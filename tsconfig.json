@@ -1,0 +1,32 @@
+{
+    "compilerOptions": {
+        "strict": true,
+        "outDir": "module",
+        "target": "ESNext",
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext",
+        "rootDir": "./src",
+        "baseUrl": "./src",
+        "declaration": true,
+        "declarationMap": true,
+        "noImplicitAny": true,
+        "experimentalDecorators": true,
+        "pretty": true,
+        "noFallthroughCasesInSwitch": true,
+        "noImplicitReturns": true,
+        "forceConsistentCasingInFileNames": true,
+        "allowSyntheticDefaultImports": true,
+        "esModuleInterop": true,
+        "inlineSourceMap": true,
+        "inlineSources": true,
+        "skipLibCheck": true,
+    },
+    "include": [
+        "./src/**/*",
+    ],
+    "exclude": [
+        "node_modules",
+        "dist",
+        "module"
+    ]
+}

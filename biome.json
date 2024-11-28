@@ -1,0 +1,23 @@
+{
+    "linter": {
+      "rules": {
+        "suspicious": {
+            "noAssignInExpressions": "off",
+            "noShadowRestrictedNames": "off"
+        },
+        "style": {
+          "noUnusedTemplateLiteral": "off",
+          "noNonNullAssertion": "off"
+        },
+        "complexity": {
+            "noStaticOnlyClass": "off",
+            "noForEach": "off",
+            "noBannedTypes": "off",
+            "useLiteralKeys": "off"
+        },
+        "performance": {
+            "noAccumulatingSpread": "off"
+        }
+      }
+    }
+  }

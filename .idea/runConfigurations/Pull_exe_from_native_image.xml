@@ -1,0 +1,15 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Pull exe from native image" type="docker-deploy" factoryName="docker-image" server-name="docker-desktop-linux">
+    <deployment type="docker-image">
+      <settings>
+        <option name="imageTag" value="leaf-compute-java:latest" />
+        <option name="attachToContainerNeeded" value="true" />
+        <option name="command" value="" />
+        <option name="containerName" value="" />
+        <option name="entrypoint" value="/bin/sh" />
+        <option name="showCommandPreview" value="true" />
+      </settings>
+    </deployment>
+    <method v="2" />
+  </configuration>
+</component>
