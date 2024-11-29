@@ -1,13 +1,10 @@
-name: Release NPM - Publish to github packages
-
+name: "on Release: Publish github package"
 on:
   release:
     types: [released]
-
 env:
   NPM_REGISTRY_PROTOCOL: 'https'
   NPM_REGISTRY_HOST: 'npm.pkg.github.com'
-
 jobs:
   packages:
     permissions:

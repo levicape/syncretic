@@ -4,18 +4,19 @@ import { isAwsTaggable } from "../component/aws/AwsTags.js";
 
 const CONFIG_NAMESPACE = `frontend`;
 const CONFIG_PREFIX = `stack`;
-export type Stack = {
+export type FrontendStack = {
 	dns?: {
 		hostnames?: string[];
 	};
 };
 
 export class FrontendContext {
-	private constructor(readonly dns: Required<Stack["dns"]>) {}
+	private constructor(readonly dns: Required<FrontendStack["dns"]>) {}
 
 	static async fromConfig(): Promise<FrontendContext> {
 		const { dns } =
-			new Config(CONFIG_NAMESPACE).getObject<Stack>(CONFIG_PREFIX) ?? {};
+			new Config(CONFIG_NAMESPACE).getObject<FrontendStack>(CONFIG_PREFIX) ??
+			{};
 		if (dns !== undefined) {
 			let { hostnames } = dns;
 			if (hostnames === undefined) {

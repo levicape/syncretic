@@ -1,4 +1,4 @@
-name: CI infra AWS Runner
+name: CI - Deploy AWS CodePipeline
 on:
   workflow_dispatch:
     inputs:
@@ -14,16 +14,6 @@ on:
         description: 'Region'
         required: true
         type: string
-    secrets:
-      AWS_ACCESS_KEY_ID:
-        description: 'AWS Access Key ID'
-        required: true
-      AWS_SECRET_ACCESS_KEY:
-        description: 'AWS Secret Access Key'
-        required: true
-      PULUMI_CONFIG_PASSPHRASE:
-        description: 'Pulumi config passphrase'
-        required: true
 jobs:
   images:
     runs-on: docker
@@ -56,7 +46,7 @@ jobs:
       if: success()
       run: /root/.pulumi/bin/pulumi up --yes --password ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
       working-directory: ci/stacks/images
-      with:
+      env:
         bucket_name: ${{ inputs.BUCKET_NAME }}
         region: ${{ inputs.AWS_REGION }}        
   project:
@@ -90,6 +80,6 @@ jobs:
       if: success()
       run: /root/.pulumi/bin/pulumi up --yes --password ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
       working-directory: ci/stacks/project        
-      with:
+      env:
         bucket_name: ${{ inputs.BUCKET_NAME }}
         region: ${{ inputs.AWS_REGION }}

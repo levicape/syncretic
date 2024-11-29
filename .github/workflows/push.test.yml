@@ -1,4 +1,4 @@
-name: Push test - Run package.json tests
+name: "on Push: Test package"
 on:
   push:
     branches:
@@ -68,8 +68,8 @@ jobs:
           pnpm install;
           pnpm run build;
 
-      # - name: Run unit tests
-      #   run: pnpm run test:unit
+      - name: Run unit tests
+        run: pnpm run test:unit
 
       - name: Run lint
         run: pnpm run lint
@@ -116,5 +116,5 @@ jobs:
           pnpm install;
           pnpm run build;
 
-      # - name: Run examples
-      #   run: pnpm run test:examples
+      - name: Run examples
+        run: pnpm run test:examples

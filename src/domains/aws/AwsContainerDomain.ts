@@ -29,7 +29,7 @@ export interface AwsContainerDomainProps {
 	role: Role;
 	// Enables caching for external registries (docker, ghcr, public.ecr.aws). Can only be enabled in one environment.
 	globalCache?: boolean;
-	credentials: {
+	credentials?: {
 		docker?: DomainRegistryCredential;
 		ghcr?: DomainRegistryCredential;
 	};
@@ -169,7 +169,7 @@ export class AwsContainerDomain extends ComponentResource {
 		});
 
 		let caches: PullThroughCacheRule[] = [];
-		if (globalCache) {
+		if (globalCache !== undefined && credentials !== undefined) {
 			GLOBAL_CACHE = name;
 			caches = (
 				[

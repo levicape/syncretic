@@ -2,6 +2,8 @@
     "name": "@levicape/ubiquitous-guide",
     "author": "Pedro Cardona",
     "license": "AGPL-3.0-only",
+    "main": "module/index.ts",
+    "types": "module/index.d.ts",
     "engines": {
         "node": ">=20.0.0"
     },
@@ -12,6 +14,7 @@
     "publishConfig": {
       "registry": "https://npm.pkg.github.com/"
     },
+    "bin": "./module/cli/bin.js",
     "version": "0.0.0-local.0",
     "type": "module",
     "scripts": {
