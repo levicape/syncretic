@@ -5,9 +5,9 @@ import {
 	RolePolicyAttachment,
 } from "@pulumi/aws/iam/index.js";
 import {
-	Function,
 	FunctionUrl,
 	type FunctionUrlArgs,
+	Function as LambdaFunction,
 } from "@pulumi/aws/lambda/index.js";
 import { BucketObject, BucketV2 } from "@pulumi/aws/s3/index.js";
 import { AssetArchive, FileAsset } from "@pulumi/pulumi/asset/index.js";
@@ -100,7 +100,7 @@ export class JavaJvmComponentAws extends JavaJvmComponent {
 				},
 			);
 
-			const lambda = new Function(
+			const lambda = new LambdaFunction(
 				`${name}-Java--dt`,
 				{
 					runtime: "java21",

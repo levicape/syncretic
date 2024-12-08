@@ -1,0 +1,181 @@
+packages:
+  - '.'
+  - 'canary'
+  - 'protocols/*'
+  - 'iac/stacks/*'
+
+catalog:
+  "@levicape/paloma": "0.0.6-main.6"
+
+catalogs:
+  core:
+    "long": "^5.2.3"
+    "zod": "3.23.8"
+    "yaml": "^2.6.1"
+    "ini": "^5.0.0"
+    "pify": "^6.1.0"
+    "verror": "^1.10.0"
+    "fast-xml-parser": "^4.5.0"
+  id:
+    "@paralleldrive/cuid2": "^2.2.2"
+    "ksuid": "^3.0.0"
+    "ulidx": "^2.4.1"
+    "uuid-base64-ts": "^1.0.2"
+    "slugid": "^5.0.1"
+    "nanoid": "^5.0.9"
+  protobuf:
+    "@bufbuild/protobuf": "^2.2.2"
+    "@bufbuild/buf": "^1.44.0"
+    "ts-proto": "^2.5.0"
+  server:
+    "consola": "^3.2.3"
+    "hookable": "^5.5.3"
+    "@stricjs/cluster": "^2.0.0"
+    "@stricjs/utils": "^2.0.7"
+
+    "node-html-parser": "^6.1.13"
+    "lru-cache": "^11.0.2"
+    "unzipper": "^0.12.3"
+  aws:
+    "@aws-sdk/client-dynamodb": "^3.705.0"
+    "@aws-sdk/client-secrets-manager": "^3.699.0"
+    "@aws-sdk/client-sqs": "^3.699.0"
+    "@aws-sdk/lib-dynamodb": "^3.705.0"
+    "@aws-sdk/util-dynamodb": "^3.705.0"
+    "aws4fetch": "^1.0.20"
+    "pino-lambda": "^4.4.1"
+  database:
+    "better-sqlite3": "^11.6.0"
+    "slonik": "^46.2.0"
+    "knex": "^3.1.0"
+    "pg": "^8.13.1"
+  cli:
+    "@stricli/core": "^1.1.0"
+    "enquirer": "^2.4.1"
+  hono:
+    "hono": "^4.6.12"
+    "@hono/node-server": "^1.13.7"
+    "@hono/zod-validator": "^0.4.1"
+    "compressible": "^2.0.18"
+    "hono-rate-limiter": "^0.4.2"
+  dev:
+    "typescript": "^5.7.2"
+    "tsx": "^4.19.2"
+  types:
+
+    "@total-typescript/ts-reset": "^0.6.1"
+    "tslib": "^2.8.1"
+    "@types/bcryptjs": "^2.4.6"
+    "@types/better-sqlite3": "^7.6.12"
+    "@types/cookie-signature": "^1.1.2"
+    "@types/qrcode": "^1.5.5"
+    "@types/react": "^19.0.0"
+    "@types/react-dom": "^19.0.0"
+
+
+    "@types/folder-hash": "^4.0.4"
+    "@types/node": "^22.10.1"
+    "@types/unzipper": "^0.10.10"
+    "@types/compressible": "^2.0.2"
+    "@types/jsonwebtoken": "^9.0.7"
+    "@types/module-alias": "^2.0.4"
+    "@types/ini": "^4.1.1"
+    "@types/verror": "^1.10.10"
+
+  test:
+    "expect": "^29.7.0"
+  lint:
+    "@biomejs/biome": "^1.9.4"
+  package:
+    "depcheck": "^1.4.7"
+    "publint": "^0.2.12"
+    "syncpack": "^13.0.0"
+    "ci": "^2.3.0"
+
+  crypto:
+    # TODO: ???
+    "crypto-js": "^4.2.0"
+    "crypto.js": "^3.2.2"
+    "jsonwebtoken": "^9.0.2"
+  http:
+    "http-status-codes": "^2.3.0"
+    "odata-filter-parser": "^0.5.5"
+
+    "cookie": "^1.0.2"
+    "cookie-signature": "^1.2.2"
+    "isbot": "^4.4.0"
+
+  build:
+    "node-gyp": "^10.2.0"
+    "autoprefixer": "^10.4.20"
+    "vinxi": "^0.4.3"
+    "vite": "^5.4.11"
+    "vite-env-only": "^3.0.3"
+    "vite-plugin-cjs-interop": "^2.1.5"
+    "vite-plugin-esmodule": "^1.5.0"
+    "vite-tsconfig-paths": "^4.3.2"
+    "webpack": "^5.96.1"
+    "@vitejs/plugin-react": "^4.3.4"
+    "nexe": "4.0.0-rc.6"
+    "folder-hash": "^4.0.4"
+  web:
+    "redaxios": "^0.5.1"
+    "spin-delay": "^2.0.1"
+    "@epic-web/cachified": "^5.2.0"
+    "@epic-web/client-hints": "^1.3.5"
+    "@epic-web/invariant": "^1.0.0"
+    "@epic-web/remember": "^1.1.0"
+    "@epic-web/totp": "^2.0.0"
+    "@conform-to/zod": "^1.2.2"
+  web-dom:
+    "input-otp": "^1.4.1"
+    "qrcode": "^1.5.4"
+    "sonner": "^1.7.0"
+  web-react:
+    "react": "19.0.0"
+    "react-dom": "19.0.0"
+    "react-is": "^18.3.1"
+    # TODO: override
+    "react-keyed-flatten-children": "^3.0.2"
+    "@uidotdev/usehooks": "^2.4.1"
+    "ahooks": "^3.8.1"
+    "@conform-to/react": "^1.2.2"
+  web-style:
+    "clsx": "^2.1.1"
+    "postcss": "^8.4.49"
+    "sass-embedded": "^1.81.0"
+    "tailwindcss": "^3.4.15"
+    "tailwind-merge": "^2.5.5"
+    "tailwindcss-animate": "^1.0.7"
+  web-tanstack:
+    "@tanstack/react-form": "^0.34.4"
+    "@tanstack/react-query": "^5.61.5"
+    "@tanstack/react-query-devtools": "^5.61.5"
+    "@tanstack/react-router": "^1.84.4"
+    "@tanstack/react-table": "^8.20.5"
+    "@tanstack/router-devtools": "^1.84.4"
+    "@tanstack/router-plugin": "^1.84.4"
+    "@tanstack/start": "^1.84.4"
+    "@tanstack/zod-form-adapter": "^0.34.4"
+  web-validation:
+    "class-variance-authority": "^0.7.1"
+  web-polaris:
+    "@shopify/polaris-icons": "^9.3.0"
+  web-cloudscape:
+    "@cloudscape-design/components": "^3.0.839"
+    "@cloudscape-design/global-styles": "^1.0.32"
+
+  pulumi:
+    "@pulumi/docker-build": "^0.0.7"
+    "@pulumi/synced-folder": "^0.11.1"
+    "@pulumi/aws": "^6.61.0"
+    "@pulumi/awsx": "^2.19.0"
+    "@pulumi/command": "^1.0.1"
+    "@pulumi/docker": "^4.5.7"
+    "@pulumi/kubernetes": "^4.18.3"
+    "@pulumi/pulumi": "^3.142.0"
+    "@pulumi/random": "^4.16.7"
+    "@pulumiverse/time": "^0.1.0"
+
+  kubernetes:
+    "@kubernetes-models/postgres-operator": "^0.4.1"

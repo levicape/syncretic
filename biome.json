@@ -3,11 +3,14 @@
       "rules": {
         "suspicious": {
             "noAssignInExpressions": "off",
-            "noShadowRestrictedNames": "off"
+            "noUnsafeDeclarationMerging": "off",
+            "noControlCharactersInRegex": "off"
         },
         "style": {
           "noUnusedTemplateLiteral": "off",
-          "noNonNullAssertion": "off"
+          "noNonNullAssertion": "off",
+          "noParameterAssign": "off",
+          "useConst": "off"
         },
         "complexity": {
             "noStaticOnlyClass": "off",

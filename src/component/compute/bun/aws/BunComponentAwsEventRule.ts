@@ -1,6 +1,6 @@
 import { EventRule } from "@pulumi/aws/cloudwatch/eventRule.js";
 import { EventTarget } from "@pulumi/aws/cloudwatch/eventTarget.js";
-import type { Function } from "@pulumi/aws/lambda/index.js";
+import type { Function as LambdaFunction } from "@pulumi/aws/lambda/index.js";
 import { Permission } from "@pulumi/aws/lambda/permission.js";
 import type { ComponentResource } from "@pulumi/pulumi/index.js";
 
@@ -13,7 +13,7 @@ export type BunComponentAwsEventRuleScheduleExpression =
 	| RateExpression;
 export type BunComponentAwsEventRuleProps = {
 	name: string;
-	lambda: Function;
+	lambda: LambdaFunction;
 	scheduleExpression: BunComponentAwsEventRuleScheduleExpression;
 	parent: ComponentResource;
 };

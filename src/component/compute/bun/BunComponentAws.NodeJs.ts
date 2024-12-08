@@ -10,7 +10,10 @@ import {
 	FunctionUrl,
 	type FunctionUrlArgs,
 } from "@pulumi/aws/lambda/functionUrl.js";
-import { Function, Runtime } from "@pulumi/aws/lambda/index.js";
+import {
+	Function as LambdaFunction,
+	Runtime,
+} from "@pulumi/aws/lambda/index.js";
 import { BucketObject, BucketV2 } from "@pulumi/aws/s3/index.js";
 import { Instance, Service } from "@pulumi/aws/servicediscovery/index.js";
 import { PrivateDnsNamespace } from "@pulumi/aws/servicediscovery/privateDnsNamespace.js";
@@ -56,7 +59,7 @@ export interface BunComponentAwsNodeProps
 }
 
 export type BunComponentAwsNodeState = {
-	lambda: Function;
+	lambda: LambdaFunction;
 	cloudmap?: {
 		namespace: PrivateDnsNamespace;
 		service: Service;
@@ -279,7 +282,7 @@ export class BunComponentAwsNode extends ComputeComponent {
 			// );
 		}
 
-		const lambda = new Function(
+		const lambda = new LambdaFunction(
 			`${name}-Bun-js-lambda`,
 			{
 				architectures: ["arm64"],

@@ -1,6 +1,6 @@
 import { hostname, networkInterfaces, version } from "node:os";
 import { extname } from "node:path";
-import type { Function } from "@pulumi/aws/lambda/index.js";
+import type { Function as LambdaFunction } from "@pulumi/aws/lambda/index.js";
 import { BucketV2 } from "@pulumi/aws/s3/bucketV2.js";
 import {
 	type BucketObject,
@@ -47,7 +47,7 @@ export const BunComponentAwsAssets = (
 		lambda,
 		image,
 	}: {
-		lambda: Function;
+		lambda: LambdaFunction;
 		image: Image;
 	},
 	context: Context,

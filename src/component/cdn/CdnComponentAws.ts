@@ -1,7 +1,7 @@
 import type { Certificate } from "@pulumi/aws/acm/index.js";
 import {
+	Function as CloudfrontFunction,
 	Distribution,
-	Function,
 	OriginAccessIdentity,
 } from "@pulumi/aws/cloudfront/index.js";
 import {
@@ -81,7 +81,7 @@ export interface CdnComponentAwsState {
 	};
 	cache: Distribution;
 	function: {
-		rewriteUrls: Function;
+		rewriteUrls: CloudfrontFunction;
 	};
 	manifest?: {
 		content: Output<{ CdnComponent: WebsiteManifest }>;
@@ -165,7 +165,7 @@ export class CdnComponentAws extends CdnComponent {
 				);
 			}
 
-			const rewriteUrls = new Function(
+			const rewriteUrls = new CloudfrontFunction(
 				`${name}-Cdn--cache-rewrite-url`,
 				{
 					runtime: "cloudfront-js-2.0",
@@ -185,7 +185,7 @@ function handler(event) {
 				{ parent: this },
 			);
 
-			const hostHeaderInjection = new Function(
+			const hostHeaderInjection = new CloudfrontFunction(
 				`${name}-Cdn--cache-host-header`,
 				{
 					runtime: "cloudfront-js-2.0",

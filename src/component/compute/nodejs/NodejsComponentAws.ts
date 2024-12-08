@@ -6,9 +6,9 @@ import {
 	RolePolicyAttachment,
 } from "@pulumi/aws/iam/index.js";
 import {
-	Function,
 	FunctionUrl,
 	type FunctionUrlArgs,
+	Function as LambdaFunction,
 } from "@pulumi/aws/lambda/index.js";
 import { BucketObject, BucketV2 } from "@pulumi/aws/s3/index.js";
 import { AssetArchive, FileArchive } from "@pulumi/pulumi/asset/index.js";
@@ -27,7 +27,7 @@ import type { ComputeManifest } from "../ComputeManifest.js";
 import { NodejsComponent } from "./NodejsComponent.js";
 
 export type NodejsComponentAwsState = {
-	lambda: Function;
+	lambda: LambdaFunction;
 	code: {
 		bucket: BucketV2;
 		zip: BucketObject;
@@ -149,7 +149,7 @@ export class NodejsComponentAws extends NodejsComponent {
 				},
 			);
 
-			const lambda = new Function(
+			const lambda = new LambdaFunction(
 				`${name}-Node--dt-${prefix}`,
 				{
 					runtime: "nodejs20.x",

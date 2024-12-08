@@ -1,4 +1,3 @@
-import { region } from "@pulumi/aws/config/index.js";
 import { getCallerIdentity } from "@pulumi/aws/getCallerIdentity.js";
 import { Config, getProject, getStack } from "@pulumi/pulumi/index.js";
 import { registerStackTransformation } from "@pulumi/pulumi/runtime/index.js";
@@ -80,11 +79,11 @@ export class Context {
 		}
 
 		const aws: AwsEnvironment | undefined =
-			region !== undefined
+			process.env.AWS_REGION !== undefined
 				? {
 						accountArn: (await getCallerIdentity()).arn,
 						accountId: (await getCallerIdentity()).accountId,
-						region,
+						region: process.env.AWS_REGION! as AwsEnvironment["region"],
 					}
 				: undefined;
 

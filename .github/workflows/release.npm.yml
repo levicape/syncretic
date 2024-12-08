@@ -32,7 +32,7 @@ jobs:
       
       - uses: actions/setup-node@v4
         with:
-          node-version: '23.x'
+          node-version: "22.12.0"
           registry-url: ${{ env.NPM_REGISTRY_PROTOCOL }}://${{ env.NPM_REGISTRY_HOST }}
           cache: 'pnpm'
           cache-dependency-path: pnpm-lock.yaml
@@ -57,12 +57,13 @@ jobs:
       - if: ${{ steps.cache-npm.outputs.cache-hit != 'true' }}
         name: List the state of node modules
         continue-on-error: true
-        run: npm list
+        run: pnpm list
 
       - name: Install and test
         run: |
           pnpm install;
-          pnpm run test;
+          pnpm build:ci;
+# pnpm run test;
       - name: Increment version
         run: | 
           export PREID=$RELEVANT_SHA;

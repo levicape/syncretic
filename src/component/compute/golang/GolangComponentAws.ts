@@ -5,7 +5,7 @@ import {
 	FunctionUrl,
 	type FunctionUrlArgs,
 } from "@pulumi/aws/lambda/functionUrl.js";
-import { Function } from "@pulumi/aws/lambda/index.js";
+import { Function as LambdaFunction } from "@pulumi/aws/lambda/index.js";
 import * as pulumi from "@pulumi/pulumi/index.js";
 import { Output } from "@pulumi/pulumi/index.js";
 import {
@@ -77,7 +77,7 @@ export class GolangComponentAws extends ComputeComponent {
 			);
 		}
 
-		const lambda = new Function(
+		const lambda = new LambdaFunction(
 			`${name}-lambda`,
 			{
 				runtime: aws.lambda.Runtime.CustomAL2023,

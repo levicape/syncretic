@@ -23,7 +23,6 @@ export function createDatabaseEnvironment<Schema extends string>(
 						return [`${prefix}_DATABASE__DB_${i}`, key];
 					}),
 				);
-				// biome-ignore lint/style/noParameterAssign:
 				prefix = prefix.toUpperCase();
 				const dbName = Object.keys(database.k8s.secrets.prepared)[0];
 				const schema = "public";
@@ -50,7 +49,6 @@ export function createDatabaseEnvironment<Schema extends string>(
 				>
 			).flatMap((key, i) => {
 				return (["reader", "writer", "owner"] as const).map((role) => {
-					// biome-ignore lint/style/noParameterAssign:
 					prefix = prefix.toUpperCase();
 					return {
 						prefix: `${prefix}_DATABASE__DB_${i}__${role.toUpperCase()}_`,

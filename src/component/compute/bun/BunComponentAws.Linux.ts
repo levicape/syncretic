@@ -6,7 +6,10 @@ import { ManagedPolicy } from "@pulumi/aws/iam/index.js";
 import type { Role } from "@pulumi/aws/iam/role.js";
 import { RolePolicyAttachment } from "@pulumi/aws/iam/rolePolicyAttachment.js";
 import type { FunctionUrl } from "@pulumi/aws/lambda/functionUrl.js";
-import { Function, Runtime } from "@pulumi/aws/lambda/index.js";
+import {
+	Function as LambdaFunction,
+	Runtime,
+} from "@pulumi/aws/lambda/index.js";
 import { BucketObject, BucketV2 } from "@pulumi/aws/s3/index.js";
 import type { Instance, Service } from "@pulumi/aws/servicediscovery/index.js";
 import type { PrivateDnsNamespace } from "@pulumi/aws/servicediscovery/privateDnsNamespace.js";
@@ -68,7 +71,7 @@ export type BunComponentAwsProps = Omit<ComputeComponentProps, "build"> & {
 	);
 
 export type BunComponentAwsState = {
-	lambda: Function;
+	lambda: LambdaFunction;
 	cloudmap?: {
 		namespace: PrivateDnsNamespace;
 		service: Service;
@@ -282,7 +285,7 @@ export class BunComponentAws extends ComputeComponent {
 		}
 
 		const vpc: Vpc | undefined = filesystem?.vpc ?? props.vpc;
-		const lambda = new Function(
+		const lambda = new LambdaFunction(
 			`${name}-Bun--lambda`,
 			{
 				architectures: ["arm64"],

@@ -1,11 +1,8 @@
 {
-	"private": "true",
-	"type": "module",
-	"version": "0.0.0-local.0",
-	"dependencies": {
-		"@levicape/musical-carnival": "^0.0.0-local.0"
-	},
-	"imports": {
-		"atokos": "../module/index.js"
-	}
+  "version": "0.0.0-local.0",
+  "dependencies": {
+    "@levicape/paloma": "catalog:"
+  },
+  "private": "true",
+  "type": "module"
 }

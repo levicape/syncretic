@@ -1,0 +1,23 @@
+{
+	"files": {
+		"ignore": ["src/_protocols/**/*"]
+	},
+	"linter": {
+		"rules": {
+			"complexity": {
+				"noForEach": "off",
+				"noStaticOnlyClass": "off"
+			},
+			"style": {
+				"noUnusedTemplateLiteral": "off",
+				"noParameterAssign": "off",
+				"noNonNullAssertion": "off"
+			},
+			"suspicious": {
+				"noUnsafeDeclarationMerging": "off",
+				"noControlCharactersInRegex": "off",
+				"noAssignInExpressions": "off"
+			}
+		}
+	}
+}
