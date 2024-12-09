@@ -1,4 +1,4 @@
-#!/usr/bin/env node --experimental-strip-types
+#!/usr/bin/env node --no-deprecation --no-warnings --experimental-strip-types
 import { run } from "@stricli/core";
 import { FourtwoCliApp } from "./FourtwoCliApp.mjs";
 

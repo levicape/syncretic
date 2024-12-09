@@ -59,7 +59,6 @@ const images = {
 		"aws/codebuild/amazonlinux-aarch64-lambda-standard:corretto21",
 		"aws/codebuild/amazonlinux-aarch64-lambda-standard:nodejs18",
 		"aws/codebuild/amazonlinux-aarch64-lambda-standard:nodejs20",
-		"aws/codebuild/amazonlinux-aarch64-lambda-standard:nodejs22",
 		"aws/codebuild/amazonlinux-aarch64-lambda-standard:python3.11",
 		"aws/codebuild/amazonlinux-aarch64-lambda-standard:python3.12",
 		"aws/codebuild/amazonlinux-aarch64-lambda-standard:ruby3.2",

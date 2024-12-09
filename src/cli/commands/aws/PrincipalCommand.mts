@@ -4,9 +4,10 @@ import { buildCommand } from "@stricli/core";
 import { AwsClient } from "aws4fetch";
 import Enquirer from "enquirer";
 import VError from "verror";
-import { OIDC, Policy } from "../../../index.mjs";
 import { AwsClientBuilder } from "../../../sdk/AwsClientBuilder.mjs";
+import { OIDC } from "../../../sdk/aws/OIDC.mjs";
 import { Organizations } from "../../../sdk/aws/Organizations.mjs";
+import { Policy } from "../../../sdk/aws/Policy.mjs";
 import { Role } from "../../../sdk/aws/Role.mjs";
 import { SystemsManager } from "../../../sdk/aws/SystemsManager.mjs";
 
@@ -16,15 +17,26 @@ const prompt = enquirer.prompt.bind(enquirer);
 type Flags = {
 	name?: string;
 	email?: string;
+	prefix?: string;
 	region: string;
 };
+
+const IAM_CONSISTENCY_DELAY = 5000;
+const OIDC_CONSISTENCY_DELAY = 3000;
 
 export const waitForReady = async (
 	label: string,
 	props: { timeout?: number; isReady: () => Promise<boolean> },
 ) => {
 	const start = Date.now();
-	while (Date.now() - start < (props.timeout ?? 20000)) {
+	console.dir({
+		waitForReady: {
+			message: `Waiting for ${label}`,
+			timeout: `${props.timeout ?? 60000}ms`,
+		},
+	});
+
+	while (Date.now() - start < (props.timeout ?? 60000)) {
 		if (await props.isReady()) {
 			return;
 		}
@@ -39,11 +51,11 @@ export const waitForReady = async (
 	);
 };
 
-export const principalName = async () => {
+export const principalName = async (prefix?: string) => {
 	const packageJson = JSON.parse(
 		await readFile(`${cwd()}/package.json`, "utf8"),
 	);
-	return packageJson?.name.replace(/[^a-zA-Z0-9]/g, "-");
+	return (prefix ?? "dev") + packageJson?.name.replace(/[^a-zA-Z0-9]/g, "-");
 };
 
 export const repositoryName = async () => {
@@ -69,14 +81,27 @@ export const repositoryName = async () => {
 
 export const PrincipalOIDCRole = `FourtwoOIDCProviderRole`;
 export const PrincipalOIDCParameter = (principal?: string) =>
-	`/fourtwo/${principal ? `${principal}` : "_principal"}/OIDCProviderArn`;
+	`/fourtwo/${principal ? `${principal}` : "_principal"}/principal/OIDCProviderArn`;
+export const PrincipalOAARole = "OrganizationAccountAccessRole";
+export const PrincipalOAAParameter = (principal?: string) =>
+	`/fourtwo/${principal ? `${principal}` : "_principal"}/principal/OrganizationAccountAccessRoleArn`;
 
 export const PrincipalCommand = async () => {
 	return async () =>
 		buildCommand({
 			loader: async () => {
 				return async (flags: Flags) => {
-					let { name, email, region } = flags;
+					let { name, email, region, prefix } = flags;
+
+					if (name && prefix) {
+						throw new VError(
+							{
+								name: "PrincipalCommand",
+								message: "Name and prefix are mutually exclusive",
+							},
+							"Name and prefix are mutually exclusive",
+						);
+					}
 					const credentials = await AwsClientBuilder.getAWSCredentials();
 					const client = new AwsClient({
 						...credentials,
@@ -113,7 +138,7 @@ export const PrincipalCommand = async () => {
 						},
 						{ depth: null },
 					);
-					name = name ?? (await principalName());
+					name = name ?? (await principalName(prefix));
 					if (!name) {
 						throw new VError(
 							{
@@ -174,6 +199,7 @@ export const PrincipalCommand = async () => {
 						let { CreateAccountStatus } = await organizations.CreateAccount({
 							AccountName: name,
 							Email: email,
+							RoleName: PrincipalOAARole,
 						});
 						console.dir({
 							PrincipalCommand: {
@@ -209,7 +235,11 @@ export const PrincipalCommand = async () => {
 						};
 					}
 
-					const serviceRole = "OrganizationAccountAccessRole";
+					await new Promise((resolve) =>
+						setTimeout(resolve, IAM_CONSISTENCY_DELAY),
+					);
+
+					const serviceRole = PrincipalOAARole;
 					const { AssumedRoleUser, Credentials } = (
 						await roles.AssumeRole({
 							RoleArn: `arn:aws:iam::${principal?.Id}:role/${serviceRole}`,
@@ -278,6 +308,10 @@ export const PrincipalCommand = async () => {
 								{ depth: null },
 							);
 
+							await new Promise((resolve) =>
+								setTimeout(resolve, OIDC_CONSISTENCY_DELAY),
+							);
+
 							const oidcRole = PrincipalOIDCRole;
 							let service: Awaited<ReturnType<typeof roles.CreateRole>>;
 							service = await roles.CreateRole(
@@ -316,6 +350,9 @@ export const PrincipalCommand = async () => {
 								},
 								{ depth: null },
 							);
+							await new Promise((resolve) =>
+								setTimeout(resolve, IAM_CONSISTENCY_DELAY),
+							);
 
 							let policy: Awaited<ReturnType<typeof policies.PutRolePolicy>>;
 							policy = await policies.PutRolePolicy({
@@ -342,57 +379,113 @@ export const PrincipalCommand = async () => {
 								},
 								{ depth: null },
 							);
+							await (async () => {
+								let parameter = PrincipalOIDCParameter();
+								let scopedParameter = PrincipalOIDCParameter(
+									await principalName(prefix),
+								);
 
-							let parameter = PrincipalOIDCParameter();
-							let scopedParameter = PrincipalOIDCParameter(
-								await principalName(),
-							);
-
-							let existing: Awaited<ReturnType<typeof systems.GetParameter>>;
-							existing = await systems.GetParameter({
-								Name: parameter,
-							});
-
-							let updateParameter =
-								existing?.Parameter?.Value !==
-								service.CreateRoleResult.Role.Arn;
-
-							if (updateParameter) {
-								let param: Awaited<ReturnType<typeof systems.PutParameter>>;
-								param = await systems.PutParameter({
+								let existing: Awaited<ReturnType<typeof systems.GetParameter>>;
+								existing = await systems.GetParameter({
 									Name: parameter,
-									Value: service.CreateRoleResult.Role.Arn,
-									Type: "String",
-									Overwrite: true,
 								});
 
-								await root.PutParameter({
-									Name: scopedParameter,
-									Value: service.CreateRoleResult.Role.Arn,
-									Type: "String",
-									Overwrite: true,
+								let updateParameter =
+									existing?.Parameter?.Value !==
+									service.CreateRoleResult.Role.Arn;
+
+								if (updateParameter) {
+									let param: Awaited<ReturnType<typeof systems.PutParameter>>;
+									param = await systems.PutParameter({
+										Name: parameter,
+										Value: service.CreateRoleResult.Role.Arn,
+										Type: "String",
+										Overwrite: true,
+									});
+
+									const owner = await root.PutParameter({
+										Name: scopedParameter,
+										Value: service.CreateRoleResult.Role.Arn,
+										Type: "String",
+										Overwrite: true,
+									});
+
+									console.dir(
+										{
+											PrincipalCommand: {
+												message: "Updated role OIDC parameter",
+												owner,
+												param,
+											},
+										},
+										{ depth: null },
+									);
+								} else {
+									console.dir(
+										{
+											PrincipalCommand: {
+												message: "Role OIDC parameter already up-to-date",
+												existing,
+											},
+										},
+										{ depth: null },
+									);
+								}
+							})();
+
+							await (async () => {
+								let parameter = PrincipalOAAParameter();
+								let scopedParameter = PrincipalOAAParameter(
+									await principalName(prefix),
+								);
+
+								let existing: Awaited<ReturnType<typeof systems.GetParameter>>;
+								existing = await systems.GetParameter({
+									Name: parameter,
 								});
 
-								console.dir(
-									{
-										PrincipalCommand: {
-											message: "Updated role parameter",
-											param,
+								let arn = `arn:aws:iam::${principal?.Id}:role/${serviceRole}`;
+								let updateParameter = existing?.Parameter?.Value !== arn;
+
+								if (updateParameter) {
+									let param: Awaited<ReturnType<typeof systems.PutParameter>>;
+									param = await systems.PutParameter({
+										Name: parameter,
+										Value: arn,
+										Type: "String",
+										Overwrite: true,
+									});
+
+									const owner = await root.PutParameter({
+										Name: scopedParameter,
+										Value: arn,
+										Type: "String",
+										Overwrite: true,
+									});
+
+									console.dir(
+										{
+											PrincipalCommand: {
+												message: "Updated Organization Access role parameters",
+												owner,
+												param,
+											},
 										},
-									},
-									{ depth: null },
-								);
-							} else {
-								console.dir(
-									{
-										PrincipalCommand: {
-											message: "Role parameter already up-to-date",
-											existing,
+										{ depth: null },
+									);
+								} else {
+									console.dir(
+										{
+											PrincipalCommand: {
+												message:
+													"Role Organization Access parameter already up-to-date",
+												existing,
+											},
 										},
-									},
-									{ depth: null },
-								);
-							}
+										{ depth: null },
+									);
+								}
+							})();
 						}
 					}
 				};
@@ -401,7 +494,7 @@ export const PrincipalCommand = async () => {
 				flags: {
 					name: {
 						brief:
-							"Name of the principal. Defaults to URL-safe root package.json name",
+							"Name of the principal. Defaults to URL-safe root package.json name. Mutually exclusive with prefix",
 						kind: "parsed",
 						parse: (value: string) => {
 							if (value.trim().length === 0) {
@@ -449,6 +542,13 @@ export const PrincipalCommand = async () => {
 						kind: "parsed",
 						parse: (value: string) => value,
 						optional: false,
+					},
+					prefix: {
+						brief:
+							"Prefix for the principal. Defaults to 'dev'. Mutually exclusive with name",
+						kind: "parsed",
+						parse: (value: string) => value,
+						optional: true,
 					},
 				},
 			},

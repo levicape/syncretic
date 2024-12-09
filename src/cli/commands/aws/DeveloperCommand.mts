@@ -1,12 +1,15 @@
 import { buildCommand } from "@stricli/core";
 import { AwsClient } from "aws4fetch";
 import VError from "verror";
-import { Codebuild, Policy } from "../../../index.mjs";
 import { AwsClientBuilder } from "../../../sdk/AwsClientBuilder.mjs";
+import { Codebuild } from "../../../sdk/aws/Codebuild.mjs";
+import { Policy } from "../../../sdk/aws/Policy.mjs";
 import { Role } from "../../../sdk/aws/Role.mjs";
 import { S3 } from "../../../sdk/aws/S3.mjs";
 import { SystemsManager } from "../../../sdk/aws/SystemsManager.mjs";
 import {
+	PrincipalOAAParameter,
+	PrincipalOAARole,
 	PrincipalOIDCParameter,
 	principalName,
 	repositoryName,
@@ -14,35 +17,74 @@ import {
 } from "./PrincipalCommand.mjs";
 
 type Flags = {
-	account: string;
 	region: string;
 	token: string;
 	uniqueId?: string;
 	source?: `s3://${string}` | `github://${string}`;
+	prefix?: string;
 	role?: string;
+	overwrite?: boolean;
 
 	type?: string;
 	image?: string;
 	compute?: string;
 };
 
+const CONSISTENCY_DELAY = (time: number) => async () => {
+	return new Promise<void>((resolve) => {
+		setTimeout(() => {
+			resolve();
+		}, time);
+	});
+};
+
+const IAM_CONSISTENCY_DELAY = CONSISTENCY_DELAY(5000);
+const CODEBUILD_CONSISTENCY_DELAY = CONSISTENCY_DELAY(10000);
+
 export const DeveloperProjectParameter = (principal?: string) =>
-	`/fourtwo/${principal ? `${principal}` : "_principal"}/CodebuildProjectArn`;
+	`/fourtwo/${principal ? `${principal}` : "_principal"}/developer/CodebuildProjectArn`;
 
 export const DeveloperCommand = async () => {
 	return async () =>
 		buildCommand({
 			loader: async () => {
 				return async (flags: Flags) => {
-					const { account, region, role, token, source } = flags;
+					const { region, role, token, source, overwrite } = flags;
 					const credentials = await AwsClientBuilder.getAWSCredentials();
 					const client = new AwsClient({
 						...credentials,
 						region,
 					});
 					let roles = new Role(client);
+					const root = new SystemsManager(client);
+					const principal = await principalName();
 
-					const serviceRole = role ?? "OrganizationAccountAccessRole";
+					const oaaParameter = PrincipalOAAParameter(principal);
+					const oaaRole = (
+						await root.GetParameter({
+							Name: oaaParameter,
+						})
+					)?.Parameter.Value;
+
+					console.dir({
+						DeveloperCommand: {
+							message: "Got OAA role",
+							oaaRole,
+						},
+					});
+
+					if (!oaaRole) {
+						throw new VError(
+							{
+								name: "OAA",
+								message: `OAA role not found. Expected parameter: ${oaaParameter}. Please run \`twofour aws principal\` to initialize the required role.`,
+							},
+							"OIDC role not found",
+						);
+					}
+
+					const account = oaaRole.split(":")[4];
+					const serviceRole = role ?? PrincipalOAARole;
 					const { AssumedRoleUser, Credentials } = (
 						await roles.AssumeRole({
 							RoleArn: `arn:aws:iam::${account}:role/${serviceRole}`,
@@ -69,9 +111,8 @@ export const DeveloperCommand = async () => {
 						roles = new Role(assumed);
 
 						const codebuild = new Codebuild(assumed);
-						const systems = new SystemsManager(assumed);
 						const policy = new Policy(assumed);
-						const principal = await principalName();
+						const systems = new SystemsManager(assumed);
 						const s3 = new S3(assumed);
 						let uniqueId =
 							flags.uniqueId ?? Math.random().toString(36).substring(4);
@@ -83,6 +124,8 @@ export const DeveloperCommand = async () => {
 						const artifacts = await s3.CreateBucket({
 							BucketName: `fourtwo-${uniqueId}-artifacts`,
 						});
+
+						// Parameters
 
 						const state = await s3.CreateBucket({
 							BucketName: `fourtwo-${uniqueId}-state`,
@@ -107,7 +150,7 @@ export const DeveloperCommand = async () => {
 
 						const oidcParameter = PrincipalOIDCParameter(principal);
 						const oidcRole = (
-							await systems.GetParameter({
+							await root.GetParameter({
 								Name: oidcParameter,
 							})
 						)?.Parameter.Value;
@@ -143,6 +186,8 @@ export const DeveloperCommand = async () => {
 							},
 							{ depth: null },
 						);
+
+						await CODEBUILD_CONSISTENCY_DELAY();
 
 						const assumeRolePolicy = (
 							await policy.GetRole({
@@ -212,6 +257,8 @@ export const DeveloperCommand = async () => {
 							});
 						}
 
+						await IAM_CONSISTENCY_DELAY();
+
 						let uniqueCodebuildName = `fourtwo-${uniqueId}-a64-lambda-nodejs20`;
 						if (uniqueCodebuildName.length > 150) {
 							uniqueCodebuildName = uniqueCodebuildName.slice(0, 150);
@@ -244,7 +291,7 @@ export const DeveloperCommand = async () => {
 								environment: {
 									type: "ARM_LAMBDA_CONTAINER",
 									image:
-										"aws/codebuild/amazonlinux-aarch64-lambda-standard:nodejs22",
+										"aws/codebuild/amazonlinux-aarch64-lambda-standard:nodejs20",
 									computeType: "BUILD_LAMBDA_1GB",
 								},
 								serviceRole: oidcRole,
@@ -282,7 +329,7 @@ export const DeveloperCommand = async () => {
 
 						let updateParameter = existing?.Parameter?.Value !== project.arn;
 
-						if (updateParameter) {
+						if (updateParameter || overwrite) {
 							let param: Awaited<ReturnType<typeof systems.PutParameter>>;
 							param = await systems.PutParameter({
 								Name: parameter,
@@ -291,7 +338,7 @@ export const DeveloperCommand = async () => {
 								Overwrite: true,
 							});
 
-							await systems.PutParameter({
+							await root.PutParameter({
 								Name: scopedParameter,
 								Value: project.arn,
 								Type: "String",
@@ -323,12 +370,6 @@ export const DeveloperCommand = async () => {
 			},
 			parameters: {
 				flags: {
-					account: {
-						brief: "AWS Account ID",
-						kind: "parsed",
-						parse: (value: string) => value,
-						optional: false,
-					},
 					role: {
 						brief: "Role to assume. Defaults to OrganizationAccountAccessRole",
 						kind: "parsed",
@@ -371,6 +412,18 @@ export const DeveloperCommand = async () => {
 								"Invalid source",
 							);
 						},
+						optional: true,
+					},
+					overwrite: {
+						brief: "Overwrite",
+						kind: "boolean",
+						optional: true,
+					},
+					prefix: {
+						brief:
+							"Prefix for the principal. Defaults to 'dev'. Mutually exclusive with name",
+						kind: "parsed",
+						parse: (value: string) => value,
 						optional: true,
 					},
 				},

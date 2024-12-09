@@ -63,6 +63,12 @@
   "engines": {
     "node": ">=22.0.0"
   },
+  "exports": {
+    ".": "./module/index.mjs",
+    "./component": "./module/component/index.mjs",
+    "./ci": "./module/ci/index.mjs",
+    "./cli": "./module/cli/index.mjs"
+  },
   "files": [
     "canary",
     "module"
