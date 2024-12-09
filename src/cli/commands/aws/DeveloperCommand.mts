@@ -22,6 +22,7 @@ import {
 type Flags = {
 	region: string;
 	token: string;
+	username?: string;
 	uniqueId?: string;
 	replace?: boolean;
 	source?: `s3://${string}` | `github://${string}`;
@@ -57,7 +58,7 @@ export const DeveloperCommand = async () => {
 		buildCommand({
 			loader: async () => {
 				return async (flags: Flags) => {
-					const { region, role, token, source, replace } = flags;
+					const { region, role, token, source, replace, username } = flags;
 					const credentials = await AwsClientBuilder.getAWSCredentials();
 					const client = new AwsClient({
 						...credentials,
@@ -297,11 +298,12 @@ export const DeveloperCommand = async () => {
 							uniqueCodebuildName = uniqueCodebuildName.slice(0, 150);
 						}
 
-						if ((uniqueId !== previousUniqueId) && !credentials) {
+						if (uniqueId !== previousUniqueId && !credentials) {
 							throw new VError(
 								{
 									name: "credentials",
-									message: "No credentials found. Credentials must be provided when creating or replacing a project",
+									message:
+										"No credentials found. Credentials must be provided when creating or replacing a project",
 								},
 								"No credentials found",
 							);
@@ -364,6 +366,20 @@ export const DeveloperCommand = async () => {
 							{ depth: null },
 						);
 
+
+						if (!username) {
+							console.dir(
+								{
+									DeveloperCommand: {
+										message: "No username provided",
+									},
+								},
+								{ depth: null },
+							);
+
+							// Prompt with reminder that it will run builds for every commit
+						}
+
 						const webhook = await codebuild.CreateWebhook({
 							projectName: uniqueCodebuildName,
 							filterGroups: [
@@ -372,9 +388,16 @@ export const DeveloperCommand = async () => {
 										type: "EVENT",
 										pattern: "WORKFLOW_JOB_QUEUED",
 									},
+									...(username
+										? [
+												{
+													type: "ACTOR_ACCOUNT_ID",
+													pattern: username,
+												} as const,
+											]
+										: []),
 								],
 							],
-							// TODO: Scope to ACTOR_ACCOUNT_ID
 							// TODO: Allow --filepath
 							scopeConfiguration: {
 								name: (await repositoryName())!.split("/")[0],
@@ -446,12 +469,6 @@ export const DeveloperCommand = async () => {
 			},
 			parameters: {
 				flags: {
-					role: {
-						brief: "Role to assume. Defaults to OrganizationAccountAccessRole",
-						kind: "parsed",
-						parse: (value: string) => value,
-						optional: true,
-					},
 					region: {
 						brief: "AWS Region",
 						kind: "parsed",
@@ -463,6 +480,18 @@ export const DeveloperCommand = async () => {
 						kind: "parsed",
 						parse: (value: string) => value,
 						optional: false,
+					},
+					username: {
+						brief: "Username",
+						kind: "parsed",
+						parse: (value: string) => value,
+						optional: true,
+					},
+					role: {
+						brief: "Role to assume. Defaults to OrganizationAccountAccessRole",
+						kind: "parsed",
+						parse: (value: string) => value,
+						optional: true,
 					},
 					uniqueId: {
 						brief: "Unique ID",

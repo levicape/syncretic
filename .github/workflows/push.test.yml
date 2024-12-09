@@ -75,7 +75,7 @@ jobs:
   #       run: pnpm run lint
   canary:
     name: Verify test:canary
-    runs-on: ${{ vars.RUNNER }}
+    runs-on: ${{ vars.RUNNER }}-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
       - uses: actions/checkout@v4
 
