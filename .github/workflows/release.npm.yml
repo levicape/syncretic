@@ -11,7 +11,7 @@ jobs:
       packages: write
       contents: read
     name: Publish to npm registry
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER }}-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
       - uses: actions/checkout@v4
 

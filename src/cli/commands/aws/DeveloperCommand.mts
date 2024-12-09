@@ -341,7 +341,7 @@ export const DeveloperCommand = async () => {
 									type: "ARM_LAMBDA_CONTAINER",
 									image:
 										"aws/codebuild/amazonlinux-aarch64-lambda-standard:nodejs20",
-									computeType: "BUILD_LAMBDA_1GB",
+									computeType: "BUILD_LAMBDA_4GB",
 								},
 								serviceRole: oidcRole,
 								tags: [
