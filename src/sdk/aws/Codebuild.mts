@@ -119,6 +119,8 @@ const images = {
 	MAC_ARM: ["aws/codebuild/macos-arm-base:14"] as const,
 };
 
+type WebhookFilterType = "BASE_REF" | "HEAD_REF" | "ACTOR_ACCOUNT_ID";
+
 type ImagesFor<T extends keyof typeof images> = (typeof images)[T][number];
 
 type CredentialProviderType = "SECRETS_MANAGER";
@@ -212,7 +214,10 @@ type ArtifactPackaging = "NONE" | "ZIP";
 type ReportBuildStatus = "ENABLED" | "DISABLED";
 type ImagePullCredentialsType = "CODEBUILD" | "SERVICE_ROLE";
 type FileSystemLocationType = "EFS";
-type CodebuildCreateProjectRequest<EnvironmentT extends EnvironmentType> = {
+
+export type CodebuildCreateProjectRequest<
+	EnvironmentT extends EnvironmentType,
+> = {
 	artifacts: Artifact;
 	autoRetryLimit?: number;
 	badgeEnabled?: boolean;
@@ -258,6 +263,235 @@ type CodebuildCreateProjectRequest<EnvironmentT extends EnvironmentType> = {
 	timeoutInMinutes?: number;
 	vpcConfig?: VpcConfig;
 };
+
+const ImportSourceCredentialsResponseZod = z.object({
+	arn: z.string(),
+});
+
+const CreateProjectResponseZod = z.object({
+	project: z.object({
+		arn: z.string(),
+		artifacts: z
+			.object({
+				artifactIdentifier: z.string().optional(),
+				bucketOwnerAccess: z.string().optional(),
+				encryptionDisabled: z.boolean().optional(),
+				location: z.string().optional(),
+				name: z.string().optional(),
+				namespaceType: z.string().optional(),
+				overrideArtifactName: z.boolean().optional(),
+				packaging: z.string().optional(),
+				path: z.string().optional(),
+				type: z.string().optional(),
+			})
+			.optional(),
+		badgeEnabled: z.boolean().optional(),
+		buildBatchConfig: z
+			.object({
+				batchReportMode: z.string().optional(),
+				combineArtifacts: z.boolean().optional(),
+				restrictions: z
+					.object({
+						computeTypesAllowed: z.array(z.string()).optional(),
+						maximumBuildsAllowed: z.number().optional(),
+					})
+					.optional(),
+				serviceRole: z.string().optional(),
+				timeoutInMins: z.number().optional(),
+			})
+			.optional(),
+		cache: z
+			.object({
+				location: z.string().optional(),
+				modes: z.array(z.string()).optional(),
+				type: z.string().optional(),
+			})
+			.optional(),
+		concurrentBuildLimit: z.number().optional(),
+		created: z.number().optional(),
+		description: z.string().optional(),
+		encryptionKey: z.string().optional(),
+		environment: z
+			.object({
+				certificate: z.string().optional(),
+				computeConfiguration: z
+					.object({
+						disk: z.number().optional(),
+						machineType: z.string().optional(),
+						memory: z.number().optional(),
+						vCpu: z.number().optional(),
+					})
+					.optional(),
+				computeType: z.string().optional(),
+				environmentVariables: z
+					.array(
+						z
+							.object({
+								Name: z.string().optional(),
+								Value: z.string().optional(),
+							})
+							.optional(),
+					)
+					.optional(),
+				fleet: z
+					.object({
+						fleetArn: z.string(),
+					})
+					.optional(),
+				image: z.string().optional(),
+				imagePullCredentialsType: z.string().optional(),
+				privilegedMode: z.boolean().optional(),
+				registryCredential: z
+					.object({
+						credential: z.string().optional(),
+						credentialProvider: z.string().optional(),
+					})
+					.optional(),
+				type: z.string().optional(),
+			})
+			.optional(),
+		fileSystemLocations: z
+			.array(
+				z
+					.object({
+						identifier: z.string().optional(),
+						location: z.string().optional(),
+						mountOptions: z.string().optional(),
+						mountPoint: z.string().optional(),
+						type: z.string().optional(),
+					})
+					.optional(),
+			)
+			.optional(),
+		lastModified: z.number().optional(),
+		logsConfig: z
+			.object({
+				cloudWatchLogs: z
+					.object({
+						groupName: z.string().optional(),
+						status: z.string().optional(),
+						streamName: z.string().optional(),
+					})
+					.optional(),
+				s3Logs: z
+					.object({
+						bucketOwnerAccess: z.string().optional(),
+						encryptionDisabled: z.boolean().optional(),
+						location: z.string().optional(),
+						status: z.string().optional(),
+					})
+					.optional(),
+			})
+			.optional(),
+		name: z.string().optional(),
+		queuedTimeoutInMinutes: z.number().optional(),
+		secondaryArtifacts: z
+			.array(
+				z
+					.object({
+						artifactIdentifier: z.string().optional(),
+						bucketOwnerAccess: z.string().optional(),
+						encryptionDisabled: z.boolean().optional(),
+						location: z.string().optional(),
+						name: z.string().optional(),
+						namespaceType: z.string().optional(),
+						overrideArtifactName: z.boolean().optional(),
+						packaging: z.string().optional(),
+						path: z.string().optional(),
+						type: z.string().optional(),
+					})
+					.optional(),
+			)
+			.optional(),
+		secondarySources: z
+			.array(
+				z
+					.object({
+						auth: z
+							.object({
+								resource: z.string().optional(),
+								type: z.string().optional(),
+							})
+							.optional(),
+						buildspec: z.string().optional(),
+						gitCloneDepth: z.number().optional(),
+						gitSubmodulesConfig: z
+							.object({
+								fetchSubmodules: z.boolean().optional(),
+							})
+							.optional(),
+						insecureSsl: z.boolean().optional(),
+						location: z.string().optional(),
+						reportBuildStatusConfig: z
+							.object({
+								context: z.string().optional(),
+								targetUrl: z.string().optional(),
+							})
+							.optional(),
+						sourceIdentifier: z.string().optional(),
+						sourceType: z.string().optional(),
+					})
+					.optional(),
+			)
+			.optional(),
+		serviceRole: z.string().optional(),
+		source: z
+			.object({
+				auth: z
+					.object({
+						resource: z.string().optional(),
+						type: z.string().optional(),
+					})
+					.optional(),
+				buildspec: z.string().optional(),
+				gitCloneDepth: z.number().optional(),
+				gitSubmodulesConfig: z
+					.object({
+						fetchSubmodules: z.boolean().optional(),
+					})
+					.optional(),
+				insecureSsl: z.boolean().optional(),
+				location: z.string().optional(),
+				reportBuildStatusConfig: z
+					.object({
+						context: z.string().optional(),
+						targetUrl: z.string().optional(),
+					})
+					.optional(),
+				sourceIdentifier: z.string().optional(),
+				sourceType: z.string().optional(),
+			})
+			.optional(),
+		sourceVersion: z.string().optional(),
+		tags: z
+			.array(
+				z
+					.object({
+						key: z.string().optional(),
+						value: z.string().optional(),
+					})
+					.optional(),
+			)
+			.optional(),
+		timeoutInMinutes: z.number().optional(),
+		vpcConfig: z
+			.object({
+				securityGroupIds: z.array(z.string()).optional(),
+				subnets: z.array(z.string()).optional(),
+				vpcId: z.string().optional(),
+			})
+			.optional(),
+	}),
+});
+
+const CreateWebhookResponse = z.object({
+	webhook: z
+		.object({
+			payloadUrl: z.string().optional(),
+			url: z.string().optional(),
+		})
+		.optional(),
+});
 
 export class Codebuild {
 	constructor(private client: AwsClient) {}
@@ -307,11 +541,7 @@ export class Codebuild {
 			);
 		}
 
-		return z
-			.object({
-				arn: z.string(),
-			})
-			.parse(await response.json());
+		return ImportSourceCredentialsResponseZod.parse(await response.json());
 	}
 
 	async CreateProject<EnvironmentT extends EnvironmentType>(
@@ -352,223 +582,64 @@ export class Codebuild {
 			throw new Error(`Failed to create project: ${response.statusText}`);
 		}
 
-		return z
-			.object({
-				project: z.object({
-					arn: z.string(),
-					artifacts: z
-						.object({
-							artifactIdentifier: z.string().optional(),
-							bucketOwnerAccess: z.string().optional(),
-							encryptionDisabled: z.boolean().optional(),
-							location: z.string().optional(),
-							name: z.string().optional(),
-							namespaceType: z.string().optional(),
-							overrideArtifactName: z.boolean().optional(),
-							packaging: z.string().optional(),
-							path: z.string().optional(),
-							type: z.string().optional(),
-						})
-						.optional(),
-					badgeEnabled: z.boolean().optional(),
-					buildBatchConfig: z
-						.object({
-							batchReportMode: z.string().optional(),
-							combineArtifacts: z.boolean().optional(),
-							restrictions: z
-								.object({
-									computeTypesAllowed: z.array(z.string()).optional(),
-									maximumBuildsAllowed: z.number().optional(),
-								})
-								.optional(),
-							serviceRole: z.string().optional(),
-							timeoutInMins: z.number().optional(),
-						})
-						.optional(),
-					cache: z
-						.object({
-							location: z.string().optional(),
-							modes: z.array(z.string()).optional(),
-							type: z.string().optional(),
-						})
-						.optional(),
-					concurrentBuildLimit: z.number().optional(),
-					created: z.number().optional(),
-					description: z.string().optional(),
-					encryptionKey: z.string().optional(),
-					environment: z
-						.object({
-							certificate: z.string().optional(),
-							computeConfiguration: z
-								.object({
-									disk: z.number().optional(),
-									machineType: z.string().optional(),
-									memory: z.number().optional(),
-									vCpu: z.number().optional(),
-								})
-								.optional(),
-							computeType: z.string().optional(),
-							environmentVariables: z
-								.array(
-									z
-										.object({
-											Name: z.string().optional(),
-											Value: z.string().optional(),
-										})
-										.optional(),
-								)
-								.optional(),
-							fleet: z
-								.object({
-									fleetArn: z.string(),
-								})
-								.optional()
-								.optional(),
-							image: z.string().optional(),
-							imagePullCredentialsType: z.string().optional(),
-							privilegedMode: z.boolean().optional(),
-							registryCredential: z
-								.object({
-									credential: z.string().optional(),
-									credentialProvider: z.string().optional(),
-								})
-								.optional(),
-							type: z.string().optional(),
-						})
-						.optional(),
-					fileSystemLocations: z
-						.array(
-							z
-								.object({
-									identifier: z.string().optional(),
-									location: z.string().optional(),
-									mountOptions: z.string().optional(),
-									mountPoint: z.string().optional(),
-									type: z.string().optional(),
-								})
-								.optional(),
-						)
-						.optional(),
-					lastModified: z.number().optional(),
-					logsConfig: z
-						.object({
-							cloudWatchLogs: z
-								.object({
-									groupName: z.string().optional(),
-									status: z.string().optional(),
-									streamName: z.string().optional(),
-								})
-								.optional(),
-							s3Logs: z
-								.object({
-									bucketOwnerAccess: z.string().optional(),
-									encryptionDisabled: z.boolean().optional(),
-									location: z.string().optional(),
-									status: z.string().optional(),
-								})
-								.optional(),
-						})
-						.optional(),
-					name: z.string().optional(),
-					queuedTimeoutInMinutes: z.number().optional(),
-					secondaryArtifacts: z
-						.array(
-							z
-								.object({
-									artifactIdentifier: z.string().optional(),
-									bucketOwnerAccess: z.string().optional(),
-									encryptionDisabled: z.boolean().optional(),
-									location: z.string().optional(),
-									name: z.string().optional(),
-									namespaceType: z.string().optional(),
-									overrideArtifactName: z.boolean().optional(),
-									packaging: z.string().optional(),
-									path: z.string().optional(),
-									type: z.string().optional(),
-								})
-								.optional(),
-						)
-						.optional(),
-					secondarySources: z
-						.array(
-							z
-								.object({
-									auth: z
-										.object({
-											resource: z.string().optional(),
-											type: z.string().optional(),
-										})
-										.optional(),
-									buildspec: z.string().optional(),
-									gitCloneDepth: z.number().optional(),
-									gitSubmodulesConfig: z
-										.object({
-											fetchSubmodules: z.boolean().optional(),
-										})
-										.optional(),
-									insecureSsl: z.boolean().optional(),
-									location: z.string().optional(),
-									reportBuildStatusConfig: z
-										.object({
-											context: z.string().optional(),
-											targetUrl: z.string().optional(),
-										})
-										.optional(),
-									sourceIdentifier: z.string().optional(),
-									sourceType: z.string().optional(),
-								})
-								.optional(),
-						)
-						.optional(),
-					serviceRole: z.string().optional(),
-					source: z
-						.object({
-							auth: z
-								.object({
-									resource: z.string().optional(),
-									type: z.string().optional(),
-								})
-								.optional(),
-							buildspec: z.string().optional(),
-							gitCloneDepth: z.number().optional(),
-							gitSubmodulesConfig: z
-								.object({
-									fetchSubmodules: z.boolean().optional(),
-								})
-								.optional(),
-							insecureSsl: z.boolean().optional(),
-							location: z.string().optional(),
-							reportBuildStatusConfig: z
-								.object({
-									context: z.string().optional(),
-									targetUrl: z.string().optional(),
-								})
-								.optional(),
-							sourceIdentifier: z.string().optional(),
-							sourceType: z.string().optional(),
-						})
-						.optional(),
-					sourceVersion: z.string().optional(),
-					tags: z
-						.array(
-							z
-								.object({
-									key: z.string().optional(),
-									value: z.string().optional(),
-								})
-								.optional(),
-						)
-						.optional(),
-					timeoutInMinutes: z.number().optional(),
-					vpcConfig: z
-						.object({
-							securityGroupIds: z.array(z.string()).optional(),
-							subnets: z.array(z.string()).optional(),
-							vpcId: z.string().optional(),
-						})
-						.optional(),
-				}),
-			})
-			.parse(await response.json());
+		return CreateProjectResponseZod.parse(await response.json());
+	}
+
+	async CreateWebhook(request: {
+		branchFilter?: string;
+		buildType?: string;
+		filterGroups?: ({
+			excludeMatchedPattern?: boolean;
+		} & (
+			| {
+					pattern: string;
+					type: WebhookFilterType;
+			  }
+			| {
+					type: "EVENT";
+					pattern: "WORKFLOW_JOB_QUEUED";
+			  }
+		))[][];
+		manualCreation?: boolean;
+		projectName: string;
+		scopeConfiguration?: {
+			domain?: string;
+			name: string;
+			scope: "GITHUB_ORGANIZATION" | "GITHUB_GLOBAL";
+		};
+	}) {
+		const response = await this.client.fetch(
+			`https://codebuild.${this.client.region}.amazonaws.com`,
+			{
+				method: "POST",
+				headers: {
+					"Content-Type": "application/x-amz-json-1.1",
+					"X-Amz-Target": "CodeBuild_20161006.CreateWebhook",
+				},
+				body: JSON.stringify(request),
+			},
+		);
+
+		if (response.status !== 200) {
+			let body = await response.text();
+			if (response.status === 400 && body.includes("ResourceAlreadyExists")) {
+				return {
+					webhook: {},
+				};
+			}
+			console.dir(
+				{
+					Codebuild: {
+						status: response.status,
+						statusText: response.statusText,
+						body,
+					},
+				},
+				{ depth: null },
+			);
+			throw new Error(`Failed to create webhook: ${response.statusText}`);
+		}
+
+		return CreateWebhookResponse.parse(await response.json());
 	}
 }

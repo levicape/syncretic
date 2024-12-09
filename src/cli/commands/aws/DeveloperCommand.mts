@@ -2,7 +2,10 @@ import { buildCommand } from "@stricli/core";
 import { AwsClient } from "aws4fetch";
 import VError from "verror";
 import { AwsClientBuilder } from "../../../sdk/AwsClientBuilder.mjs";
-import { Codebuild } from "../../../sdk/aws/Codebuild.mjs";
+import {
+	Codebuild,
+	type CodebuildCreateProjectRequest,
+} from "../../../sdk/aws/Codebuild.mjs";
 import { Policy } from "../../../sdk/aws/Policy.mjs";
 import { Role } from "../../../sdk/aws/Role.mjs";
 import { S3 } from "../../../sdk/aws/S3.mjs";
@@ -20,10 +23,12 @@ type Flags = {
 	region: string;
 	token: string;
 	uniqueId?: string;
+	replace?: boolean;
 	source?: `s3://${string}` | `github://${string}`;
 	prefix?: string;
 	role?: string;
-	overwrite?: boolean;
+
+	// githubId?: string;
 
 	type?: string;
 	image?: string;
@@ -44,12 +49,15 @@ const CODEBUILD_CONSISTENCY_DELAY = CONSISTENCY_DELAY(10000);
 export const DeveloperProjectParameter = (principal?: string) =>
 	`/fourtwo/${principal ? `${principal}` : "_principal"}/developer/CodebuildProjectArn`;
 
+// Image command, creates ECR, updates Codebuild credentials and updates the Codebuild image
+//  This allows baking dependencies into the pipeline runner
+
 export const DeveloperCommand = async () => {
 	return async () =>
 		buildCommand({
 			loader: async () => {
 				return async (flags: Flags) => {
-					const { region, role, token, source, overwrite } = flags;
+					const { region, role, token, source, replace } = flags;
 					const credentials = await AwsClientBuilder.getAWSCredentials();
 					const client = new AwsClient({
 						...credentials,
@@ -114,8 +122,55 @@ export const DeveloperCommand = async () => {
 						const policy = new Policy(assumed);
 						const systems = new SystemsManager(assumed);
 						const s3 = new S3(assumed);
+
+						const oidcParameter = PrincipalOIDCParameter(principal);
+						const oidcRole = (
+							await root.GetParameter({
+								Name: oidcParameter,
+							})
+						)?.Parameter.Value;
+
+						console.dir({
+							DeveloperCommand: {
+								message: "Got OIDC role",
+								oidcRole,
+							},
+						});
+
+						if (!oidcRole) {
+							throw new VError(
+								{
+									name: "OIDC",
+									message: `OIDC role not found. Expected parameter: ${oidcParameter}. Please run \`paloma aws principal\` to initialize the required role.`,
+								},
+								"OIDC role not found",
+							);
+						}
+
+						let previousId = (
+							await systems.GetParameter({
+								Name: DeveloperProjectParameter(),
+							})
+						)?.Parameter?.Value as
+							| `arn:aws:codebuild:${string}:${string}:project/${string}`
+							| undefined;
+						if (previousId) {
+							console.dir(
+								{
+									DeveloperCommand: {
+										message: "Found previous project",
+										previousId,
+									},
+								},
+								{ depth: null },
+							);
+						}
+
+						let previousUniqueId = previousId?.split(":")[5]?.split("-")[1];
 						let uniqueId =
-							flags.uniqueId ?? Math.random().toString(36).substring(4);
+							(flags.uniqueId ?? replace)
+								? Math.random().toString(36).substring(4)
+								: (previousUniqueId ?? Math.random().toString(36).substring(4));
 
 						// const sources = await s3.CreateBucket({
 						// 	BucketName: `fourtwo-${uniqueId}-source`,
@@ -148,30 +203,6 @@ export const DeveloperCommand = async () => {
 							{ depth: null },
 						);
 
-						const oidcParameter = PrincipalOIDCParameter(principal);
-						const oidcRole = (
-							await root.GetParameter({
-								Name: oidcParameter,
-							})
-						)?.Parameter.Value;
-
-						console.dir({
-							DeveloperCommand: {
-								message: "Got OIDC role",
-								oidcRole,
-							},
-						});
-
-						if (!oidcRole) {
-							throw new VError(
-								{
-									name: "OIDC",
-									message: `OIDC role not found. Expected parameter: ${oidcParameter}. Please run \`paloma aws principal\` to initialize the required role.`,
-								},
-								"OIDC role not found",
-							);
-						}
-
 						const credentials = await codebuild.ImportSourceCredentials({
 							serverType: "GITHUB",
 							authType: "PERSONAL_ACCESS_TOKEN",
@@ -186,6 +217,8 @@ export const DeveloperCommand = async () => {
 							},
 							{ depth: null },
 						);
+
+						//TODO: Credential ARN Parameter or List Credentials call
 
 						await CODEBUILD_CONSISTENCY_DELAY();
 
@@ -264,6 +297,16 @@ export const DeveloperCommand = async () => {
 							uniqueCodebuildName = uniqueCodebuildName.slice(0, 150);
 						}
 
+						if ((uniqueId !== previousUniqueId) && !credentials) {
+							throw new VError(
+								{
+									name: "credentials",
+									message: "No credentials found. Credentials must be provided when creating or replacing a project",
+								},
+								"No credentials found",
+							);
+						}
+
 						const projectSource = !source
 							? ({
 									type: "GITHUB",
@@ -271,8 +314,9 @@ export const DeveloperCommand = async () => {
 										type: "OAUTH",
 										resource: credentials.arn,
 									},
-									location: `https://github.com/${await repositoryName()}`,
-								} as const)
+									gitCloneDepth: 1,
+									location: `CODEBUILD_DEFAULT_WEBHOOK_SOURCE_LOCATION`,
+								} satisfies CodebuildCreateProjectRequest<"ARM_LAMBDA_CONTAINER">["source"])
 							: await (async () => {
 									// Check s3 and parse
 									throw new VError("Not implemented");
@@ -281,13 +325,16 @@ export const DeveloperCommand = async () => {
 						const { project } = await codebuild.CreateProject(
 							{
 								name: uniqueCodebuildName,
+								description: `Project for building ${await repositoryName()}`,
 								source: projectSource,
 								artifacts: {
 									type: "S3",
 									location: artifacts.Bucket.Location!.replaceAll("/", ""),
 									packaging: "NONE",
 									bucketOwnerAccess: "FULL",
+									namespaceType: "BUILD_ID",
 								},
+								// vpcConfig: {},
 								environment: {
 									type: "ARM_LAMBDA_CONTAINER",
 									image:
@@ -298,7 +345,7 @@ export const DeveloperCommand = async () => {
 								tags: [
 									{
 										key: "Fourtwo",
-										value: "Project",
+										value: flags.prefix ?? "dev",
 									},
 								],
 							},
@@ -317,6 +364,35 @@ export const DeveloperCommand = async () => {
 							{ depth: null },
 						);
 
+						const webhook = await codebuild.CreateWebhook({
+							projectName: uniqueCodebuildName,
+							filterGroups: [
+								[
+									{
+										type: "EVENT",
+										pattern: "WORKFLOW_JOB_QUEUED",
+									},
+								],
+							],
+							// TODO: Scope to ACTOR_ACCOUNT_ID
+							// TODO: Allow --filepath
+							scopeConfiguration: {
+								name: (await repositoryName())!.split("/")[0],
+								scope: "GITHUB_ORGANIZATION",
+							},
+							buildType: "BUILD",
+						});
+
+						console.dir(
+							{
+								DeveloperCommand: {
+									message: "Created webhook",
+									webhook,
+								},
+							},
+							{ depth: null },
+						);
+
 						let parameter = DeveloperProjectParameter();
 						let scopedParameter = DeveloperProjectParameter(
 							await principalName(),
@@ -329,7 +405,7 @@ export const DeveloperCommand = async () => {
 
 						let updateParameter = existing?.Parameter?.Value !== project.arn;
 
-						if (updateParameter || overwrite) {
+						if (updateParameter) {
 							let param: Awaited<ReturnType<typeof systems.PutParameter>>;
 							param = await systems.PutParameter({
 								Name: parameter,
@@ -414,8 +490,8 @@ export const DeveloperCommand = async () => {
 						},
 						optional: true,
 					},
-					overwrite: {
-						brief: "Overwrite",
+					replace: {
+						brief: "Replace",
 						kind: "boolean",
 						optional: true,
 					},

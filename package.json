@@ -3,7 +3,8 @@
   "version": "0.0.0-local.0",
   "author": "Pedro Cardona",
   "bin": {
-    "@levicape/fourtwo": "module/cli/bin.mjs"
+    "@levicape/fourtwo": "module/cli/bin.mjs",
+    "fourtwo": "module/cli/bin.mjs"
   },
   "config": {
     "packagemanager": "pnpm",
