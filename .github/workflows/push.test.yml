@@ -75,7 +75,7 @@ jobs:
   #       run: pnpm run lint
   canary:
     name: Verify test:canary
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER }}
     steps:
       - uses: actions/checkout@v4
 

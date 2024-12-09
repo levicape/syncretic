@@ -327,8 +327,10 @@ export const PrincipalCommand = async () => {
 												},
 												Action: "sts:AssumeRoleWithWebIdentity",
 												Condition: {
+													// https://docs.github.com/en/actions/security-for-github-actions/security-hardening-your-deployments/about-security-hardening-with-openid-connect
+													// environment?
 													StringLike: {
-														"token.actions.githubusercontent.com:sub": `repo:${repo}:*`,
+														"token.actions.githubusercontent.com:sub": `repo:${repo}:ref:refs/heads/*`,
 													},
 												},
 											},

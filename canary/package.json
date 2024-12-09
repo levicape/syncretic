@@ -1,8 +1,8 @@
 {
-  "version": "0.0.0-local.0",
-  "dependencies": {
-    "@levicape/paloma": "catalog:"
-  },
-  "private": "true",
-  "type": "module"
+	"version": "0.0.0-local.0",
+	"dependencies": {
+		"@levicape/paloma": "catalog:"
+	},
+	"private": "true",
+	"type": "module"
 }
