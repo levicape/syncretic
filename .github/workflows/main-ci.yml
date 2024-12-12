@@ -1,0 +1,60 @@
+# THIS FILE WAS AUTOMATICALLY GENERATED, DO NOT MODIFY
+# .../codegen/github/GenerateGithubNode.mts
+########################################
+name: "on Push: Test Package"
+on:
+  push:
+    branches:
+      - main
+env:
+  NPM_REGISTRY_PROTOCOL: https
+  NPM_REGISTRY_HOST: npm.pkg.github.com
+jobs:
+  build:
+    name: Build, Lint and Test package
+    runs-on: ${{ vars.RUNNER }}-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+      - name: Setup Node 22.12.0
+        uses: actions/setup-node@v4
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          node-version: 22.12.0
+          registry-url: ${{ env.NPM_REGISTRY_PROTOCOL }}://${{ env.NPM_REGISTRY_HOST }}/
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+          scope: "@levicape"
+      - id: cache-npm
+        name: Cache node modules
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{
+            hashFiles('**/pnpm-lock.json') }}
+          restore-keys: |-
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+      - if: ${{ steps.cache-npm.outputs.cache-hit != 'true' }}
+        name: List Dependencies
+        run: pnpm list;
+        continue-on-error: true
+      - name: Install Dependencies
+        run: pnpm install;
+      - name: Build module
+        run: pnpm run build:ci;
+      - name: "Run package.json: lint:format"
+        run: pnpm run lint:format;
+      - name: "Run package.json: test:canary"
+        run: pnpm run test:canary;
+
+########################################
+########################################
+# {"started":"2024-12-12T21:43:17.382Z","now":"2024-12-12T21:43:17.392Z","elapsed":"10ms","hashed":"adc94db81f25fb03fa556b593dd86c239b79f9285cb3b2477f741223c4a8fd0d","signed":"1148a06a618241a10f79b23274eed975de161ff23dde30fa5f79146b32830b4fe7c628532762951faae7b91605f2706946dc43e804d15ccbdc5896bdfeaaff3de5d15ff17664ccacfa59787ee60b520107f0152060f4b5e0e7e8351db50697371e4f53cfaa8eb59dd6ed74c9598cbd802a3359d9f59f2f0f31239bddd9142721"}
+# END OF GENERATED FILE

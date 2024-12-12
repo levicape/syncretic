@@ -1,0 +1,7 @@
+{
+	"dependencies": {
+		"@levicape/fourtwo": "workspace:"
+	},
+	"private": "true",
+	"type": "module"
+}

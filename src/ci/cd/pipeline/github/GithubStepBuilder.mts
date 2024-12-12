@@ -8,10 +8,10 @@ export type GithubStep<Uses extends string, WithKeys extends string> = {
 	id?: string;
 	name?: string;
 	uses: Uses;
-	_with?: Record<WithKeys | never, GithubTemplateString | undefined>;
+	with?: Record<WithKeys | never, GithubTemplateString | undefined>;
 	env?: Record<string, GithubTemplateString | undefined>;
 	run?: string;
-	_if?: GithubTemplateString;
+	if?: GithubTemplateString;
 	"continue-on-error"?: boolean;
 	"working-directory"?: GithubTemplateString;
 };
@@ -29,8 +29,8 @@ export class GithubStepBuilder<Uses extends string, WithKeys extends string> {
 
 	constructor(
 		name: string,
-		uses: Uses,
-		with_: Record<WithKeys, GithubTemplateString | undefined>,
+		uses?: Uses,
+		with_?: Record<WithKeys, GithubTemplateString | undefined>,
 	) {
 		this.name = name;
 		this.uses = uses;
@@ -57,6 +57,10 @@ export class GithubStepBuilder<Uses extends string, WithKeys extends string> {
 		return this;
 	}
 
+	getRun(): string[] {
+		return this.run || [];
+	}
+
 	setRun(run: string[]): this {
 		this.run = run;
 		return this;
@@ -79,20 +83,47 @@ export class GithubStepBuilder<Uses extends string, WithKeys extends string> {
 
 	build(): GithubStep<Uses, WithKeys> {
 		return {
+			if: this._if,
 			id: this.id,
 			name: this.name,
 			uses: this.uses as Uses,
-			_with: this._with as Record<WithKeys, GithubTemplateString | undefined>,
 			env: this.env,
+			with:
+				Object.keys(this._with ?? {}).length > 0
+					? (this._with as Record<WithKeys, GithubTemplateString | undefined>)
+					: undefined,
+			"working-directory": this["working-directory"],
 			run: this.run
 				?.map((r) => {
 					r = r.trim();
 					r = r.endsWith(";") ? r : `${r};`;
+					return r;
 				})
 				.join("\n"),
-			_if: this._if,
 			"continue-on-error": this["continue-on-error"],
-			"working-directory": this["working-directory"],
 		};
 	}
 }
+
+export const GithubStepX = <Uses extends string, WithKeys extends string>(
+	props: {
+		name: string;
+		with?: Record<WithKeys, GithubTemplateString | undefined>;
+		id?: string;
+		env?: Record<string, GithubTemplateString | undefined>;
+		if?: GithubTemplateString;
+		continueOnError?: boolean;
+		workingDirectory?: GithubTemplateString;
+	} & ({ uses: Uses; run?: string[] } | { uses?: never; run: string[] }),
+): GithubStepBuilder<Uses, WithKeys> => {
+	const { name, uses, with: with_ } = props;
+	const factory = new GithubStepBuilder(name, uses, with_);
+	if (props.id) factory.setId(props.id);
+	if (props.env) factory.setEnv(props.env);
+	if (props.run) factory.setRun(props.run);
+	if (props.if) factory.setIf(props.if);
+	if (props.continueOnError) factory.setContinueOnError(props.continueOnError);
+	if (props.workingDirectory)
+		factory.setWorkingDirectory(props.workingDirectory);
+	return factory;
+};

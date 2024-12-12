@@ -11,7 +11,7 @@
     "packageexecutor": "pnpm exec",
     "binpath": "./src/cli/bin.mts",
     "clipath": "./module/cli/bin.mjs",
-    "lintpaths": "./src ./canary"
+    "lintpaths": "./src ./canary ./iac"
   },
   "dependencies": {
     "@bufbuild/protobuf": "catalog:protobuf",
@@ -36,7 +36,9 @@
     "ksuid": "catalog:id",
     "nanoid": "catalog:id",
     "nexe": "catalog:build",
+    "pretty-ms": "catalog:core",
     "slugid": "catalog:id",
+    "tsx": "catalog:dev",
     "unzipper": "catalog:server",
     "verror": "catalog:core",
     "yaml": "catalog:core",
@@ -58,7 +60,6 @@
     "publint": "catalog:package",
     "syncpack": "catalog:package",
     "ts-proto": "catalog:protobuf",
-    "tsx": "catalog:dev",
     "typescript": "catalog:dev"
   },
   "engines": {
@@ -66,12 +67,32 @@
   },
   "exports": {
     ".": "./module/index.mjs",
-    "./component": "./module/component/index.mjs",
+    "./jsx-runtime": "./module/runtime/jsx-runtime.js",
+    "./pulumi": "./module/pulumi/index.mjs",
+    "./pulumi/component": "./module/pulumi/component/index.mjs",
+    "./pulumi/component/aws": "./module/pulumi/component/aws/index.mjs",
+    "./pulumi/component/cdn": "./module/pulumi/component/cdn/index.js",
+    "./pulumi/component/compute": "./module/pulumi/component/compute/index.js",
+    "./pulumi/component/database": "./module/pulumi/component/database/index.js",
+    "./pulumi/component/queue": "./module/pulumi/component/queue/index.js",
+    "./pulumi/component/website": "./module/pulumi/component/website/index.js",
+    "./pulumi/domains": "./module/pulumi/domains/index.js",
+    "./pulumi/domains/aws": "./module/pulumi/domains/aws/index.js",
+    "./pulumi/domains/frontend": "./module/pulumi/domains/frontend/index.js",
     "./ci": "./module/ci/index.mjs",
-    "./cli": "./module/cli/index.mjs"
+    "./ci/codegen": "./module/ci/codegen/index.mjs",
+    "./ci/codegen/github": "./module/ci/codegen/github/index.mjs",
+    "./ci/cd": "./module/ci/cd/index.mjs",
+    "./ci/cd/pipeline": "./module/ci/cd/pipeline/index.mjs",
+    "./ci/cd/pipeline/github": "./module/ci/cd/pipeline/github/index.mjs",
+    "./ci/cd/state": "./module/ci/cd/state/index.mjs",
+    "./cli": "./module/cli/index.mjs",
+    "./sdk": "./module/sdk/index.mjs",
+    "./sdk/aws": "./module/sdk/aws/index.mjs"
   },
   "files": [
     "canary",
+    "iac",
     "module"
   ],
   "license": "AGPL-3.0-only",
@@ -88,7 +109,8 @@
     "build:ci": "$npm_package_config_packagemanager run build",
     "clean": "rm -rf ./module",
     "clean:install": "rm -rf ./node_modules",
-    "dx:bin": "$npm_package_config_packageexecutor tsx $npm_package_config_binpath",
+    "dx:cli:bin": "$npm_package_config_packageexecutor tsx $npm_package_config_binpath",
+    "dx:cli:dev": "node --inspect-brk --import tsx $npm_package_config_binpath",
     "dx:config:post": "$npm_package_config_packagemanager config set recursive-install true",
     "dx:config:pre": "$npm_package_config_packagemanager config set recursive-install false",
     "dx:lint": "$npm_package_config_packagemanager run build:ci && $npm_package_config_packagemanager run lint:write && $npm_package_config_packagemanager run package:format && $npm_package_config_packagemanager run prepublish",

@@ -366,7 +366,6 @@ export const DeveloperCommand = async () => {
 							{ depth: null },
 						);
 
-
 						if (!username) {
 							console.dir(
 								{

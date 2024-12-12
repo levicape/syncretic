@@ -3,6 +3,34 @@ import type { Platform } from "./Platform.mjs";
 import { PlatformBuilder } from "./PlatformBuilder.mjs";
 
 export class PlatformTargets {
+	static defaultPipeline = <Step,>(options: PipelineOptions) =>
+		new PlatformBuilder<Step>()
+			.setOs("linux")
+			.setArch("aarch64")
+			.setDistro("amazonlinux")
+			.setRelease("3")
+			.setOptions(options)
+			.build();
+
+	static codebuildPlatforms = <Step,>(options: PipelineOptions) =>
+		(
+			[
+				{ os: "linux", arch: "x64", distro: "debian", release: "11" },
+				{ os: "linux", arch: "x64", distro: "debian", release: "10" },
+				{ os: "linux", arch: "x64", distro: "ubuntu", release: "20.04" },
+				{ os: "linux", arch: "x64", distro: "ubuntu", release: "18.04" },
+				{ os: "linux", arch: "x64", distro: "alpine", release: "3.14" },
+				{ os: "linux", arch: "x64", distro: "alpine", release: "3.13" },
+			] as Platform[]
+		).map((platform) =>
+			new PlatformBuilder<Step>()
+				.setOs(platform.os)
+				.setArch(platform.arch)
+				.setDistro(platform.distro)
+				.setRelease(platform.release)
+				.setOptions(options)
+				.build(),
+		);
 	static buildPlatforms = <Step,>(options: PipelineOptions) =>
 		(
 			[
