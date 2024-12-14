@@ -11,8 +11,8 @@ env:
   NPM_REGISTRY_HOST: npm.pkg.github.com
 jobs:
   build:
-    name: Build, Lint and Test package
-    runs-on: ${{ vars.RUNNER }}-${{ github.run_id }}-${{ github.run_attempt }}
+    name: Compile, Lint and Test package
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -35,8 +35,7 @@ jobs:
           cache-name: cache-node-modules
         with:
           path: ~/.npm
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{
-            hashFiles('**/pnpm-lock.json') }}
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/pnpm-lock.json') }}
           restore-keys: |-
             ${{ runner.os }}-build-${{ env.cache-name }}-
             ${{ runner.os }}-build-
@@ -47,14 +46,14 @@ jobs:
         continue-on-error: true
       - name: Install Dependencies
         run: pnpm install;
-      - name: Build module
-        run: pnpm run build:ci;
-      - name: "Run package.json: lint:format"
-        run: pnpm run lint:format;
-      - name: "Run package.json: test:canary"
-        run: pnpm run test:canary;
+      - name: Compile module
+        run: pnpm run compile;
+      - name: "Run package.json: lint"
+        run: pnpm run lint;
+      - name: "Run package.json: test"
+        run: pnpm run test;
 
 ########################################
 ########################################
-# {"started":"2024-12-12T21:43:17.382Z","now":"2024-12-12T21:43:17.392Z","elapsed":"10ms","hashed":"adc94db81f25fb03fa556b593dd86c239b79f9285cb3b2477f741223c4a8fd0d","signed":"1148a06a618241a10f79b23274eed975de161ff23dde30fa5f79146b32830b4fe7c628532762951faae7b91605f2706946dc43e804d15ccbdc5896bdfeaaff3de5d15ff17664ccacfa59787ee60b520107f0152060f4b5e0e7e8351db50697371e4f53cfaa8eb59dd6ed74c9598cbd802a3359d9f59f2f0f31239bddd9142721"}
+# {"started":"2024-12-14T03:45:44.706Z","now":"2024-12-14T03:45:44.712Z","elapsed":"6ms","hashed":"37a48ac6dea2edf49ef8d7a5738f06acd4650cab05b05d639d6ce8fca12c174b","signed":"30823a46d73eb5f557ed11d9e0ab7b4d01db9f3543a8f026b3c09fdf1043d8b9943df6e9bc65bb6c3f4e8b9609abf6df376060e0237618b4b95f5f143835d5cac3d5e3ff17be980ba88355fb25e0c92c0e55bc1d1c8cf592b008d9e57447a0376f19ddc700e408bc2d15a4cdcf2214df3bf91fa7e28eab957f1aaacdddb01768"}
 # END OF GENERATED FILE

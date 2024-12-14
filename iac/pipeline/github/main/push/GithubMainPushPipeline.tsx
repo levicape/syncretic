@@ -15,7 +15,7 @@ import {
 } from "@levicape/fourtwo/ci/codegen/github";
 
 let {
-	current: { register, context },
+	current: { register, $ },
 } = CurrentState;
 
 export default (
@@ -34,7 +34,6 @@ export default (
 		<GithubJobX
 			id="build"
 			name="Build, Lint and Test package"
-			runsOn={`${context("vars.RUNNER")}-${context("github.run_id")}-${context("github.run_attempt")}`}
 			steps={
 				<GithubPipelineNodeSetupX
 					configuration={{
@@ -78,24 +77,4 @@ export default (
 	</GithubPipelineX>
 );
 
-// TODO: Provider pattern to manage runs-on and configuration instead of function children
-// TODO: Add function signature to run/scripts in JSX and builder in addition to string
 // TODO: Upload / Download artifacts between parent and children
-// .setArtifactUpload()
-// .setChildren([
-// 	new GithubJobBuilder("lint", "Lint module").setSteps(
-// 		GithubNodePipelineJobScripts({
-// 			...node,
-// 			scripts: ["lint:check"],
-// 		}).steps,
-// 	)
-// 	// .setArtifactDownload()
-// 	,
-// 	new GithubJobBuilder("test", "Test module").setSteps(
-// 		GithubNodePipelineJobScripts({
-// 			...node,
-// 			scripts: ["test:unit"],
-// 		}).steps,
-// 	)
-// 	// .setArtifactDownload(),
-// ]),

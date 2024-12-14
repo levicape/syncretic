@@ -1,15 +1,16 @@
-import type {
-	GithubJob,
-	GithubJobBuilder,
-	GithubJobX,
-} from "./GithubJobBuilder.mjs";
+import type { GithubJob, GithubJobBuilder } from "./GithubJobBuilder.mjs";
 
 export type GithubOnPushSpec = {
 	branches: string[];
 };
 
+export type GithubOnReleaseSpec = {
+	types: "released"[];
+};
+
 export type GithubOn = {
 	push?: GithubOnPushSpec;
+	release?: GithubOnReleaseSpec;
 };
 
 export type GithubPipeline<Uses extends string, With extends string> = {
@@ -33,6 +34,16 @@ export class GithubPipelineBuilder<Uses extends string, With extends string> {
 
 	setEnv(env: Record<string, string>): this {
 		this.env = env;
+		return this;
+	}
+
+	setOnRelease(types: "released"[]): this {
+		this.on = {
+			release: {
+				types,
+			},
+		};
+
 		return this;
 	}
 
@@ -96,6 +107,10 @@ export const GithubPipelineX = <
 	const factory = new GithubPipelineBuilder<Uses, With>(name);
 	if (on.push && (on.push.branches.length ?? 0) > 0) {
 		factory.setOnPush(on.push.branches);
+	}
+
+	if (on.release && (on.release.types.length ?? 0) > 0) {
+		factory.setOnRelease(on.release.types);
 	}
 
 	if (children) {

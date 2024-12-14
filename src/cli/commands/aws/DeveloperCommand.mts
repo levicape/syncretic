@@ -103,7 +103,7 @@ export const DeveloperCommand = async () => {
 
 					console.dir(
 						{
-							PrincipalCommand: {
+							DeveloperCommand: {
 								message: "Assumed role",
 								AssumedRoleUser,
 							},
@@ -455,7 +455,7 @@ export const DeveloperCommand = async () => {
 						} else {
 							console.dir(
 								{
-									PrincipalCommand: {
+									DeveloperCommand: {
 										message: "Project parameter already up-to-date",
 										existing,
 									},
@@ -463,6 +463,14 @@ export const DeveloperCommand = async () => {
 								{ depth: null },
 							);
 						}
+
+						console.dir({
+							DeveloperCommand: {
+								message: "Codebuild project created and linked.",
+								project,
+								usage: `runs-on: codebuild-${project.name}-\${{ github.run_id }}-\${{ github.run_attempt }}`,
+							},
+						});
 					}
 				};
 			},

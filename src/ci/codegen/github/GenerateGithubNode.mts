@@ -32,7 +32,12 @@ export const GenerateGithubPipeline = async function* () {
 		throw new VError("Failed to generate pipeline");
 	}
 
-	const yaml = stringify(rendered);
+	const yaml = stringify(rendered, {
+		collectionStyle: "block",
+		doubleQuotedAsJSON: true,
+		minContentWidth: 0,
+		lineWidth: 0,
+	});
 	const hashed = hash("sha256", yaml);
 	// TODO: Prompt with --sign, or --sign-key, or use a --sign-path supporting ssm:// and file:// paths
 	const signed = publicEncrypt(
