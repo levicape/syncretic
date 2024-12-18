@@ -1,0 +1,89 @@
+########################################
+# THIS FILE WAS AUTOMATICALLY GENERATED, DO NOT MODIFY
+########################################
+name: "on Release: [released] Publish package"
+on:
+  release:
+    types:
+      - released
+env:
+  NPM_REGISTRY_PROTOCOL: https
+  NPM_REGISTRY_HOST: npm.pkg.github.com
+jobs:
+  packages:
+    name: Compile, lint, test and publish package
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+    steps:
+      - name: Verify registry URL
+        continue-on-error: true
+        run: |-
+          echo "NPM_REGISTRY_URL: ${{ env.NPM_REGISTRY_PROTOCOL }}://${{ env.NPM_REGISTRY_HOST }}";
+          curl -v --insecure ${{ env.NPM_REGISTRY_PROTOCOL }}://${{ env.NPM_REGISTRY_HOST }};
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+      - name: Setup Node 22.12.0
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.12.0
+          registry-url: ${{ env.NPM_REGISTRY_PROTOCOL }}://${{ env.NPM_REGISTRY_HOST }}
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+          scope: "@levicape"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - id: cache-npm
+        name: Cache node modules
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-build-npm-node-modules-${{ hashFiles('**/pnpm-lock.json') }}
+          restore-keys: ${{ runner.os }}-build-npm-node-modules-
+      - name: Get pnpm store directory
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV;
+      - id: cache-pnpm-store
+        name: Cache pnpm files
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.json') }}
+          restore-keys: ${{ runner.os }}-pnpm-store-
+      - if: ${{ steps.cache-npm.outputs.cache-hit != 'true' }}
+        name: List Dependencies
+        continue-on-error: true
+        run: pnpm list;
+      - name: Install Dependencies
+        run: pnpm install;
+      - name: "Run package.json: compile"
+        run: pnpm run compile;
+      - name: "Run package.json: lint"
+        run: pnpm run lint;
+      - name: "Run package.json: test"
+        run: pnpm run test;
+      - name: Increment version
+        env:
+          RELEVANT_SHA: ${{ github.event.release.target_commitish || github.sha }}
+        run: |-
+          export PREID=$RELEVANT_SHA;
+          export PREID=${PREID:0:10};
+          export ARGS="--git-tag-version=false --commit-hooks=false";
+          npm version ${{ github.event.release.tag_name }}-$PREID.${{ github.run_number }} $ARGS --allow-same-version;
+      - name: "Run package.json: prepublish"
+        run: pnpm run prepublish;
+      - if: success()
+        name: Increment version
+        continue-on-error: true
+        run: pnpm publish --no-git-checks;
+
+########################################
+########################################
+#**:_$~- {"$$":"head","filename":"[release(released)]GithubReleaseReleased.yml","source":"iac/workflows/github/release/GithubReleaseReleased.js"}
+#**:_$~- {"$$":"script","generator":"codegen/github/GenerateGithubWorkflow.mts"}
+#**:_$~- {"$$":"body","hashed":"ee6da0353dfeda0d3a67c1602541a24f0a0687f46f1c1c2c40a4633b2beb4315"}
+#**:_$~- {"$$":"footer","started":"2024-12-18T11:42:37.897Z","now":"2024-12-18T11:42:37.907Z","elapsed":"10ms"}
+# END OF GENERATED FILE
+

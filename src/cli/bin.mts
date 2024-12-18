@@ -10,31 +10,32 @@ export const AfterExit = {
 };
 
 const production = process.env.NODE_ENV === "production";
+const app = await FourtwoCliApp();
+const args = process.argv.slice(2);
+const cleanargs = args.map((a, i) => {
+	if (i > 0) {
+		if (["--token"].includes(args[i - 1] ?? "")) {
+			return "*****";
+		}
+	}
+	return a;
+});
 !production &&
 	console.dir({
 		Cli: {
 			message: "Command execution started",
-			args: process.argv.slice(2),
+			args: cleanargs,
 		},
 	});
-const app = await FourtwoCliApp();
 await run(app, process.argv.slice(2), {
 	process: {
 		...process,
 		exit: (code: number) => {
-			const args = process.argv.slice(2);
 			!production &&
 				console.dir({
 					Cli: {
 						message: "Command execution complete",
-						args: args.map((a, i) => {
-							if (i > 0) {
-								if (["--token"].includes(args[i - 1] ?? "")) {
-									return "*****";
-								}
-							}
-							return a;
-						}),
+						args: cleanargs,
 						code,
 					},
 				});

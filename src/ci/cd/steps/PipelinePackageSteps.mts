@@ -1,13 +1,14 @@
-import type { GithubPipelineOptions } from "../pipeline/github/steps/GithubPipelineSteps.mjs";
-
-export type PipelinePackageOptions = {
+export type PipelinePackageOptions<Options> = {
 	packageManager: {
 		node: "npm" | "pnpm" | "yarn";
+		cache?: boolean;
 	};
 	registry: {
 		scope: string;
+		host: string;
+		secret?: string;
 	};
-} & GithubPipelineOptions;
+} & Options;
 
 export type PipelinePackageSteps<Step, Props> = {
 	getCheckoutStep: (props: Props) => Step[];

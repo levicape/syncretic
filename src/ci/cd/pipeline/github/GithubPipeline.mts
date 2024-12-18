@@ -2,7 +2,7 @@ import { CommitMessages } from "../../../command/CommitMessages.mjs";
 import { getEnv } from "../../../machine/context/Environment.mjs";
 import { getLastSuccessfulBuild } from "../../../machine/executor/Buildkite.mjs";
 
-export type BuildkiteBuild = {
+export type GithubBuild = {
 	id: string;
 	commit_id: string;
 	branch_name: string;
@@ -12,16 +12,13 @@ export type BuildkiteBuild = {
 };
 
 export class GithubPipeline {
-	static lastBuild = async (): Promise<BuildkiteBuild | undefined> => {
+	static lastBuild = async (): Promise<GithubBuild | undefined> => {
 		console.log("Checking last successful build...");
 		const lastBuild = await getLastSuccessfulBuild();
 		if (lastBuild) {
 			const { id, path, commit_id: commit } = lastBuild;
 			console.log(" - Build ID:", id);
-			console.log(
-				" - Build URL:",
-				new URL(path as string, "https://buildkite.com/").toString(),
-			);
+			console.log(" - Build URL:");
 			console.log(" - Commit:", commit);
 		} else {
 			console.log(" - No build found");

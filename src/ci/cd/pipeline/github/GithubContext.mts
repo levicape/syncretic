@@ -3,7 +3,6 @@ import {
 	isMainBranch,
 	isMergeQueue,
 } from "../../../machine/code/Git.mjs";
-import type { Agent } from "../../agent/Agent.mjs";
 import type { Target } from "../../target/Target.mjs";
 
 export class GithubContext {

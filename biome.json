@@ -9,6 +9,9 @@
     },  
     "linter": {
       "rules": {
+        "correctness": {
+          "useJsxKeyInIterable": "off"
+        },
         "suspicious": {
             "noAssignInExpressions": "off",
             "noUnsafeDeclarationMerging": "off",

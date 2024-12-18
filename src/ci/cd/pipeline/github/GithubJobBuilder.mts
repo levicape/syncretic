@@ -1,14 +1,65 @@
 import type { GithubStep, GithubStepBuilder } from "./GithubStepBuilder.mjs";
 
+export type GithubTemplateString = string;
+
+export type GithubJobDefaultsSpec = {
+	run?: {
+		"working-directory"?: string;
+		shell?: string;
+	};
+};
+
+export type GithubJobPermissionsSpec = {
+	packages?: "read" | "write";
+	contents?: "read" | "write";
+};
+
+export type GithubJobStrategySpec = {
+	"fail-fast"?: boolean;
+	"max-parallel"?: number;
+	matrix?: {
+		include?: Record<string, string>[];
+		exclude?: Record<string, string>[];
+	} & { [variable: string]: string[] };
+};
+
+export type GithubJobImageSpec = {
+	image: string;
+	credentials?: {
+		username: string;
+		password: string;
+	};
+	options?: string;
+	env?: Record<string, string>;
+	ports?: string[];
+	volumes?: string[];
+};
+
+export type GithubJobSecretsSpec =
+	| {
+			[secret: string]: string;
+	  }
+	| "inherit";
+
 export type GithubJob<Uses extends string, With extends string> = {
 	name: string;
 	"runs-on"?: string;
-	permissions?: {
-		packages?: "read" | "write";
-		contents?: "read" | "write";
-	};
+	permissions?: GithubJobPermissionsSpec;
 	steps?: GithubStep<Uses, With>[];
 	needs?: string[];
+	if?: string;
+	environment?: string;
+	concurrency?: number;
+	env?: Record<string, string>;
+	defaults?: GithubJobDefaultsSpec;
+	strategy?: GithubJobStrategySpec;
+	"continue-on-error"?: string;
+	container?: GithubJobImageSpec;
+	services?: Record<string, GithubJobImageSpec>;
+	outputs?: Record<string, GithubTemplateString>;
+	uses?: Uses;
+	with?: Record<With | never, GithubTemplateString | undefined>;
+	secrets?: GithubJobSecretsSpec;
 };
 
 export class GithubJobBuilder<Uses extends string, With extends string> {
@@ -21,9 +72,20 @@ export class GithubJobBuilder<Uses extends string, With extends string> {
 		packages?: "read" | "write";
 		contents?: "read" | "write";
 	} = {};
-
+	private if_?: string;
 	private outputs: Record<string, string> = {};
-	private inputs: Record<string, string> = {};
+	private environment?: string;
+	private concurrency?: number;
+	private env: Record<string, string> = {};
+	private defaults: GithubJobDefaultsSpec = {};
+	private strategy: GithubJobStrategySpec = {};
+	private "continue-on-error"?: string;
+	private container?: GithubJobImageSpec;
+	private services: Record<string, GithubJobImageSpec> = {};
+	private uses?: Uses;
+	private with_: Record<With | never, GithubTemplateString | undefined> =
+		{} as Record<With | never, GithubTemplateString | undefined>;
+	private secrets?: GithubJobSecretsSpec;
 
 	constructor(
 		readonly id: string,
@@ -55,6 +117,16 @@ export class GithubJobBuilder<Uses extends string, With extends string> {
 		return this;
 	}
 
+	setIf(if_: string): this {
+		this.if_ = if_;
+		return this;
+	}
+
+	setOutputs(outputs: Record<string, string>): this {
+		this.outputs = outputs;
+		return this;
+	}
+
 	setChildren(jobs: GithubJobBuilder<Uses, With>[]): this {
 		this.children = jobs;
 		return this;
@@ -65,6 +137,61 @@ export class GithubJobBuilder<Uses extends string, With extends string> {
 		contents?: "read" | "write";
 	}): this {
 		this.permissions = permissions;
+		return this;
+	}
+
+	setEnvironment(environment: string): this {
+		this.environment = environment;
+		return this;
+	}
+
+	setConcurrency(concurrency: number): this {
+		this.concurrency = concurrency;
+		return this;
+	}
+
+	setEnv(env: Record<string, string>): this {
+		this.env = env;
+		return this;
+	}
+
+	setDefaults(defaults: GithubJobDefaultsSpec): this {
+		this.defaults = defaults;
+		return this;
+	}
+
+	setStrategy(strategy: GithubJobStrategySpec): this {
+		this.strategy = strategy;
+		return this;
+	}
+
+	setContinueOnError(continueOnError: string): this {
+		this["continue-on-error"] = continueOnError;
+		return this;
+	}
+
+	setContainer(container: GithubJobImageSpec): this {
+		this.container = container;
+		return this;
+	}
+
+	setServices(services: Record<string, GithubJobImageSpec>): this {
+		this.services = services;
+		return this;
+	}
+
+	setUses(uses: Uses): this {
+		this.uses = uses;
+		return this;
+	}
+
+	setWith(with_: Record<With | never, GithubTemplateString | undefined>): this {
+		this.with_ = with_;
+		return this;
+	}
+
+	setSecrets(secrets: GithubJobSecretsSpec): this {
+		this.secrets = secrets;
 		return this;
 	}
 
@@ -86,12 +213,34 @@ export class GithubJobBuilder<Uses extends string, With extends string> {
 
 		return {
 			job: {
+				if: this.if_,
 				name: this.name,
+				"runs-on": this.runsOn,
+				needs: this.needs.length > 0 ? this.needs : undefined,
+				concurrency: this.concurrency,
+				"continue-on-error": this["continue-on-error"],
+				strategy:
+					Object.keys(this.strategy).length > 0 ? this.strategy : undefined,
+				uses: (this.uses?.length ?? 0) > 0 ? this.uses : undefined,
+				secrets:
+					Object.keys(this.secrets ?? {}).length > 0 ? this.secrets : undefined,
+				with: Object.keys(this.with_ ?? {}).length > 0 ? this.with_ : undefined,
 				permissions:
 					Object.keys(this.permissions).length > 0
 						? this.permissions
 						: undefined,
-				"runs-on": this.runsOn,
+				outputs:
+					Object.keys(this.outputs).length > 0 ? this.outputs : undefined,
+				defaults:
+					Object.keys(this.defaults).length > 0 ? this.defaults : undefined,
+				environment:
+					(this.environment?.length ?? 0) > 0 ? this.environment : undefined,
+				container: this.container,
+				services:
+					Object.keys(this.services ?? {}).length > 0
+						? this.services
+						: undefined,
+				env: Object.keys(this.env).length > 0 ? this.env : undefined,
 				steps: this.steps.flatMap((step) => {
 					let steps = [step];
 					while (steps.some((s) => Array.isArray(s))) {
@@ -100,49 +249,8 @@ export class GithubJobBuilder<Uses extends string, With extends string> {
 
 					return steps.map((s) => s.build());
 				}),
-				needs: this.needs.length > 0 ? this.needs : undefined,
 			},
 			children: this.children,
 		};
 	}
 }
-
-export const GithubJobX = <
-	Uses extends string = string,
-	With extends string = string,
->({
-	id,
-	name,
-	runsOn,
-	steps,
-	needs,
-	children,
-	permissions,
-}: {
-	id: string;
-	name: string;
-	runsOn?: string;
-	steps: GithubStepBuilder<Uses, With>[];
-	children?: GithubJobBuilder<Uses, With>[];
-	needs?: string[];
-	permissions?: {
-		packages?: "read" | "write";
-		contents?: "read" | "write";
-	};
-}): GithubJobBuilder<Uses, With> => {
-	const job = new GithubJobBuilder<Uses, With>(id, name);
-	if (runsOn) {
-		job.setRunsOn(runsOn);
-	}
-	job.setSteps(steps);
-	if (needs) {
-		job.addNeeds(needs);
-	}
-	if (children) {
-		job.setChildren(children);
-	}
-	if (permissions) {
-		job.setPermissions(permissions);
-	}
-	return job;
-};

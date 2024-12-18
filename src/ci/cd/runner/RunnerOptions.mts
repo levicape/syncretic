@@ -33,9 +33,6 @@ export type RunnerOptions = {
 let cwd = "";
 export const setRunnerCwd = (root: string) => {
 	cwd = root;
-	console.dir({
-		cwd,
-	});
 };
 
 let __options: RunnerOptions | undefined;

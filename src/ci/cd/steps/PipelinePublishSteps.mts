@@ -1,4 +1,4 @@
-import type { GithubPipelineOptions } from "../pipeline/github/steps/GithubPipelineSteps.mjs";
+import type { GithubPipelineNodeOptions } from "../pipeline/github/node/GithubPipelineNodeOptions.mjs";
 import type { Platform } from "../platform/Platform.mjs";
 import type { Target } from "../target/Target.mjs";
 
@@ -20,7 +20,7 @@ export type VersionStrategy = (props: VersionStrategyProps) => {
 	};
 };
 
-export type PipelinePublishOptions = {
+export type PipelinePublishOptions<Options> = {
 	packageManager: {
 		node: "npm" | "pnpm" | "yarn";
 	};
@@ -28,7 +28,7 @@ export type PipelinePublishOptions = {
 		version: VersionStrategy;
 		disableGitChecks?: boolean;
 	};
-} & GithubPipelineOptions;
+} & Options;
 
 export type PipelinePublishSteps<Step, Props> = {
 	// getVersion: (props: Props) => Step[];

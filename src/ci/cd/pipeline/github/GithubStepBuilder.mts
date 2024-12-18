@@ -1,19 +1,51 @@
-/**
- * @link https://buildkite.com/docs/pipelines/command-step
- */
+import type { GithubTemplateString } from "./GithubJobBuilder.mjs";
 
-export type GithubTemplateString = string;
+export type GithubStepImageSpec = {
+	image: string;
+	credentials?: {
+		username: string;
+		password: string;
+	};
+	options?: string;
+	env?: Record<string, string>;
+	ports?: string[];
+	volumes?: string[];
+};
+
+export type GithubStepStrategySpec = {
+	"fail-fast"?: boolean;
+	"max-parallel"?: number;
+	matrix?: {
+		include?: Record<string, string>[];
+		exclude?: Record<string, string>[];
+	} & { [variable: string]: string[] };
+};
+
+export type GithubStepSecretsSpec =
+	| {
+			[secret: string]: string;
+	  }
+	| "inherit";
 
 export type GithubStep<Uses extends string, WithKeys extends string> = {
 	id?: string;
 	name?: string;
 	uses: Uses;
-	with?: Record<WithKeys | never, GithubTemplateString | undefined>;
+	with?: Record<WithKeys | never, GithubTemplateString | undefined> & {
+		entrypoint?: GithubTemplateString;
+		args?: GithubTemplateString;
+	};
 	env?: Record<string, GithubTemplateString | undefined>;
 	run?: string;
 	if?: GithubTemplateString;
 	"continue-on-error"?: boolean;
 	"working-directory"?: GithubTemplateString;
+	shell?: "bash" | "pwsh" | "python" | "sh" | "cmd" | `${string} ${string} {0}`;
+	"timeout-minutes"?: number;
+	strategy?: GithubStepStrategySpec;
+	container?: GithubStepImageSpec;
+	services?: Record<string, GithubStepImageSpec>;
+	secrets?: GithubStepSecretsSpec;
 };
 
 export class GithubStepBuilder<Uses extends string, WithKeys extends string> {
@@ -26,6 +58,18 @@ export class GithubStepBuilder<Uses extends string, WithKeys extends string> {
 	private _if?: GithubTemplateString;
 	private "continue-on-error"?: boolean;
 	private "working-directory"?: GithubTemplateString;
+	private shell?:
+		| "bash"
+		| "pwsh"
+		| "python"
+		| "sh"
+		| "cmd"
+		| `${string} ${string} {0}`;
+	private "timeout-minutes"?: number;
+	private strategy?: GithubStepStrategySpec;
+	private container?: GithubStepImageSpec;
+	private services?: Record<string, GithubStepImageSpec>;
+	private secrets?: GithubStepSecretsSpec;
 
 	constructor(
 		name: string,
@@ -81,18 +125,72 @@ export class GithubStepBuilder<Uses extends string, WithKeys extends string> {
 		return this;
 	}
 
+	setShell(
+		shell:
+			| "bash"
+			| "pwsh"
+			| "python"
+			| "sh"
+			| "cmd"
+			| `${string} ${string} {0}`,
+	): this {
+		this.shell = shell;
+		return this;
+	}
+
+	setTimeoutMinutes(timeoutMinutes: number): this {
+		this["timeout-minutes"] = timeoutMinutes;
+		return this;
+	}
+
+	setStrategy(strategy: GithubStepStrategySpec): this {
+		this.strategy = strategy;
+		return this;
+	}
+
+	setContainer(container: GithubStepImageSpec): this {
+		this.container = container;
+		return this;
+	}
+
+	setServices(services: Record<string, GithubStepImageSpec>): this {
+		this.services = services;
+		return this;
+	}
+
+	setSecrets(secrets: GithubStepSecretsSpec): this {
+		this.secrets = secrets;
+		return this;
+	}
+
 	build(): GithubStep<Uses, WithKeys> {
 		return {
 			if: this._if,
-			id: this.id,
+			id: (this.id?.length ?? 0) > 0 ? this.id : undefined,
 			name: this.name,
-			uses: this.uses as Uses,
-			env: this.env,
+			"continue-on-error": this["continue-on-error"],
+			strategy:
+				Object.keys(this.strategy ?? {}).length > 0 ? this.strategy : undefined,
+			uses: ((this.uses?.length ?? 0) > 0 ? this.uses : undefined) as Uses,
+			secrets:
+				Object.keys(this.secrets ?? {}).length > 0 ? this.secrets : undefined,
 			with:
 				Object.keys(this._with ?? {}).length > 0
 					? (this._with as Record<WithKeys, GithubTemplateString | undefined>)
 					: undefined,
-			"working-directory": this["working-directory"],
+			"timeout-minutes": this["timeout-minutes"],
+			container:
+				Object.keys(this.container ?? {}).length > 0
+					? this.container
+					: undefined,
+			services:
+				Object.keys(this.services ?? {}).length > 0 ? this.services : undefined,
+			"working-directory":
+				(this["working-directory"]?.length ?? 0) > 0
+					? this["working-directory"]
+					: undefined,
+			shell: this.shell,
+			env: Object.keys(this.env ?? {}).length > 0 ? this.env : undefined,
 			run: this.run
 				?.map((r) => {
 					r = r.trim();
@@ -100,30 +198,6 @@ export class GithubStepBuilder<Uses extends string, WithKeys extends string> {
 					return r;
 				})
 				.join("\n"),
-			"continue-on-error": this["continue-on-error"],
 		};
 	}
 }
-
-export const GithubStepX = <Uses extends string, WithKeys extends string>(
-	props: {
-		name: string;
-		with?: Record<WithKeys, GithubTemplateString | undefined>;
-		id?: string;
-		env?: Record<string, GithubTemplateString | undefined>;
-		if?: GithubTemplateString;
-		continueOnError?: boolean;
-		workingDirectory?: GithubTemplateString;
-	} & ({ uses: Uses; run?: string[] } | { uses?: never; run: string[] }),
-): GithubStepBuilder<Uses, WithKeys> => {
-	const { name, uses, with: with_ } = props;
-	const factory = new GithubStepBuilder(name, uses, with_);
-	if (props.id) factory.setId(props.id);
-	if (props.env) factory.setEnv(props.env);
-	if (props.run) factory.setRun(props.run);
-	if (props.if) factory.setIf(props.if);
-	if (props.continueOnError) factory.setContinueOnError(props.continueOnError);
-	if (props.workingDirectory)
-		factory.setWorkingDirectory(props.workingDirectory);
-	return factory;
-};

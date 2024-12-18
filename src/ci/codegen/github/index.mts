@@ -1,2 +1,3 @@
 export * from "./node/index.mjs";
-export * from "./GenerateGithubNode.mjs";
+export * from "./GenerateGithubWorkflow.mjs";
+export * from "./GithubWorkflowJobStepCodegen.mjs";

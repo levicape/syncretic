@@ -1,0 +1,95 @@
+########################################
+# THIS FILE WAS AUTOMATICALLY GENERATED, DO NOT MODIFY
+########################################
+Name: onPush_Test-Package
+RunMode: PARALLEL
+SchemaVersion: "1.0"
+Compute:
+  Type: EC2
+  Fleet: Linux.Arm64.XLarge
+  SharedInstance: "TRUE"
+Triggers:
+  - Type: PUSH
+    Branches:
+      - main
+Actions:
+  ci:
+    Actions:
+      Install:
+        Identifier: aws/build@v1.0.0
+        Caching:
+          FileCaching:
+            a64_npm_global:
+              Path: .npm-global
+            a64_pnpm_store:
+              Path: .pnpm-store
+        Timeout: 5
+        Inputs:
+          Sources:
+            - WorkflowSource
+          Variables:
+            - Name: NPM_REGISTRY_PROTOCOL
+              Value: https
+            - Name: NPM_REGISTRY_HOST
+              Value: npm.pkg.github.com
+            - Name: NODE_AUTH_TOKEN
+              Value: ${Secrets.GITHUB_LEVICAPE_PAT}
+        Configuration:
+          Container:
+            Registry: CODECATALYST
+            Image: CodeCatalystLinux_Arm64:2024_03
+          Steps:
+            - Run: npm config set prefix=$(pwd)/.npm-global
+            - Run: npm config set @levicape:registry=$NPM_REGISTRY_PROTOCOL://$NPM_REGISTRY_HOST --location project
+            - Run: npm config set //$NPM_REGISTRY_HOST/:_authToken=$NODE_AUTH_TOKEN --location project
+            - Run: mkdir -p ./.npm-global
+            - Run: mkdir -p ./.pnpm-store
+            - Run: npm root -g
+            - Run: npm install --g pnpm
+            - Run: npm install --g n
+            - Run: npm exec n 22
+            - Run: ls -la ./.npm-global/lib/node_modules
+            - Run: ls -la ./.npm-global/lib/node_modules/pnpm || true
+            - Run: npm exec pnpm config set store-dir $(pwd)/.pnpm-store
+            - Run: npm exec pnpm install
+            - Run: npm exec pnpm list
+      Compile:
+        Identifier: aws/build@v1.0.0
+        Timeout: 8
+        DependsOn:
+          - Install
+        Configuration:
+          Container:
+            Registry: CODECATALYST
+            Image: CodeCatalystLinux_Arm64:2024_03
+          Steps:
+            - Run: npm config set prefix=$(pwd)/.npm-global
+            - Run: npm exec pnpm config set store-dir $(pwd)/.pnpm-store
+            - Run: npm exec n 22
+            - Run: npm exec pnpm list
+            - Run: npm exec pnpm compile
+            - Run: npm exec pnpm lint
+      Test:
+        Identifier: aws/managed-test@v1.0.0
+        Timeout: 10
+        DependsOn:
+          - Compile
+        Configuration:
+          Container:
+            Registry: CODECATALYST
+            Image: CodeCatalystLinux_Arm64:2024_03
+          Steps:
+            - Run: npm config set prefix=$(pwd)/.npm-global
+            - Run: npm exec pnpm config set store-dir $(pwd)/.pnpm-store
+            - Run: npm exec n 22
+            - Run: npm exec pnpm list
+            - Run: npm exec pnpm test
+
+########################################
+########################################
+#**:_$~- {"$$":"head","filename":"[push(b:main)]CodeCatalystMainPush.yml","source":"iac/workflows/codecatalyst/push/CodeCatalystMainPush.js"}
+#**:_$~- {"$$":"script","generator":"codegen/codecatalyst/GenerateCodeCatalystWorkflow.mts"}
+#**:_$~- {"$$":"body","hashed":"a8debf6d5a706d221e7fc94ae2a2b8fc50ff53a8375ee077e3a20426ad3c2a44"}
+#**:_$~- {"$$":"footer","started":"2024-12-18T11:42:32.184Z","now":"2024-12-18T11:42:32.188Z","elapsed":"4ms"}
+# END OF GENERATED FILE
+

@@ -1,6 +1,15 @@
 import VError from "verror";
 
-export const PipelineStateGeneratorBuilder = () => {
+export type PipelineStateGeneratorBuilderProps = {
+	template: {
+		env: (val: string) => string;
+		secret: (val: string) => string;
+	};
+};
+
+export const PipelineStateGeneratorBuilder = (
+	props: PipelineStateGeneratorBuilderProps,
+) => {
 	let registered: Record<string, unknown> = {};
 	let env: Record<string, unknown> = {};
 	let secret: Record<string, unknown> = {};
@@ -45,7 +54,9 @@ export const PipelineStateGeneratorBuilder = () => {
 				if (!(val in env)) {
 					env[val] = collect("env", val);
 				}
-				yield `\${{ env.${val} }}`;
+				let templated = props.template.env(val);
+				yield templated;
+				// yield `\${{ env.${val} }}`;
 			}
 		})(),
 		secret: (function* () {
@@ -54,7 +65,9 @@ export const PipelineStateGeneratorBuilder = () => {
 				if (!(val in secret)) {
 					secret[val] = collect("secret", val);
 				}
-				yield `\${{ secrets.${val} }}`;
+				let templated = props.template.secret(val);
+				yield templated;
+				// yield `\${{ secrets.${val} }}`;
 			}
 		})(),
 		maps: {

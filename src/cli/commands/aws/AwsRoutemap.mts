@@ -1,31 +1,40 @@
 import { buildRouteMap } from "@stricli/core";
-import { DeveloperCommand } from "./DeveloperCommand.mjs";
-import { OrganizationCommand } from "./OrganizationCommand.mjs";
-import { PrincipalCommand } from "./PrincipalCommand.mjs";
+import { AwsCodebuildRouteMap } from "./codebuild/AwsCodebuildRoutemap.mjs";
+import { AwsCodecatalystRoutemap } from "./codecatalyst/AwsCodecatalystRoutemap.mjs";
+import { AwsOrganizationRoutemap } from "./organization/AwsOrganizationRoutemap.mjs";
 
 export const AwsRoutemap = async () => {
-	const [prepareOrganization, preparePrincipal, prepareDeveloper] =
+	const [prepareOrganization, prepareCodebuild, prepareCodecatalyst] =
 		await Promise.all([
-			OrganizationCommand(),
-			PrincipalCommand(),
-			DeveloperCommand(),
+			AwsOrganizationRoutemap(),
+			AwsCodebuildRouteMap(),
+			AwsCodecatalystRoutemap(),
 		]);
 
-	const [organization, principal, developer] = await Promise.all([
+	const [organization, codebuild, codecatalyst] = await Promise.all([
 		prepareOrganization(),
-		preparePrincipal(),
-		prepareDeveloper(),
+		prepareCodebuild(),
+		prepareCodecatalyst(),
 	]);
 
 	return async () =>
 		buildRouteMap({
+			aliases: {
+				org: "organization",
+				catalyst: "codecatalyst",
+				codeb: "codebuild",
+				// codec: "codecommit",
+				// codep: "codepipeline",
+				// codea: "codeartifact",
+			},
 			routes: {
 				organization,
-				principal,
-				developer,
+				codebuild,
+				codecatalyst,
 			},
 			docs: {
-				brief: "Commands to deploy specific AWS resources",
+				brief:
+					"Commands to deploy specific AWS resources under an organization. To start, explore the organization commands",
 			},
 		});
 };

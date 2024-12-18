@@ -1,4 +1,4 @@
 export * from "./AwsRoutemap.mjs";
-export * from "./OrganizationCommand.mjs";
-export * from "./PrincipalCommand.mjs";
-export * from "./DeveloperCommand.mjs";
+export * from "./codebuild/index.mjs";
+export * from "./codecatalyst/index.mjs";
+export * from "./organization/index.mjs";
