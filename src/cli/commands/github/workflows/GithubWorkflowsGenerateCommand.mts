@@ -138,7 +138,22 @@ export const GithubWorkflowsGenerateCommand = async () => {
 
 					let workflow: GithubWorkflowBuilder<string, string> = (
 						await import(source)
-					)[import_]() as unknown as GithubWorkflowBuilder<string, string>;
+					)[import_] as unknown as GithubWorkflowBuilder<string, string>;
+
+					if (typeof workflow === "object") {
+						console.warn({
+							GenerateCommand: {
+								message:
+									"Using object as workflow. It is recommended to instead export an async function that returns the GithubWorkflowX component, so that the build process can initialize",
+							},
+						});
+					}
+
+					if (typeof workflow === "function") {
+						workflow = (
+							workflow as () => GithubWorkflowBuilder<string, string>
+						)();
+					}
 
 					if (workflow instanceof Promise) {
 						workflow = await workflow;

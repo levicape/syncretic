@@ -97,7 +97,7 @@ catalogs:
     "publint": "^0.2.12"
     "syncpack": "^13.0.0"
     "ci": "^2.3.0"
-
+    "nx": "20.2.2"
   crypto:
     # TODO: ???
     "crypto-js": "^4.2.0"

@@ -150,3 +150,7 @@ _models
 
 *.local.*
 protobuf
+
+
+.nx/cache
+.nx/workspace-data

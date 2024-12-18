@@ -150,7 +150,7 @@ export const AwsCodecatalystWorkflowsGenerateCommand = async () => {
 						any
 					> = (await import(source))[
 						import_
-					]() as unknown as CodeCatalystWorkflowBuilder<
+					] as unknown as CodeCatalystWorkflowBuilder<
 						string,
 						string,
 						// biome-ignore lint/suspicious/noExplicitAny:
@@ -160,6 +160,30 @@ export const AwsCodecatalystWorkflowsGenerateCommand = async () => {
 						// biome-ignore lint/suspicious/noExplicitAny:
 						any
 					>;
+
+					if (typeof workflow === "object") {
+						console.warn({
+							GenerateCommand: {
+								message:
+									"Using object as workflow. It is recommended to instead export an async function that returns the GithubWorkflowX component, so that the build process can initialize",
+							},
+						});
+					}
+
+					if (typeof workflow === "function") {
+						workflow = (
+							workflow as () => CodeCatalystWorkflowBuilder<
+								string,
+								string,
+								// biome-ignore lint/suspicious/noExplicitAny:
+								any,
+								// biome-ignore lint/suspicious/noExplicitAny:
+								any,
+								// biome-ignore lint/suspicious/noExplicitAny:
+								any
+							>
+						)();
+					}
 
 					if (workflow instanceof Promise) {
 						workflow = await workflow;
