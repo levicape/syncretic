@@ -67,7 +67,6 @@ export const PipelineStateGeneratorBuilder = (
 				}
 				let templated = props.template.secret(val);
 				yield templated;
-				// yield `\${{ secrets.${val} }}`;
 			}
 		})(),
 		maps: {

@@ -199,6 +199,10 @@ export class GithubJobBuilder<Uses extends string, With extends string> {
 		job: GithubJob<Uses, With>;
 		children: GithubJobBuilder<Uses, With>[];
 	} {
+		if (!Array.isArray(this.steps)) {
+			this.steps = [this.steps];
+		}
+
 		if (!this.steps.length) {
 			throw new Error("No steps added to job");
 		}

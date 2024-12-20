@@ -1,12 +1,15 @@
 {
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "defaultBase": "main",
-
   "targetDefaults": {
-    "compile": {
+    "build": {
       "cache": true,
-      "dependsOn": [
-        "^compile"
+      "outputs": [
+        "{projectRoot}/module",
+        "{projectRoot}/commonjs",
+        "{projectRoot}/.vinxi",
+        "{projectRoot}/.build",
+        "{projectRoot}/public"
       ]
     }
   }

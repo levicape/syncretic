@@ -1,25 +1,35 @@
 import { buildRouteMap } from "@stricli/core";
-import { AwsCodebuildGithubOidcCommand } from "./AwsCodebuildGithubOidcCommand.mjs";
+import { AwsCodebuildGithubAuthCommand } from "./AwsCodebuildGithubAuthCommand.mjs";
+import { AwsCodebuildGithubRunnerCommand } from "./AwsCodebuildGithubRunnerCommand.mjs";
 
 export const AwsCodebuildGithubRoutemap = async () => {
-	const [prepareGithubOidcCommand] = await Promise.all([
-		AwsCodebuildGithubOidcCommand(),
-	]);
+	const routemap = [
+		["runner", await AwsCodebuildGithubRunnerCommand()],
+		["import-credentials", await AwsCodebuildGithubAuthCommand()],
+	] as const;
 
-	const [oidc] = await Promise.all([prepareGithubOidcCommand()]);
+	const prepare = await Promise.all(
+		routemap.map(async ([name, promise]) => {
+			return [name, await promise()];
+		}),
+	);
 
+	const routes = Object.fromEntries(prepare);
 	return async () =>
 		buildRouteMap({
-			defaultCommand: "oidc",
 			aliases: {
-				link: "oidc",
+				auth: "import-credentials",
+				import: "import-credentials",
+				credentials: "import-credentials",
+				token: "import-credentials",
+				login: "import-credentials",
+				oidc: "runner",
+				builder: "runner",
 			},
-			routes: {
-				oidc,
-			},
+			routes,
 			docs: {
 				brief:
-					"Commands to create and manage the current principal Codebuild project connections with a Github repository.",
+					"Commands to create and manage project connections between Github and Codebuild.",
 			},
 		});
 };

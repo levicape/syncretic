@@ -39,8 +39,6 @@ yarn-error.log*
 **/*.tgz
 **/*.log
 package-lock.json
-**/*.bun
-
 
 # Logs
 logs
@@ -128,9 +126,14 @@ typings/
 .dynamodb/
 
 # TypeScript output
+**/*.tsbuildinfo
+tsconfig.tsbuildinfo
+
 dist
 tsc.out
 out
+module
+commonjs
 
 # Azure Functions artifacts
 bin
@@ -141,7 +144,6 @@ local.settings.json
 gen
 **/gen
 build
-module
 **/_protocols
 _protocols
 **/_models

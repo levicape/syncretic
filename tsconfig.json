@@ -4,17 +4,15 @@
   
       /* Projects */
       // "incremental": true,                              /* Save .tsbuildinfo files to allow for incremental compilation of projects. */
-      // "composite": true,                                /* Enable constraints that allow a TypeScript project to be used with project references. */
-      // "tsBuildInfoFile": "./.tsbuildinfo",              /* Specify the path to .tsbuildinfo incremental compilation file. */
+      "composite": true,                                /* Enable constraints that allow a TypeScript project to be used with project references. */
+      "tsBuildInfoFile": ".tsc/.tsbuildinfo",              /* Specify the path to .tsbuildinfo incremental compilation file. */
       // "disableSourceOfProjectReferenceRedirect": true,  /* Disable preferring source files instead of declaration files when referencing composite projects. */
       // "disableSolutionSearching": true,                 /* Opt a project out of multi-project reference checking when editing. */
       // "disableReferencedProjectLoad": true,             /* Reduce the number of projects loaded automatically by TypeScript. */
   
       /* Language and Environment */
       "target": "ESNext",                                  /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */
-      // "lib": [],                                        /* Specify a set of bundled library declaration files that describe the target runtime environment. */
-      "jsx": "react-jsx",                                /* Specify what JSX code is generated. */
-      "jsxImportSource": "./src/runtime",                            /* Specify module specifier used to import the JSX factory functions when using 'jsx: react-jsx*'. */
+      "lib": ["ES2023"],                                        /* Specify a set of bundled library declaration files that describe the target runtime environment. */
       // "experimentalDecorators": true,                   /* Enable experimental support for TC39 stage 2 draft decorators. */
       // "emitDecoratorMetadata": true,                    /* Emit design-type metadata for decorated declarations in source files. */
       // "jsxFactory": "",                                 /* Specify the JSX factory function used when targeting React JSX emit, e.g. 'React.createElement' or 'h'. */
@@ -23,13 +21,10 @@
       // "noLib": true,                                    /* Disable including any library files, including the default lib.d.ts. */
       // "useDefineForClassFields": true,                  /* Emit ECMAScript-standard-compliant class fields. */
       // "moduleDetection": "auto",                        /* Control what method is used to detect module-format JS files. */
-      "customConditions": [
-        "node"
-      ],
       /* Modules */
       "module": "NodeNext",    
-      "moduleResolution": "nodenext",                       /* Specify how TypeScript looks up a file from a given module specifier. */
-      "rootDir": "./src",                            /* Specify what module code is generated. */
+      "moduleResolution": "NodeNext",                       /* Specify how TypeScript looks up a file from a given module specifier. */
+      "rootDir": "./src",                                   /* Specify what module code is generated. */
       // "rootDirs": [],                                   /* Allow multiple folders to be treated as one when resolving modules. */
       // "typeRoots": [],                                  /* Specify multiple folders that act like './node_modules/@types'. */
       "types": ["@types/node"],                                      /* Specify type package names to be included without being referenced in a source file. */
@@ -94,12 +89,14 @@
       // "noPropertyAccessFromIndexSignature": true,       /* Enforces using indexed accessors for keys declared using an indexed type. */
       // "allowUnusedLabels": true,                        /* Disable error reporting for unused labels. */
       // "allowUnreachableCode": true,                     /* Disable error reporting for unreachable code. */
+      "allowImportingTsExtensions": false,
   
       /* Completeness */
       // "skipDefaultLibCheck": true,                      /* Skip type checking .d.ts files that are included with TypeScript. */
       "skipLibCheck": true,                                 /* Skip type checking all .d.ts files. */
       "verbatimModuleSyntax": true,
-          "isolatedModules": true
+      "isolatedModules": true,
+      "resolvePackageJsonExports": true
     },
     "include": [
       "src/**/*",

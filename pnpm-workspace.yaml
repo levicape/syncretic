@@ -1,8 +1,10 @@
 packages:
   - '.'
   - 'canary'
+  - 'pulumi'
   - 'protocols/*'
   - 'iac/workflows'
+  - 'iac/stacks/*'
 
 
 catalog:

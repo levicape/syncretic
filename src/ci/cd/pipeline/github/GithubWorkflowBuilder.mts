@@ -32,23 +32,23 @@ export type GithubOnWorkflowCallSpec = {
 	inputs?: Record<
 		string,
 		{
-			description: string;
+			description?: string;
 			required: boolean;
-			default: string;
+			default?: string;
 			type: "string" | "number" | "boolean";
 		}
 	>;
 	outputs?: Record<
 		string,
 		{
-			description: string;
+			description?: string;
 			value: string;
 		}
 	>;
 	secrets?: Record<
 		string,
 		{
-			description: string;
+			description?: string;
 			required: boolean;
 		}
 	>;
@@ -60,9 +60,9 @@ export type GithubOnWorkflowDispatchSpec = {
 	inputs?: Record<
 		string,
 		{
-			description: string;
+			description?: string;
 			required: boolean;
-			default: string;
+			default?: string;
 			type: "string" | "number" | "boolean";
 		}
 	>;
@@ -75,6 +75,7 @@ export type GithubOn = {
 	pull_request_target?: GithubPullRequestSpec;
 	schedule?: GithubOnScheduleSpec;
 	workflow_call?: GithubOnWorkflowCallSpec;
+	workflow_dispatch?: GithubOnWorkflowCallSpec;
 };
 
 export type GithubWorkflowPermissions = {

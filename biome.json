@@ -1,6 +1,7 @@
 {
     "files": {
       "ignore": [
+        "**/module",
         "package.json",
         "package-lock.json",
         "**/package.json",

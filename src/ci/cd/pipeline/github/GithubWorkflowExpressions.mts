@@ -2,8 +2,20 @@ import { PipelineStateGeneratorBuilder } from "../../state/PipelineStateGenerato
 
 export const GithubPipelineStateGeneratorBuilderConfiguration = {
 	template: {
-		env: (val: string) => `\${{ env.${val} }}`,
-		secret: (val: string) => `\${{ secrets.${val} }}`,
+		env: (val: string) => {
+			if (val.startsWith("[")) {
+				return `\${{ env[${val.slice(1, -1)}] }}`;
+			}
+
+			return `\${{ env.${val} }}`;
+		},
+		secret: (val: string) => {
+			if (val.startsWith("[")) {
+				return `\${{ secrets[${val.slice(1, -1)}] }}`;
+			}
+
+			return `\${{ secrets.${val} }}`;
+		},
 	},
 };
 

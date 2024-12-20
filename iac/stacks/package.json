@@ -1,0 +1,39 @@
+{
+  "name": "iac_stacks",
+  "config": {
+    "packagemanager": "pnpm",
+    "packageexecutor": "pnpm exec",
+    "binpath": "./src/cli/bin.mts",
+    "clipath": "./module/cli/bin.mjs",
+    "lintpaths": "./src ./canary ./iac"
+  },
+  "dependencies": {
+    "@levicape/fourtwo-pulumi": "workspace:",
+    "@pulumi/aws": "^6.0.0",
+    "@pulumi/awsx": "^2.0.2",
+    "@pulumi/pulumi": "^3.113.0"
+  },
+  "devDependencies": {
+    "@types/node": "^18",
+    "typescript": "^5.0.0"
+  },
+  "nx": {
+    "targets": {
+      "nx:compile": {
+        "dependsOn": [
+          "@levicape/fourtwo-pulumi:nx:compile"
+        ]
+      },
+      "dx:precommit": {
+        "dependsOn": [
+          "^dx:precommit",
+          "nx:compile",
+          "iac_stacks_bootstrap:nx:precommit"
+        ]
+      }      
+    }
+  },
+  "scripts": {
+    "compile": "$npm_package_config_packageexecutor nx nx:compile"
+  }
+}

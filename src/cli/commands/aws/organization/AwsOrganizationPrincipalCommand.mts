@@ -1,5 +1,3 @@
-import { readFile } from "node:fs/promises";
-import { cwd } from "node:process";
 import { buildCommand } from "@stricli/core";
 import { AwsClient } from "aws4fetch";
 import Enquirer from "enquirer";
@@ -10,6 +8,11 @@ import { AwsOrganizations } from "../../../../sdk/aws/clients/AwsOrganizations.m
 import { AwsPolicy } from "../../../../sdk/aws/clients/AwsPolicy.mjs";
 import { AwsRole } from "../../../../sdk/aws/clients/AwsRole.mjs";
 import { AwsSystemsManager } from "../../../../sdk/aws/clients/AwsSystemsManager.mjs";
+import { AwsSystemsManagerParameterGenerator } from "../../../../sdk/aws/generators/AwsSystemsManagerParameterGenerator.mjs";
+import {
+	AwsPrincipalNameFromPackageJson,
+	PackageJsonRepositoryName,
+} from "../../../context/PackageJson.mjs";
 
 const enquirer = new Enquirer();
 const prompt = enquirer.prompt.bind(enquirer);
@@ -17,7 +20,7 @@ const prompt = enquirer.prompt.bind(enquirer);
 type Flags = {
 	name?: string;
 	email?: string;
-	prefix?: string;
+	prefix: string;
 	region: string;
 };
 
@@ -51,38 +54,6 @@ export const waitForReady = async (
 	);
 };
 
-export const AwsPrincipalNameFromPackageJson = async (prefix?: string) => {
-	const packageJson = JSON.parse(
-		await readFile(`${cwd()}/package.json`, "utf8"),
-	);
-
-	if (packageJson?.name === undefined) {
-		return undefined;
-	}
-	return (prefix ?? "dev") + packageJson?.name.replace(/[^a-zA-Z0-9]/g, "-");
-};
-
-export const repositoryName = async () => {
-	const packageJson = JSON.parse(
-		await readFile(`${cwd()}/package.json`, "utf8"),
-	);
-	let { repository } = packageJson;
-	if (typeof repository === "string") {
-		if (repository.startsWith("github:")) {
-			return repository.split(":")[1];
-		}
-	}
-
-	console.dir({
-		PrincipalCommand: {
-			message: "Repository not found in package.json",
-			repository,
-		},
-	});
-
-	return undefined;
-};
-
 export const AwsOrganizationPrincipalOIDCRole = `FourtwoOIDCProviderRole`;
 export const AwsOrganizationPrincipalOIDCParameter = (principal?: string) =>
 	`/fourtwo/${principal ? `${principal}` : "_principal"}/organization/principal/OIDCProviderArn`;
@@ -97,15 +68,6 @@ export const AwsOrganizationPrincipalCommand = async () => {
 				return async (flags: Flags) => {
 					let { name, email, region, prefix } = flags;
 
-					if (name && prefix) {
-						throw new VError(
-							{
-								name: "PrincipalCommand",
-								message: "Name and prefix are mutually exclusive",
-							},
-							"Name and prefix are mutually exclusive",
-						);
-					}
 					const credentials = await AwsClientBuilder.getAWSCredentials();
 					const client = new AwsClient({
 						...credentials,
@@ -113,7 +75,7 @@ export const AwsOrganizationPrincipalCommand = async () => {
 					});
 					const organizations = new AwsOrganizations(client);
 					let roles = new AwsRole(client);
-					let root = new AwsSystemsManager(client);
+					const root = new AwsSystemsManager(client);
 
 					const org = await organizations.DescribeOrganization();
 					if (!org) {
@@ -122,7 +84,17 @@ export const AwsOrganizationPrincipalCommand = async () => {
 								name: "PrincipalCommand",
 								message: "Organization not found",
 							},
-							"Organization not found",
+							"Organization not found. Please create an organization first with `fourtwo aws organization init`",
+						);
+					}
+
+					if (name && prefix) {
+						throw new VError(
+							{
+								name: "PrincipalCommand",
+								message: "Name and prefix are mutually exclusive",
+							},
+							"Name and prefix are mutually exclusive",
 						);
 					}
 
@@ -142,7 +114,18 @@ export const AwsOrganizationPrincipalCommand = async () => {
 						},
 						{ depth: null },
 					);
-					name = name ?? (await AwsPrincipalNameFromPackageJson(prefix));
+
+					if (!name && !prefix) {
+						throw new VError(
+							{
+								name: "PrincipalCommand",
+								message: "Name or prefix is required",
+							},
+							"Name or prefix is required",
+						);
+					}
+
+					name = name ?? (await AwsPrincipalNameFromPackageJson({ prefix }));
 					if (!name) {
 						throw new VError(
 							{
@@ -261,238 +244,191 @@ export const AwsOrganizationPrincipalCommand = async () => {
 						{ depth: null },
 					);
 
-					{
-						const assumed = new AwsClient({
-							accessKeyId: Credentials.AccessKeyId,
-							secretAccessKey: Credentials.SecretAccessKey,
-							sessionToken: Credentials.SessionToken,
-							region,
+					const assumed = new AwsClient({
+						accessKeyId: Credentials.AccessKeyId,
+						secretAccessKey: Credentials.SecretAccessKey,
+						sessionToken: Credentials.SessionToken,
+						region,
+					});
+
+					const oidcClient = new AwsOIDC(assumed);
+					const policies = new AwsPolicy(assumed);
+					roles = new AwsRole(assumed);
+
+					let repo = await PackageJsonRepositoryName();
+
+					if (!repo) {
+						console.dir({
+							PrincipalCommand: {
+								message: "Skipping OIDC, repository not found",
+							},
 						});
-
-						const oidc = new AwsOIDC(assumed);
-						const systems = new AwsSystemsManager(assumed);
-						const policies = new AwsPolicy(assumed);
-						roles = new AwsRole(assumed);
-
-						let repo = await repositoryName();
-
-						if (!repo) {
-							console.dir({
-								PrincipalCommand: {
-									message: "Skipping OIDC, repository not found",
-								},
-							});
-						} else {
-							let provider: Awaited<
-								ReturnType<typeof oidc.CreateOpenIDConnectProvider>
-							>["CreateOpenIDConnectProviderResult"];
-							provider = (
-								await oidc.CreateOpenIDConnectProvider(
-									{
-										Url: "https://token.actions.githubusercontent.com",
-										ClientIdList: ["sts.amazonaws.com"],
-										ThumbprintList: [
-											"6938fd4d98bab03faadb97b34396831e3780aea1",
-										],
-										Tags: [
-											{ Key: "Name", Value: `${serviceRole}-OIDC-Provider` },
-										],
-									},
-									{ iam: principal?.Id ?? "<account-arn>" },
-								)
-							)?.CreateOpenIDConnectProviderResult;
-
-							console.dir(
+					} else {
+						let provider: Awaited<
+							ReturnType<typeof oidcClient.CreateOpenIDConnectProvider>
+						>["CreateOpenIDConnectProviderResult"];
+						provider = (
+							await oidcClient.CreateOpenIDConnectProvider(
 								{
-									PrincipalCommand: {
-										message: "Created OIDC Provider",
-										provider,
-									},
-								},
-								{ depth: null },
-							);
-
-							await new Promise((resolve) =>
-								setTimeout(resolve, OIDC_CONSISTENCY_DELAY),
-							);
-
-							const oidcRole = AwsOrganizationPrincipalOIDCRole;
-							let service: Awaited<ReturnType<typeof roles.CreateRole>>;
-							service = await roles.CreateRole(
-								{
-									RoleName: oidcRole,
-									AssumeRolePolicyDocument: JSON.stringify({
-										Version: "2012-10-17",
-										Statement: [
-											{
-												Effect: "Allow",
-												Principal: {
-													Federated: provider?.OpenIDConnectProviderArn,
-												},
-												Action: "sts:AssumeRoleWithWebIdentity",
-												Condition: {
-													// https://docs.github.com/en/actions/security-for-github-actions/security-hardening-your-deployments/about-security-hardening-with-openid-connect
-													// environment?
-													StringLike: {
-														"token.actions.githubusercontent.com:sub": `repo:${repo}:ref:refs/heads/*`,
-													},
-												},
-											},
-										],
-									}),
+									Url: "https://token.actions.githubusercontent.com",
+									ClientIdList: ["sts.amazonaws.com"],
+									ThumbprintList: ["6938fd4d98bab03faadb97b34396831e3780aea1"],
+									Tags: [
+										{ Key: "Name", Value: `${serviceRole}-OIDC-Provider` },
+									],
 								},
 								{ iam: principal?.Id ?? "<account-arn>" },
-							);
+							)
+						)?.CreateOpenIDConnectProviderResult;
 
-							console.dir(
-								{
-									PrincipalCommand: {
-										message:
-											service.$kind === "new"
-												? "Created Role"
-												: "Role already exists",
-										service,
-									},
+						console.dir(
+							{
+								PrincipalCommand: {
+									message: "Created OIDC Provider",
+									provider,
 								},
-								{ depth: null },
-							);
-							await new Promise((resolve) =>
-								setTimeout(resolve, IAM_CONSISTENCY_DELAY),
-							);
+							},
+							{ depth: null },
+						);
 
-							let policy: Awaited<ReturnType<typeof policies.PutRolePolicy>>;
-							policy = await policies.PutRolePolicy({
-								RoleName: service.CreateRoleResult.Role.RoleName,
-								PolicyName: "FourtwoOIDCRolePolicy",
-								PolicyDocument: {
+						await new Promise((resolve) =>
+							setTimeout(resolve, OIDC_CONSISTENCY_DELAY),
+						);
+
+						const oidcRole = AwsOrganizationPrincipalOIDCRole;
+						let service: Awaited<ReturnType<typeof roles.CreateRole>>;
+						service = await roles.CreateRole(
+							{
+								RoleName: oidcRole,
+								AssumeRolePolicyDocument: JSON.stringify({
 									Version: "2012-10-17",
 									Statement: [
 										{
 											Effect: "Allow",
-											Action: "*",
-											Resource: "*",
+											Principal: {
+												Federated: provider?.OpenIDConnectProviderArn,
+											},
+											Action: "sts:AssumeRoleWithWebIdentity",
+											Condition: {
+												// https://docs.github.com/en/actions/security-for-github-actions/security-hardening-your-deployments/about-security-hardening-with-openid-connect
+												StringLike: {
+													"token.actions.githubusercontent.com:sub": `repo:${repo}:ref:refs/heads/main`,
+												},
+											},
 										},
 									],
-								},
-							});
+								}),
+							},
+							{ iam: principal?.Id ?? "<account-arn>" },
+						);
 
-							console.dir(
-								{
-									PrincipalCommand: {
-										message: "Updated role policy FourtwoOIDCRolePolicy",
-										policy,
+						console.dir(
+							{
+								PrincipalCommand: {
+									message:
+										service.$kind === "new"
+											? "Created Role"
+											: "Role already exists",
+									service,
+								},
+							},
+							{ depth: null },
+						);
+						await new Promise((resolve) =>
+							setTimeout(resolve, IAM_CONSISTENCY_DELAY),
+						);
+
+						let policy: Awaited<ReturnType<typeof policies.PutRolePolicy>>;
+						policy = await policies.PutRolePolicy({
+							RoleName: service.CreateRoleResult.Role.RoleName,
+							PolicyName: "FourtwoOIDCRolePolicy",
+							PolicyDocument: {
+								Version: "2012-10-17",
+								Statement: [
+									{
+										Effect: "Allow",
+										Action: "*",
+										Resource: "*",
 									},
+								],
+							},
+						});
+
+						console.dir(
+							{
+								PrincipalCommand: {
+									message: "Updated role policy FourtwoOIDCRolePolicy",
+									policy,
 								},
-								{ depth: null },
+							},
+							{ depth: null },
+						);
+
+						let parameters = AwsSystemsManagerParameterGenerator({
+							root,
+							systems: new AwsSystemsManager(assumed),
+						});
+						await parameters.next();
+
+						let oidc = (
+							await parameters.next({
+								template: AwsOrganizationPrincipalOIDCParameter,
+								principal: name,
+							})
+						).value;
+						if (oidc?.$$kind !== "loaded") {
+							throw new VError(
+								{
+									name: "OIDC_NOT_FOUND",
+									message: "OIDC role parameter not found. ",
+								},
+								`OIDC role parameter not found ${JSON.stringify(oidc)}`,
 							);
-							await (async () => {
-								let parameter = AwsOrganizationPrincipalOIDCParameter();
-								let scopedParameter = AwsOrganizationPrincipalOIDCParameter(
-									await AwsPrincipalNameFromPackageJson(prefix),
-								);
-
-								let existing: Awaited<ReturnType<typeof systems.GetParameter>>;
-								existing = await systems.GetParameter({
-									Name: parameter,
-								});
-
-								let updateParameter =
-									existing?.Parameter?.Value !==
-									service.CreateRoleResult.Role.Arn;
-
-								if (updateParameter) {
-									let param: Awaited<ReturnType<typeof systems.PutParameter>>;
-									param = await systems.PutParameter({
-										Name: parameter,
-										Value: service.CreateRoleResult.Role.Arn,
-										Type: "String",
-										Overwrite: true,
-									});
-
-									const owner = await root.PutParameter({
-										Name: scopedParameter,
-										Value: service.CreateRoleResult.Role.Arn,
-										Type: "String",
-										Overwrite: true,
-									});
-
-									console.dir(
-										{
-											PrincipalCommand: {
-												message: "Updated role OIDC parameter",
-												owner,
-												param,
-											},
-										},
-										{ depth: null },
-									);
-								} else {
-									console.dir(
-										{
-											PrincipalCommand: {
-												message: "Role OIDC parameter already up-to-date",
-												existing,
-											},
-										},
-										{ depth: null },
-									);
-								}
-							})();
-
-							await (async () => {
-								let parameter = AwsOrganizationPrincipalOAAParameter();
-								let scopedParameter = AwsOrganizationPrincipalOAAParameter(
-									await AwsPrincipalNameFromPackageJson(prefix),
-								);
-
-								let existing: Awaited<ReturnType<typeof systems.GetParameter>>;
-								existing = await systems.GetParameter({
-									Name: parameter,
-								});
-
-								let arn = `arn:aws:iam::${principal?.Id}:role/${serviceRole}`;
-								let updateParameter = existing?.Parameter?.Value !== arn;
-
-								if (updateParameter) {
-									let param: Awaited<ReturnType<typeof systems.PutParameter>>;
-									param = await systems.PutParameter({
-										Name: parameter,
-										Value: arn,
-										Type: "String",
-										Overwrite: true,
-									});
-
-									const owner = await root.PutParameter({
-										Name: scopedParameter,
-										Value: arn,
-										Type: "String",
-										Overwrite: true,
-									});
-
-									console.dir(
-										{
-											PrincipalCommand: {
-												message: "Updated Organization Access role parameters",
-												owner,
-												param,
-											},
-										},
-										{ depth: null },
-									);
-								} else {
-									console.dir(
-										{
-											PrincipalCommand: {
-												message:
-													"Role Organization Access parameter already up-to-date",
-												existing,
-											},
-										},
-										{ depth: null },
-									);
-								}
-							})();
 						}
+						await parameters.next();
+
+						await oidc?.update(service.CreateRoleResult.Role.Arn);
+
+						console.dir(
+							{
+								PrincipalCommand: {
+									message: "Updated OIDC role parameter",
+									oidc,
+								},
+							},
+							{ depth: null },
+						);
+
+						let oaa = (
+							await parameters.next({
+								template: AwsOrganizationPrincipalOAAParameter,
+								principal: name,
+							})
+						).value;
+						if (oaa?.$$kind !== "loaded") {
+							throw new VError(
+								{
+									name: "OAA_NOT_FOUND",
+									message: "OAA role parameter not found. ",
+								},
+								`OAA role parameter not found ${JSON.stringify({
+									oaa,
+								})}`,
+							);
+						}
+						await parameters.next();
+
+						await oaa?.update(service.CreateRoleResult.Role.Arn);
+
+						console.dir(
+							{
+								PrincipalCommand: {
+									message: "Updated Organization Access role parameters",
+									oaa,
+								},
+							},
+							{ depth: null },
+						);
 					}
 				};
 			},
@@ -551,10 +487,9 @@ export const AwsOrganizationPrincipalCommand = async () => {
 					},
 					prefix: {
 						brief:
-							"Prefix for the principal. Defaults to 'dev'. Mutually exclusive with name",
+							"Prefix for the principal. Mutually exclusive with name. Must be set if name is not set",
 						kind: "parsed",
 						parse: (value: string) => value,
-						optional: true,
 					},
 				},
 			},

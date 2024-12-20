@@ -1,8 +1,22 @@
 {
+  "name": "@levicape/fourtwo-canary",
   "version": "0.0.0-local.0",
   "dependencies": {
     "@levicape/paloma": "catalog:"
   },
+  "nx": {
+    "targets": {
+      "nx:test": {
+        "dependsOn": [
+          "^test",
+          "test:basic"
+        ]
+      }
+    }
+  },
   "private": "true",
+  "scripts": {
+    "test:basic": "NODE_NO_WARNINGS=1 node --experimental-strip-types ./src/basic/server.canary.mts"
+  },
   "type": "module"
 }

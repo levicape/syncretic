@@ -3,7 +3,6 @@
 
 import {
 	GithubJobBuilder,
-	type GithubStepBuilder,
 	type GithubWorkflowBuilder,
 	GithubWorkflowExpressions,
 } from "@levicape/fourtwo/ci/cd/pipeline/github";

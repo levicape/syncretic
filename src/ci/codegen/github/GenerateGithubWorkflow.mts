@@ -159,6 +159,10 @@ export const GenerateGithubWorkflow = async function* () {
 				named += `[rd]`;
 			}
 
+			if (name === "workflow_dispatch") {
+				named += `[dispatch]`;
+			}
+
 			if (name === "workflow_call") {
 				named += `[wc]`;
 			}
