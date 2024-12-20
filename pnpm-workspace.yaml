@@ -1,7 +1,7 @@
 packages:
   - '.'
   - 'canary'
-  - 'pulumi'
+  - 'packages/*'
   - 'protocols/*'
   - 'iac/workflows'
   - 'iac/stacks/*'

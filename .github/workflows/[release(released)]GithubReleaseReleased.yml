@@ -1,7 +1,7 @@
 ########################################
 # THIS FILE WAS AUTOMATICALLY GENERATED, DO NOT MODIFY
 ########################################
-name: "on Release: [released] Publish packages to Github"
+name: "on Release: [released] Publish @levicape(fourtwo, fourtwo-pulumi) to Github"
 on:
   release:
     types:
@@ -78,8 +78,8 @@ jobs:
         name: Publish to npm
         continue-on-error: true
         run: pnpm publish --no-git-checks;
-  publish_fourtwo-react:
-    name: "@levicape/fourtwo-react: Compile and publish to Github"
+  publish_fourtwo-pulumi:
+    name: "@levicape/fourtwo-pulumi: Compile and publish to Github"
     runs-on: ubuntu-latest
     permissions:
       packages: write
@@ -127,7 +127,7 @@ jobs:
       - name: Install Dependencies
         run: pnpm install;
       - name: Navigate to package directory
-        run: cd packages/react;
+        run: cd packages/pulumi;
       - name: "Run package.json: compile"
         run: pnpm run compile;
       - name: "Run package.json: lint"
@@ -153,7 +153,7 @@ jobs:
 ########################################
 #**:_$~- {"$$":"head","filename":"[release(released)]GithubReleaseReleased.yml","source":"iac/workflows/github/release/GithubReleaseReleased.js"}
 #**:_$~- {"$$":"script","generator":"codegen/github/GenerateGithubWorkflow.mts"}
-#**:_$~- {"$$":"body","hashed":"7929d5cd12cb37232f9d48426ca426f8cbb08ade22cb627b831f4efaf1c17978"}
-#**:_$~- {"$$":"footer","started":"2024-12-20T05:27:43.932Z","now":"2024-12-20T05:27:43.946Z","elapsed":"14ms"}
+#**:_$~- {"$$":"body","hashed":"63011f746d6eb6c6c8e0ed398b0ed5911703b031baa6dd3f881ecf0f32de0a69"}
+#**:_$~- {"$$":"footer","started":"2024-12-20T06:01:58.548Z","now":"2024-12-20T06:01:58.554Z","elapsed":"6ms"}
 # END OF GENERATED FILE
 
