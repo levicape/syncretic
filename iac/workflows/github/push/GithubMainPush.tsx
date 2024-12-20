@@ -9,6 +9,7 @@ import {
 import {
 	GithubJobX,
 	GithubStepCheckoutX,
+	GithubStepX,
 	GithubWorkflowX,
 } from "@levicape/fourtwo/x/github";
 import {
@@ -56,7 +57,7 @@ export default (): GithubWorkflowBuilder<string, string> => (
 	>
 		<GithubJobX
 			id="build"
-			name="Compile, Lint and Test package"
+			name="Compile, Lint and Test all workspace packages"
 			runsOn={GithubJobBuilder.defaultRunsOn()}
 			steps={
 				<>
@@ -66,9 +67,24 @@ export default (): GithubWorkflowBuilder<string, string> => (
 							return (
 								<>
 									<GithubStepNodeInstallX {...node} />
-									<GithubStepNodeScriptsX {...node} scripts={["compile"]} />
-									<GithubStepNodeScriptsX {...node} scripts={["lint"]} />
-									<GithubStepNodeScriptsX {...node} scripts={["test"]} />
+									<GithubStepX
+										name="Compile"
+										run={[
+											"pnpx nx run-many -t compile --parallel=1 --verbose --no-cloud",
+										]}
+									/>
+									<GithubStepX
+										name="Lint"
+										run={[
+											"pnpx nx run-many -t lint --parallel=1 --verbose --no-cloud",
+										]}
+									/>
+									<GithubStepX
+										name="Test"
+										run={[
+											"pnpx nx run-many -t test --parallel=1 --verbose --no-cloud",
+										]}
+									/>
 								</>
 							);
 						}}

@@ -39,12 +39,12 @@ catalogs:
       specifier: ^2.6.1
       version: 2.6.1
     zod:
-      specifier: 3.23.8
-      version: 3.23.8
+      specifier: 3.24.1
+      version: 3.24.1
   default:
     '@levicape/paloma':
-      specifier: 0.0.6-main.6
-      version: 0.0.6-main.6
+      specifier: 0.0.7-nx-main.2
+      version: 0.0.7-nx-main.2
   dev:
     tsx:
       specifier: ^4.19.2
@@ -158,7 +158,7 @@ importers:
         version: 2.6.1
       zod:
         specifier: catalog:core
-        version: 3.23.8
+        version: 3.24.1
     devDependencies:
       '@biomejs/biome':
         specifier: catalog:lint
@@ -201,7 +201,29 @@ importers:
     dependencies:
       '@levicape/paloma':
         specifier: 'catalog:'
-        version: 0.0.6-main.6(typescript@5.7.2)
+        version: 0.0.7-nx-main.2(typescript@5.7.2)
+
+  iac/stacks:
+    dependencies:
+      '@levicape/fourtwo-pulumi':
+        specifier: 'workspace:'
+        version: link:../../packages/pulumi
+      '@pulumi/aws':
+        specifier: ^6.0.0
+        version: 6.65.0(typescript@5.7.2)
+      '@pulumi/awsx':
+        specifier: ^2.0.2
+        version: 2.19.0(typescript@5.7.2)
+      '@pulumi/pulumi':
+        specifier: ^3.113.0
+        version: 3.143.0(typescript@5.7.2)
+    devDependencies:
+      '@types/node':
+        specifier: ^18
+        version: 18.19.68
+      typescript:
+        specifier: ^5.0.0
+        version: 5.7.2
 
   iac/workflows:
     dependencies:
@@ -703,8 +725,8 @@ packages:
     resolution: {integrity: sha512-rsfF5t3sd5c+3ejUgcy8q0cVG2/BxT064L4Xz+CuKEe014u8T4MtFZiWjWZFpfMXSGKzFYEA6DJYm9CqjmIfZg==}
     engines: {node: '>=14'}
 
-  '@levicape/paloma@0.0.6-main.6':
-    resolution: {integrity: sha512-x7ICrdbixfYLuDUvEFmQIPt79XVKdw6tJf/OUSjMEjFZQGQrR+/P45L251KmZYdeEdhOg91B/el30vatlHUN+g==, tarball: https://npm.pkg.github.com/download/@levicape/paloma/0.0.6-main.6/77705544546713f25a30a0da10c7764819a2d526}
+  '@levicape/paloma@0.0.7-nx-main.2':
+    resolution: {integrity: sha512-X+qHp84j4OGmmuXCEknh6E9qvKo0IjimYYEEFpm1ZOfMRc/lp10fNRnVQMU3Kspapxv5NaDkOfogJ8eiLW8cyg==, tarball: https://npm.pkg.github.com/download/@levicape/paloma/0.0.7-nx-main.2/f17eefd0044392906c4e365a0a75134ca0b389d7}
     engines: {node: '>=22.0.0'}
     hasBin: true
     peerDependencies:
@@ -1261,6 +1283,9 @@ packages:
 
   '@types/minimatch@3.0.5':
     resolution: {integrity: sha512-Klz949h02Gz2uZCMGwDUSDS1YBlTdDDgbWHi+81l29tQALUtvz4rAYi5uoVhE5Lagoq6DeqAUlbrHvW/mXDgdQ==}
+
+  '@types/node@18.19.68':
+    resolution: {integrity: sha512-QGtpFH1vB99ZmTa63K4/FU8twThj4fuVSBkGddTp7uIL/cuoLWIUSL2RcOaigBhfR+hg5pgGkBnkoOxrTVBMKw==}
 
   '@types/node@22.10.2':
     resolution: {integrity: sha512-Xxr6BBRCAOQixvonOye19wnzyDiUtTeqldOOmj3CkeblonbccA12PFwlufvRdrpjXxqnmUaeiU5EOA+7s5diUQ==}
@@ -2428,11 +2453,6 @@ packages:
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
     hasBin: true
 
-  nanoid@5.0.9:
-    resolution: {integrity: sha512-Aooyr6MXU6HpvvWXKoVoXwKMs/KyVakWwg7xQfv5/S/RIgJMy0Ifa45H9qqYy7pTCszrHzP21Uk4PZq2HpEM8Q==}
-    engines: {node: ^18 || >=20}
-    hasBin: true
-
   napi-build-utils@1.0.2:
     resolution: {integrity: sha512-ONmRUqK7zj7DWX0D9ADe03wbwOBZxNAfF20PlGfCWQcD3+/MakShIHrMqx9YwPTfxDdF1zLeL+RGZiR9kGMLdg==}
 
@@ -2910,10 +2930,6 @@ packages:
     resolution: {integrity: sha512-ZA6oR3T/pEyuqwMgAKT0/hAv8oAXckzbkmR0UkUosQ+Mc4RxGoJkRmwHgHufaenlyAgE1Mxgpdcrf75y6XcnDg==}
     engines: {node: '>=14.16'}
 
-  slugid@5.0.1:
-    resolution: {integrity: sha512-T1QJB+kML/DmjdrX+RjeowCzvbjfwzJEw6bam1ft+yUv+h9/RwAfMpoXqCjxuItrGN7CgtYW/0tMp+UEIZmx4Q==}
-    engines: {node: '>=18'}
-
   smart-buffer@4.2.0:
     resolution: {integrity: sha512-94hK0Hh8rPqQl2xXc3HsaBoOXKV20MToPkcXvwbISWLEs+64sBq5kFgn2kJDHb1Pry9yrP0dxrCI9RRci7RXKg==}
     engines: {node: '>= 6.0.0', npm: '>= 3.0.0'}
@@ -3088,6 +3104,9 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
+  undici-types@5.26.5:
+    resolution: {integrity: sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA==}
+
   undici-types@6.20.0:
     resolution: {integrity: sha512-Ny6QZ2Nju20vw1SRHe3d9jVu6gJ+4e3+MMpqu7pqE5HT6WsTSlce++GQmK5UXS8mzV8DSYHrQH+Xrf2jVcuKNg==}
 
@@ -3199,8 +3218,8 @@ packages:
     resolution: {integrity: sha512-b4JR1PFR10y1mKjhHY9LaGo6tmrgjit7hxVIeAmyMw3jegXR4dhYqLaQF5zMXZxY7tLpMyJeLjr1C4rLmkVe8g==}
     engines: {node: '>=12.20'}
 
-  zod@3.23.8:
-    resolution: {integrity: sha512-XBx9AXhXktjUqnepgTiE5flcKIYWi/rme0Eaj+5Y0lftuGBq+jyRu/md4WnuxqgP1ubdpNCsYEYPxrzVHD8d6g==}
+  zod@3.24.1:
+    resolution: {integrity: sha512-muH7gBL9sI1nciMZV67X5fTKKBLtwpZ5VBp1vsOQzj1MhrBZ4wlVCm3gedKZWLp0Oyel8sIGfeiz54Su+OVT+A==}
 
 snapshots:
 
@@ -3809,7 +3828,7 @@ snapshots:
       '@jest/schemas': 29.6.3
       '@types/istanbul-lib-coverage': 2.0.6
       '@types/istanbul-reports': 3.0.4
-      '@types/node': 22.10.2
+      '@types/node': 18.19.68
       '@types/yargs': 17.0.33
       chalk: 4.1.2
 
@@ -3862,14 +3881,12 @@ snapshots:
     optionalDependencies:
       re2-wasm: 1.0.2
 
-  '@levicape/paloma@0.0.6-main.6(typescript@5.7.2)':
+  '@levicape/paloma@0.0.7-nx-main.2(typescript@5.7.2)':
     dependencies:
       '@stricli/core': 1.1.0
       better-sqlite3: 11.7.0
       knex: 3.1.0(better-sqlite3@11.7.0)
       ksuid: 3.0.0
-      nanoid: 5.0.9
-      slugid: 5.0.1
       typescript: 5.7.2
     transitivePeerDependencies:
       - mysql
@@ -4648,7 +4665,7 @@ snapshots:
     dependencies:
       '@types/http-cache-semantics': 4.0.4
       '@types/keyv': 3.1.4
-      '@types/node': 22.10.2
+      '@types/node': 18.19.68
       '@types/responselike': 1.0.3
 
   '@types/folder-hash@4.0.4': {}
@@ -4673,9 +4690,13 @@ snapshots:
 
   '@types/keyv@3.1.4':
     dependencies:
-      '@types/node': 22.10.2
+      '@types/node': 18.19.68
 
   '@types/minimatch@3.0.5': {}
+
+  '@types/node@18.19.68':
+    dependencies:
+      undici-types: 5.26.5
 
   '@types/node@22.10.2':
     dependencies:
@@ -4685,7 +4706,7 @@ snapshots:
 
   '@types/responselike@1.0.3':
     dependencies:
-      '@types/node': 22.10.2
+      '@types/node': 18.19.68
 
   '@types/semver@7.5.8': {}
 
@@ -5562,7 +5583,7 @@ snapshots:
   jest-util@29.7.0:
     dependencies:
       '@jest/types': 29.6.3
-      '@types/node': 22.10.2
+      '@types/node': 18.19.68
       chalk: 4.1.2
       ci-info: 3.9.0
       graceful-fs: 4.2.11
@@ -5797,8 +5818,6 @@ snapshots:
 
   nanoid@3.3.8: {}
 
-  nanoid@5.0.9: {}
-
   napi-build-utils@1.0.2: {}
 
   nearley@2.20.1:
@@ -5969,7 +5988,7 @@ snapshots:
       bl: 4.1.0
       chalk: 4.1.2
       cli-cursor: 3.1.0
-      cli-spinners: 2.9.2
+      cli-spinners: 2.6.1
       is-interactive: 1.0.0
       log-symbols: 4.1.0
       strip-ansi: 6.0.1
@@ -6150,7 +6169,7 @@ snapshots:
       '@protobufjs/path': 1.1.2
       '@protobufjs/pool': 1.1.0
       '@protobufjs/utf8': 1.1.0
-      '@types/node': 22.10.2
+      '@types/node': 18.19.68
       long: 5.2.3
 
   proxy-from-env@1.1.0: {}
@@ -6333,10 +6352,6 @@ snapshots:
   slash@3.0.0: {}
 
   slash@5.1.0: {}
-
-  slugid@5.0.1:
-    dependencies:
-      uuid: 9.0.1
 
   smart-buffer@4.2.0: {}
 
@@ -6532,6 +6547,8 @@ snapshots:
 
   typescript@5.7.2: {}
 
+  undici-types@5.26.5: {}
+
   undici-types@6.20.0: {}
 
   unicorn-magic@0.1.0: {}
@@ -6638,4 +6655,4 @@ snapshots:
 
   yocto-queue@1.1.1: {}
 
-  zod@3.23.8: {}
+  zod@3.24.1: {}

@@ -11,7 +11,7 @@ env:
   NPM_REGISTRY_HOST: npm.pkg.github.com
 jobs:
   build:
-    name: Compile, Lint and Test package
+    name: Compile, Lint and Test all workspace packages
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -50,18 +50,18 @@ jobs:
         run: pnpm list;
       - name: Install Dependencies
         run: pnpm install;
-      - name: "Run package.json: compile"
-        run: pnpm run compile;
-      - name: "Run package.json: lint"
-        run: pnpm run lint;
-      - name: "Run package.json: test"
-        run: pnpm run test;
+      - name: Compile
+        run: pnpx nx run-many -t compile --parallel=1 --verbose --no-cloud;
+      - name: Lint
+        run: pnpx nx run-many -t lint --parallel=1 --verbose --no-cloud;
+      - name: Test
+        run: pnpx nx run-many -t test --parallel=1 --verbose --no-cloud;
 
 ########################################
 ########################################
 #**:_$~- {"$$":"head","filename":"[push(b:main)]GithubMainPush.yml","source":"iac/workflows/github/push/GithubMainPush.js"}
 #**:_$~- {"$$":"script","generator":"codegen/github/GenerateGithubWorkflow.mts"}
-#**:_$~- {"$$":"body","hashed":"b4793bd3108e02698dbc149c83e23b7afc46eba710debb55e177df1b479e5a80"}
-#**:_$~- {"$$":"footer","started":"2024-12-20T06:12:08.351Z","now":"2024-12-20T06:12:08.356Z","elapsed":"5ms"}
+#**:_$~- {"$$":"body","hashed":"580670b8bd6aeda5a37edf6f8a1ee780ab7f749f57fdf55a44b5709dfe74e35b"}
+#**:_$~- {"$$":"footer","started":"2024-12-20T13:05:22.435Z","now":"2024-12-20T13:05:22.441Z","elapsed":"6ms"}
 # END OF GENERATED FILE
 

@@ -30,7 +30,7 @@
           "nx:compile",
           "iac_stacks_bootstrap:nx:precommit"
         ]
-      }      
+      }
     }
   },
   "scripts": {

@@ -145,6 +145,7 @@ export class GithubNodePipelinePackageSteps<
 						new GithubStepBuilder<Uses, With>(
 							"Get pnpm store directory",
 						).setRun([
+							// TODO: <GithubOutputX name value target? = $GITHUB_ENV /> -> string
 							`echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV`,
 						]),
 						new GithubStepBuilder<Uses, With>(

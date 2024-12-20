@@ -9,7 +9,8 @@
         "{projectRoot}/commonjs",
         "{projectRoot}/.vinxi",
         "{projectRoot}/.build",
-        "{projectRoot}/public"
+        "{projectRoot}/public",
+        "{projectRoot}/gen"
       ]
     }
   }
