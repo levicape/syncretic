@@ -1,7 +1,9 @@
 import { GithubNodeWorkflowJobSetup } from "../../../../../../codegen/github/node/GithubNodeWorkflowJobStepCodegen.mjs";
 
-export const GithubStepNodeSetupX = (
-	props: Parameters<typeof GithubNodeWorkflowJobSetup>[0],
-) => {
+export type GithubNodeWorkflowJobXProps = Parameters<
+	typeof GithubNodeWorkflowJobSetup
+>[0];
+
+export const GithubStepNodeSetupX = (props: GithubNodeWorkflowJobXProps) => {
 	return GithubNodeWorkflowJobSetup(props).steps;
 };
