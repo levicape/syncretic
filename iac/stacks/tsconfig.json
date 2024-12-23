@@ -2,7 +2,7 @@
 	"compilerOptions": {
 		"strict": true,
 		"target": "es2020",
-		"module": "ESNext",
+		"module": "preserve",
 		"moduleResolution": "bundler",
 		"inlineSources": true,
 		"inlineSourceMap": true,

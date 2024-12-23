@@ -7,14 +7,20 @@ export type RolePolicy = {
 		Effect: "Allow" | "Deny";
 		Principal?:
 			| {
-					Service: string;
+					Service: string | string[];
 					Federated?: never;
+					AWS?: never;
 			  }
 			| {
 					Federated: string[];
 					Service?: never;
+					AWS?: never;
+			  }
+			| {
+					AWS: string | string[];
+					Federated?: string | string[];
 			  };
-		Action: string;
+		Action: string | string[];
 		Condition?: {
 			StringLike: {
 				[key: string]: string;

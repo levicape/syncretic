@@ -1,9 +1,14 @@
-import type { AwsClient } from "aws4fetch";
+import { AwsClient } from "aws4fetch";
 import VError from "verror";
 import { z } from "zod";
 
 export class AwsOrganizations {
-	constructor(private client: AwsClient) {}
+	constructor(private client: AwsClient) {
+		this.client = new AwsClient({
+			...client,
+			region: "us-east-1",
+		});
+	}
 
 	async CreateOrganization() {
 		const response = await this.client.fetch(
@@ -66,10 +71,6 @@ export class AwsOrganizations {
 		);
 
 		if (response.status !== 200) {
-			if (response.status === 400) {
-				return undefined;
-			}
-
 			console.dir(
 				{
 					AwsOrganizationClient: {
@@ -80,6 +81,9 @@ export class AwsOrganizations {
 				},
 				{ depth: null },
 			);
+			if (response.status === 400) {
+				return undefined;
+			}
 			throw new VError(
 				`Failed to describe organization: ${response.statusText}`,
 			);
@@ -211,6 +215,7 @@ export class AwsOrganizations {
 			},
 		);
 
+		// TODO: Paging generator
 		if (response.status !== 200) {
 			console.dir(
 				{

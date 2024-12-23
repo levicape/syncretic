@@ -52,17 +52,24 @@ export function GithubNodeWorkflowJobSetup<
 	};
 
 	let script = getScript(platformOptions);
-	const steps: GithubStepBuilder<string, string>[] = [
+	const steps: GithubStepBuilder<Uses, With>[] = [
 		...getPackageManager(platformOptions),
 		...getRuntime(platformOptions),
-	];
+	] as GithubStepBuilder<Uses, With>[];
 
 	if (scripts) {
-		steps.push(...scripts.flatMap((run) => script(run)));
+		steps.push(
+			...scripts.flatMap((run) => script(run) as GithubStepBuilder<Uses, With>),
+		);
 	}
 
 	if (children) {
-		steps.push(...children({ configuration, options }));
+		steps.push(
+			...(children({ configuration, options }) as GithubStepBuilder<
+				Uses,
+				With
+			>[]),
+		);
 	}
 
 	return {
@@ -101,16 +108,23 @@ export function GithubNodeWorkflowJobInstall<
 	};
 
 	let script = getScript(platformOptions);
-	const steps: GithubStepBuilder<string, string>[] = [
+	const steps: GithubStepBuilder<Uses, With>[] = [
 		...getInstallModules(platformOptions),
-	];
+	] as GithubStepBuilder<Uses, With>[];
 
 	if (scripts) {
-		steps.push(...scripts.flatMap((run) => script(run)));
+		steps.push(
+			...scripts.flatMap((run) => script(run) as GithubStepBuilder<Uses, With>),
+		);
 	}
 
 	if (children) {
-		steps.push(...children({ configuration, options }));
+		steps.push(
+			...(children({
+				configuration,
+				options,
+			} as GithubNodeWorkflowJobProps) as GithubStepBuilder<Uses, With>[]),
+		);
 	}
 
 	return {
@@ -149,8 +163,8 @@ export function GithubNodeWorkflowJobScript<
 	};
 
 	let script = getScript(platformOptions);
-	const steps: GithubStepBuilder<string, string>[] = [
-		...scripts.flatMap((run) => script(run)),
+	const steps: GithubStepBuilder<Uses, With>[] = [
+		...scripts.flatMap((run) => script(run) as GithubStepBuilder<Uses, With>),
 	];
 
 	return {

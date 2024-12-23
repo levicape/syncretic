@@ -27,7 +27,7 @@ export class AwsOIDC {
 			&Url=${Url}
 			${ClientIdList.map((ClientId, index) => `&ClientIDList.list.${index + 1}=${ClientId}`).join("")}
 			${ThumbprintList.map((Thumbprint, index) => `&ThumbprintList.list.${index + 1}=${Thumbprint}`).join("")}
-			${Tags?.map(({ Key, Value }, index) => `&Tags.member.${index + 1}.Key=${Key}&Tags.member.${index + 1}.Value=${Value}`)}
+			${Tags?.map(({ Key, Value }, index) => `&Tags.member.${index + 1}.Key=${Key}&Tags.member.${index + 1}.Value=${Value}`) ?? ""}
 			&Version=2010-05-08`,
 			{ aws: { signQuery: true, region: undefined } },
 		);
@@ -46,6 +46,12 @@ export class AwsOIDC {
 						status: response.status,
 						statusText: response.statusText,
 						body: await response.text(),
+					},
+					parms: {
+						Url,
+						ClientIdList,
+						ThumbprintList,
+						Tags,
 					},
 				},
 				{ depth: null },

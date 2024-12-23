@@ -1,9 +1,11 @@
 import { buildRouteMap } from "@stricli/core";
 import { AwsCodebuildGithubAuthCommand } from "./AwsCodebuildGithubAuthCommand.mjs";
+import { AwsCodebuildOidcCommand } from "./AwsCodebuildGithubOidcCommand.mjs";
 import { AwsCodebuildGithubRunnerCommand } from "./AwsCodebuildGithubRunnerCommand.mjs";
 
 export const AwsCodebuildGithubRoutemap = async () => {
 	const routemap = [
+		["oidc", await AwsCodebuildOidcCommand()],
 		["runner", await AwsCodebuildGithubRunnerCommand()],
 		["import-credentials", await AwsCodebuildGithubAuthCommand()],
 	] as const;
@@ -23,7 +25,7 @@ export const AwsCodebuildGithubRoutemap = async () => {
 				credentials: "import-credentials",
 				token: "import-credentials",
 				login: "import-credentials",
-				oidc: "runner",
+				connect: "oidc",
 				builder: "runner",
 			},
 			routes,

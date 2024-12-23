@@ -1,39 +1,56 @@
-export function jsx(
-	type: Function,
-	// biome-ignore lint/suspicious/noExplicitAny:
-	config: { children?: any[] } & Record<string, any>,
-) {
+export function jsx<
+	BuilderKind,
+	Children,
+	RenderProp,
+	FunctionProp extends (props: RenderProp) => Children[] | Children,
+	PropKeys extends string,
+>(
+	type: (config: Record<PropKeys, unknown>) => BuilderKind,
+	config: { children?: Children[] } & Record<PropKeys, unknown>,
+):
+	| BuilderKind
+	| {
+			type: (config: Record<PropKeys, unknown>) => BuilderKind;
+			props: Record<PropKeys, unknown | undefined> & {
+				children: Children | Children[] | FunctionProp;
+			};
+	  } {
 	if (typeof type === "function") {
 		return type(config);
 	}
-	const { children = [], ...props } = config;
-	// @ts-ignore
-	const childrenProps: unknown[] = [].concat(children).filter((child) => {
-		return child !== undefined && child !== null && child !== false;
-	});
+	const { ...props } = config;
+	let { children } = config;
+
+	let childrenProps: Children[] = [];
+	if (children !== undefined) {
+		if (!Array.isArray(children)) {
+			children = [children];
+		}
+		childrenProps = [...children].filter((child) => {
+			return child !== undefined && child !== null && child !== false;
+		});
+	}
 
 	return {
 		type,
 		props: {
 			...props,
 			children: childrenProps,
+		} as Record<PropKeys, unknown | undefined> & {
+			children: Children | Children[] | FunctionProp;
 		},
 	};
 }
 
 export const jsxs = jsx;
 
-export function Fragment(
-	// biome-ignore lint/suspicious/noExplicitAny:
-	config: { children?: any[] } & Record<string, any>,
-) {
+export function Fragment<Children, PropKeys extends string>(
+	config: { children?: Children[] } & Record<PropKeys, unknown>,
+): Children[] {
 	const { children = [] } = config;
-	const childrenProps: unknown[] = []
-		// @ts-ignore
-		.concat(children)
-		.filter((child) => {
-			return child !== undefined && child !== null && child !== false;
-		});
+	const childrenProps: Children[] = [...children].filter((child) => {
+		return child !== undefined && child !== null && child !== false;
+	});
 
 	if (childrenProps.some((child) => typeof child === "string")) {
 		throw new Error(

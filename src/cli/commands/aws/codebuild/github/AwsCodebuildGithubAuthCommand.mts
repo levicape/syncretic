@@ -2,16 +2,20 @@ import { buildCommand } from "@stricli/core";
 import VError from "verror";
 import { AwsCodebuild } from "../../../../../sdk/aws/clients/AwsCodebuild.mjs";
 import { AwsPrincipalNameFromPackageJson } from "../../../../context/PackageJson.mjs";
-import { RunAwsPrincipalOaaAssumeSequence } from "../../../../sequences/aws/AwsPrincipalOaaAssumeSequence.mjs";
+import {
+	PrefixPrincipal,
+	type PrefixPrincipalFlags,
+	PrefixPrincipalParameterFlags,
+} from "../../../../flags/PrefixPrincipal.mjs";
+import { RunAwsPrincipalFarAssumeSequence } from "../../../../sequences/aws/principal/AwsPrincipalFarAssumeSequence.mjs";
+
 type Flags = {
 	region: string;
 	token: string;
 	credentialsArn?: string;
 	oauth?: boolean;
-	prefix?: string;
 	replace: boolean;
-	role: string;
-};
+} & PrefixPrincipalFlags;
 
 export const AwsCodebuildGithubAuthCredentialsParameter = (
 	principal?: string,
@@ -24,14 +28,26 @@ export const AwsCodebuildGithubAuthCommand = async () => {
 			loader: async () => {
 				return async (flags: Flags) => {
 					{
-						const { region, role, oauth, prefix, replace } = flags;
-						const principal = await AwsPrincipalNameFromPackageJson({ prefix });
+						const {
+							region,
+							oauth,
+							prefix,
+							replace,
+							principal: principalFlag,
+						} = flags;
+						const principal = await new PrefixPrincipal(
+							{
+								prefix,
+								principal: principalFlag,
+							},
+							{ required: true },
+						).build();
+
 						let { credentialsArn, token } = flags;
 						let { assumed, parameters } =
-							await RunAwsPrincipalOaaAssumeSequence({
+							await RunAwsPrincipalFarAssumeSequence({
 								principal,
 								region,
-								role,
 							});
 						const codebuild = new AwsCodebuild(assumed);
 						let credentials: { arn: string } | undefined;
@@ -157,6 +173,7 @@ export const AwsCodebuildGithubAuthCommand = async () => {
 			},
 			parameters: {
 				flags: {
+					...PrefixPrincipalParameterFlags(),
 					region: {
 						brief: "AWS Region",
 						kind: "parsed",
@@ -168,19 +185,6 @@ export const AwsCodebuildGithubAuthCommand = async () => {
 						kind: "parsed",
 						parse: (value: string) => value,
 						optional: false,
-					},
-					role: {
-						brief: "Role to assume. Defaults to OrganizationAccountAccessRole",
-						kind: "parsed",
-						parse: (value: string) => value,
-						default: "OrganizationAccountAccessRole",
-					},
-					prefix: {
-						brief:
-							"Prefix for the principal. Defaults to 'dev'. Mutually exclusive with name",
-						kind: "parsed",
-						parse: (value: string) => value,
-						optional: true,
 					},
 					replace: {
 						brief: "Replace the existing credentials",

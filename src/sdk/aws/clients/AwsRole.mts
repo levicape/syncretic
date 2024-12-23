@@ -165,7 +165,7 @@ export class AwsRole {
 			throw new Error(`Failed to delete role: ${response.statusText}`);
 		}
 
-		return await response.json();
+		return;
 	}
 
 	async AssumeRole({

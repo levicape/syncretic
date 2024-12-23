@@ -6,26 +6,29 @@ import {
 } from "../../../../../sdk/aws/clients/AwsCodebuild.mjs";
 import { AwsPolicy } from "../../../../../sdk/aws/clients/AwsPolicy.mjs";
 import { AwsS3 } from "../../../../../sdk/aws/clients/AwsS3.mjs";
+import { PackageJsonRepositoryName } from "../../../../context/PackageJson.mjs";
 import {
-	AwsPrincipalNameFromPackageJson,
-	PackageJsonRepositoryName,
-} from "../../../../context/PackageJson.mjs";
-import { RunAwsPrincipalOaaAssumeSequence } from "../../../../sequences/aws/AwsPrincipalOaaAssumeSequence.mjs";
+	PrefixPrincipal,
+	type PrefixPrincipalFlags,
+	PrefixPrincipalParameterFlags,
+} from "../../../../flags/PrefixPrincipal.mjs";
 import {
-	AwsOrganizationPrincipalOIDCParameter,
-	waitForReady,
-} from "../../organization/AwsOrganizationPrincipalCommand.mjs";
+	UniqueIdReplace,
+	UniqueIdReplaceDefaultParseArn,
+	UniqueIdReplaceDefaultResourceName,
+	type UniqueIdReplaceFlags,
+} from "../../../../flags/UniqueIdReplace.mjs";
+import { WaitForReadySequence } from "../../../../sequences/WaitForReadySequence.mjs";
+import { RunAwsPrincipalFarAssumeSequence } from "../../../../sequences/aws/principal/AwsPrincipalFarAssumeSequence.mjs";
 import { AwsCodebuildGithubAuthCredentialsParameter } from "./AwsCodebuildGithubAuthCommand.mjs";
+import { AwsCodebuildOIDCParameter } from "./AwsCodebuildGithubOidcCommand.mjs";
 
 type Flags = {
 	region: string;
 	username?: string;
-	uniqueId?: string;
-	replace?: boolean;
 	source?: `s3://${string}` | `github://${string}`;
-	prefix?: string;
-	role: string;
-};
+} & UniqueIdReplaceFlags<boolean> &
+	PrefixPrincipalFlags;
 
 const CONSISTENCY_DELAY = (label: string, time: number) => async () => {
 	return new Promise<void>((resolve) => {
@@ -44,10 +47,7 @@ const CONSISTENCY_DELAY = (label: string, time: number) => async () => {
 const IAM_CONSISTENCY_DELAY = CONSISTENCY_DELAY("IAM", 8000);
 const CODEBUILD_CONSISTENCY_DELAY = CONSISTENCY_DELAY("CODEBUILD", 10000);
 
-export const AwsCodebuildGithubRunnerRoleParameter = (principal?: string) =>
-	`/fourtwo/${principal ? `${principal}` : "_principal"}/codebuild/github/runner/OidcRoleArn`;
-
-export const AwsCodebuildGithubRunnerArtifactsParameter = (
+export const AwsCodebuildGithubRunnerArtifactsBucketParameter = (
 	principal?: string,
 ) =>
 	`/fourtwo/${principal ? `${principal}` : "_principal"}/codebuild/github/runner/ArtifactsBucketName`;
@@ -63,16 +63,26 @@ export const AwsCodebuildGithubRunnerCommand = async () => {
 		buildCommand({
 			loader: async () => {
 				return async (flags: Flags) => {
-					const { region, prefix, username, replace, source, role } = flags;
-					const principal = await AwsPrincipalNameFromPackageJson({
+					const {
+						region,
 						prefix,
-					});
+						principal: principalFlag,
+						replace,
+						uniqueId: uniqueIdFlag,
+						username,
+						source,
+					} = flags;
+					const principal = await new PrefixPrincipal(
+						{ prefix, principal: principalFlag },
+						{
+							required: true,
+						},
+					).build();
 
 					let { assumed, parameters, account } =
-						await RunAwsPrincipalOaaAssumeSequence({
+						await RunAwsPrincipalFarAssumeSequence({
 							principal,
 							region,
-							role,
 						});
 
 					if (!account) {
@@ -90,7 +100,7 @@ export const AwsCodebuildGithubRunnerCommand = async () => {
 
 						const oidcParameter = (
 							await parameters.next({
-								template: AwsOrganizationPrincipalOIDCParameter,
+								template: AwsCodebuildOIDCParameter,
 								principal,
 							})
 						).value;
@@ -101,9 +111,9 @@ export const AwsCodebuildGithubRunnerCommand = async () => {
 							throw new VError(
 								{
 									name: "OIDC",
-									message: `OIDC role not found. Expected parameter: ${AwsOrganizationPrincipalOIDCParameter(
+									message: `OIDC role not found. Expected parameter: ${AwsCodebuildOIDCParameter(
 										principal,
-									)}. Please run \`paloma aws principal\` to initialize the required role.`,
+									)}. Please run \`fourtwo aws codebuild github oidc\` to initialize the required role.`,
 								},
 								"OIDC role not found",
 							);
@@ -149,12 +159,6 @@ export const AwsCodebuildGithubRunnerCommand = async () => {
 							);
 						}
 
-						let previousUniqueId = previousId?.split(":")[5]?.split("-")[1];
-						let uniqueId =
-							(flags.uniqueId ?? replace)
-								? Math.random().toString(36).substring(4)
-								: (previousUniqueId ?? Math.random().toString(36).substring(4));
-
 						let credentialsParameter = (
 							await parameters.next({
 								template: AwsCodebuildGithubAuthCredentialsParameter,
@@ -169,6 +173,26 @@ export const AwsCodebuildGithubRunnerCommand = async () => {
 								credentialsParameter,
 							);
 						}
+
+						let uniqueIdReplace = new UniqueIdReplace(
+							{
+								uniqueId: uniqueIdFlag,
+								replace,
+							},
+							{
+								region,
+								parameter: {
+									value: Promise.resolve(
+										projectParameter?.parameter.scoped?.value?.Parameter.Value,
+									),
+									parse: UniqueIdReplaceDefaultParseArn,
+									named: UniqueIdReplaceDefaultResourceName,
+								},
+							},
+						);
+
+						const { uniqueId, previousUniqueId } =
+							await uniqueIdReplace.build();
 
 						if (
 							uniqueId !== previousUniqueId &&
@@ -186,7 +210,7 @@ export const AwsCodebuildGithubRunnerCommand = async () => {
 
 						let artifactsParameter = (
 							await parameters.next({
-								template: AwsCodebuildGithubRunnerArtifactsParameter,
+								template: AwsCodebuildGithubRunnerArtifactsBucketParameter,
 								principal,
 							})
 						).value;
@@ -199,17 +223,27 @@ export const AwsCodebuildGithubRunnerCommand = async () => {
 							);
 						}
 
-						const artifacts = await s3.CreateBucket({
-							BucketName: `fourtwo-${uniqueId}-artifacts`,
-						});
+						let bucketLocation =
+							artifactsParameter?.parameter.scoped?.value?.Parameter.Value;
 
-						await artifactsParameter.update(artifacts.Bucket.Location!);
+						if (!bucketLocation) {
+							const artifacts = await s3.CreateBucket({
+								BucketName: (
+									await uniqueIdReplace.scoped("gha-runner-artifacts")
+								).resourceName,
+							});
+							bucketLocation =
+								artifacts.Bucket.Location !== null
+									? artifacts.Bucket.Location
+									: undefined;
+							await artifactsParameter.update(bucketLocation!);
+						}
 
 						console.dir(
 							{
 								AwsCodebuildGithubRunnerCommand: {
 									message: "Codebuild artifact bucket",
-									artifacts,
+									bucketLocation,
 								},
 							},
 							{ depth: null },
@@ -228,9 +262,16 @@ export const AwsCodebuildGithubRunnerCommand = async () => {
 						if (
 							assumeRolePolicy.Statement.some((s) => {
 								const isAssumeRole = s.Action === "sts:AssumeRole";
+
+								let serviceprincipal = (
+									s.Principal as {
+										Service?: string;
+									}
+								)?.Service;
+
 								const isCodebuild =
-									s.Principal?.Service !== undefined &&
-									s.Principal?.Service === "codebuild.amazonaws.com";
+									serviceprincipal !== undefined &&
+									serviceprincipal === "codebuild.amazonaws.com";
 								return s.Effect === "Allow" && isAssumeRole && isCodebuild;
 							})
 						) {
@@ -260,7 +301,7 @@ export const AwsCodebuildGithubRunnerCommand = async () => {
 								},
 							});
 
-							await waitForReady("Codebuild permissions", {
+							await WaitForReadySequence("Codebuild permissions", {
 								isReady: async () => {
 									const role = await policy.GetRole({
 										RoleName: oidcRole.split("/").pop()!,
@@ -268,9 +309,25 @@ export const AwsCodebuildGithubRunnerCommand = async () => {
 									return role.GetRoleResult.Role.AssumeRolePolicyDocument.Statement.some(
 										(s) => {
 											const isAssumeRole = s.Action === "sts:AssumeRole";
+
+											let awsprincipal = (
+												s.Principal as {
+													AWS?: string | string[];
+												}
+											)?.AWS;
+											if (awsprincipal !== undefined) {
+												return false;
+											}
+
+											let serviceprincipal = (
+												s.Principal as {
+													Service?: string;
+												}
+											)?.Service;
+
 											const isCodebuild =
-												s.Principal?.Service !== undefined &&
-												s.Principal?.Service === "codebuild.amazonaws.com";
+												serviceprincipal !== undefined &&
+												serviceprincipal === "codebuild.amazonaws.com";
 											return (
 												s.Effect === "Allow" && isAssumeRole && isCodebuild
 											);
@@ -289,7 +346,9 @@ export const AwsCodebuildGithubRunnerCommand = async () => {
 
 						await IAM_CONSISTENCY_DELAY();
 
-						let uniqueCodebuildName = `fourtwo-${uniqueId}-a64-lambda-nodejs20`;
+						let uniqueCodebuildName = (
+							await uniqueIdReplace.scoped(`project-a64-lambda-nodejs20`)
+						).resourceName;
 						if (uniqueCodebuildName.length > 150) {
 							uniqueCodebuildName = uniqueCodebuildName.slice(0, 150);
 						}
@@ -316,13 +375,17 @@ export const AwsCodebuildGithubRunnerCommand = async () => {
 								name: uniqueCodebuildName,
 								description: `Project for building ${await PackageJsonRepositoryName()}`,
 								source: projectSource,
-								artifacts: {
-									type: "S3",
-									location: artifacts.Bucket.Location!.replaceAll("/", ""),
-									packaging: "NONE",
-									bucketOwnerAccess: "FULL",
-									namespaceType: "BUILD_ID",
-								},
+								artifacts: bucketLocation
+									? {
+											type: "S3",
+											location: bucketLocation.replaceAll("/", ""),
+											packaging: "NONE",
+											bucketOwnerAccess: "FULL",
+											namespaceType: "BUILD_ID",
+										}
+									: {
+											type: "NO_ARTIFACTS",
+										},
 								// vpcConfig: {},
 								environment: {
 									type: "ARM_LAMBDA_CONTAINER",
@@ -393,7 +456,7 @@ export const AwsCodebuildGithubRunnerCommand = async () => {
 						console.dir(
 							{
 								AwsCodebuildGithubRunnerCommand: {
-									message: " Updated Codebuild Webhook",
+									message: "Updated Codebuild Webhook",
 									webhook,
 								},
 							},
@@ -440,6 +503,7 @@ export const AwsCodebuildGithubRunnerCommand = async () => {
 			},
 			parameters: {
 				flags: {
+					...PrefixPrincipalParameterFlags(),
 					region: {
 						brief: "AWS Region",
 						kind: "parsed",
@@ -448,18 +512,6 @@ export const AwsCodebuildGithubRunnerCommand = async () => {
 					},
 					username: {
 						brief: "Username",
-						kind: "parsed",
-						parse: (value: string) => value,
-						optional: true,
-					},
-					role: {
-						brief: "Role to assume. Defaults to OrganizationAccountAccessRole",
-						kind: "parsed",
-						parse: (value: string) => value,
-						default: "OrganizationAccountAccessRole",
-					},
-					uniqueId: {
-						brief: "Unique ID",
 						kind: "parsed",
 						parse: (value: string) => value,
 						optional: true,
@@ -487,12 +539,6 @@ export const AwsCodebuildGithubRunnerCommand = async () => {
 					replace: {
 						brief: "Replace",
 						kind: "boolean",
-						optional: true,
-					},
-					prefix: {
-						brief: "Prefix for the principal. Defaults to 'dev'",
-						kind: "parsed",
-						parse: (value: string) => value,
 						optional: true,
 					},
 				},

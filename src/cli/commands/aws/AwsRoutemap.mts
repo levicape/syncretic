@@ -2,19 +2,26 @@ import { buildRouteMap } from "@stricli/core";
 import { AwsCodebuildRouteMap } from "./codebuild/AwsCodebuildRoutemap.mjs";
 import { AwsCodecatalystRoutemap } from "./codecatalyst/AwsCodecatalystRoutemap.mjs";
 import { AwsOrganizationRoutemap } from "./organization/AwsOrganizationRoutemap.mjs";
+import { AwsPulumiRouteMap } from "./pulumi/AwsPulumiRoutemap.mjs";
 
 export const AwsRoutemap = async () => {
-	const [prepareOrganization, prepareCodebuild, prepareCodecatalyst] =
-		await Promise.all([
-			AwsOrganizationRoutemap(),
-			AwsCodebuildRouteMap(),
-			AwsCodecatalystRoutemap(),
-		]);
+	const [
+		prepareOrganization,
+		prepareCodebuild,
+		prepareCodecatalyst,
+		preparePulumi,
+	] = await Promise.all([
+		AwsOrganizationRoutemap(),
+		AwsCodebuildRouteMap(),
+		AwsCodecatalystRoutemap(),
+		AwsPulumiRouteMap(),
+	]);
 
-	const [organization, codebuild, codecatalyst] = await Promise.all([
+	const [organization, codebuild, codecatalyst, pulumi] = await Promise.all([
 		prepareOrganization(),
 		prepareCodebuild(),
 		prepareCodecatalyst(),
+		preparePulumi(),
 	]);
 
 	return async () =>
@@ -23,6 +30,7 @@ export const AwsRoutemap = async () => {
 				org: "organization",
 				catalyst: "codecatalyst",
 				codeb: "codebuild",
+				state: "pulumi",
 				// codec: "codecommit",
 				// codep: "codepipeline",
 				// codea: "codeartifact",
@@ -31,6 +39,7 @@ export const AwsRoutemap = async () => {
 				organization,
 				codebuild,
 				codecatalyst,
+				pulumi,
 			},
 			docs: {
 				brief:

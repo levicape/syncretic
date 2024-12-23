@@ -5,3 +5,4 @@ export * from "./AwsOrganizations.mjs";
 export * from "./AwsPolicy.mjs";
 export * from "./AwsRole.mjs";
 export * from "./AwsS3.mjs";
+export * from "./AwsSystemsManager.mjs";
