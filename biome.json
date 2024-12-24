@@ -13,7 +13,8 @@
     "linter": {
       "rules": {
         "correctness": {
-          "useJsxKeyInIterable": "off"
+          "useJsxKeyInIterable": "off",
+          "noChildrenProp": "off"
         },
         "suspicious": {
             "noAssignInExpressions": "off",

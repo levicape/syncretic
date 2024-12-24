@@ -203,6 +203,12 @@ importers:
         specifier: 'catalog:'
         version: 0.0.7-nx-main.2(typescript@5.7.2)
 
+  iac/development:
+    dependencies:
+      '@levicape/fourtwo':
+        specifier: 'workspace:'
+        version: link:../..
+
   iac/stacks:
     dependencies:
       '@levicape/fourtwo-pulumi':

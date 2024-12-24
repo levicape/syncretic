@@ -1,0 +1,34 @@
+{
+	"name": "iac-images",
+	"$schema": "../../node_modules/nx/schemas/nx-schema.json",
+	"targets": {
+		"cli:pack": {
+			"executor": "nx:run-commands",
+			"options": {
+				"env": {
+					"DOCKER_SOCKET": "/var/run/docker.sock:/var/run/docker.sock",
+					"DOCKER_WORKSPACE": "/workspace",
+					"PAKETO_IMAGE": "buildpacksio/pack"
+				},
+				"forwardAllArgs": true,
+				"commands": [
+					"docker run --rm -v $DOCKER_SOCKET -v $PWD:$DOCKER_WORKSPACE -w $DOCKER_WORKSPACE $PAKETO_IMAGE"
+				]
+			}
+		},
+		"cli:dive": {
+			"executor": "nx:run-commands",
+			"options": {
+				"env": {
+					"DOCKER_SOCKET": "/var/run/docker.sock:/var/run/docker.sock",
+					"DOCKER_WORKSPACE": "/workspace",
+					"DIVE_IMAGE": "wagoodman/dive"
+				},
+				"forwardAllArgs": true,
+				"commands": [
+					"docker run --rm -v $DOCKER_SOCKET -v $PWD:$DOCKER_WORKSPACE -w $DOCKER_WORKSPACE $DIVE_IMAGE --ci"
+				]
+			}
+		}
+	}
+}

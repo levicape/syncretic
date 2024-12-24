@@ -1,11 +1,10 @@
 packages:
   - '.'
+  - 'iac/*'
+  - 'iac/images/*'
   - 'canary'
   - 'packages/*'
   - 'protocols/*'
-  - 'iac/workflows'
-  - 'iac/stacks'
-
 
 catalog:
   "@levicape/paloma": "0.0.7-nx-main.2"

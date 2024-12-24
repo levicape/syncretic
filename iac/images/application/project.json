@@ -1,0 +1,21 @@
+{
+	"name": "iac-images-application",
+	"$schema": "../../../node_modules/nx/schemas/nx-schema.json",
+	"targets": {
+		"pack:build": {
+			"executor": "nx:run-commands",
+			"options": {
+				"env": {
+					"IMAGE_NAME": "fourtwo",
+					"PAKETO_BUILDER": "heroku/builder:24",
+					"CI": "true"
+				},
+				"commands": [
+					"npx nx run iac-images:cli:pack build $IMAGE_NAME --builder $PAKETO_BUILDER",
+					"npx nx run iac-images:cli:dive $IMAGE_NAME"
+				],
+				"parallel": false
+			}
+		}
+	}
+}
