@@ -1,3 +1,5 @@
+import VError from "verror";
+
 // Command
 export type DevfileCommand<Id extends string> = {
 	id: Id;
@@ -11,7 +13,17 @@ export type DevfileCommand<Id extends string> = {
 export class DevfileCommandBuilder<Id extends string> {
 	private exec: DevfileCommand<Id>["exec"];
 
-	constructor(private id: Id) {}
+	constructor(private id: Id) {
+		if (id.includes(" ")) {
+			throw new VError("Id cannot contain spaces");
+		}
+
+		if (id.match(/[^a-zA-Z0-9-]/)) {
+			throw new VError(
+				"Id can only contain alphanumeric characters and hyphens",
+			);
+		}
+	}
 
 	setId(id: Id): this {
 		this.id = id;

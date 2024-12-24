@@ -84,12 +84,28 @@ Actions:
             - Run: npm exec n 22
             - Run: npm exec pnpm list
             - Run: npm exec pnpm test
+  image:
+    Actions:
+      Build:
+        Identifier: aws/build@v1.0.0
+        Timeout: 10
+        Configuration:
+          Container:
+            Registry: CODECATALYST
+            Image: CodeCatalystLinux_Arm64:2024_03
+          Steps:
+            - Run: npm config set prefix=$(pwd)/.npm-global
+            - Run: npm exec pnpm config set store-dir $(pwd)/.pnpm-store
+            - Run: npm exec n 22
+            - Run: npm exec pnpm install
+            - Run: npm exec pnpm list
+            - Run: npm exec pnpm exec nx pack:build iac-images-application --verbose
 
 ########################################
 ########################################
 #**:_$~- {"$$":"head","filename":"[push(b:main)]CodeCatalystMainPush.yml","source":"iac/workflows/codecatalyst/push/CodeCatalystMainPush.js"}
 #**:_$~- {"$$":"script","generator":"codegen/codecatalyst/GenerateCodeCatalystWorkflow.mts"}
-#**:_$~- {"$$":"body","hashed":"a8debf6d5a706d221e7fc94ae2a2b8fc50ff53a8375ee077e3a20426ad3c2a44"}
-#**:_$~- {"$$":"footer","started":"2024-12-20T06:12:07.933Z","now":"2024-12-20T06:12:07.938Z","elapsed":"5ms"}
+#**:_$~- {"$$":"body","hashed":"0d6185a73b8a3b86b4bd9df4464909f005e1c4bfe864ad234ed9cff48bf777c3"}
+#**:_$~- {"$$":"footer","started":"2024-12-24T15:10:47.722Z","now":"2024-12-24T15:10:47.728Z","elapsed":"6ms"}
 # END OF GENERATED FILE
 

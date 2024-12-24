@@ -14,17 +14,22 @@ import {
 let data = (
 	<DevfileX
 		metadata={<DevfileMetadataX name={"fourtwo"} />}
-		components={[<DevfileSourceComponentX name={"source"} />,
-			<DevfileComponentX name={"dockerstore"} />
-		]}
-		events={<DevfileEventX postStart={["pnpm"]} />}
+		components={[<DevfileSourceComponentX name={"source"} />]}
+		events={<DevfileEventX postStart={["update-node", "install-pnpm"]} />}
 	>
 		{[
 			<DevfileCommandX
-				id={"pnpm"}
+				id={"update-node"}
 				exec={{
 					component: "source",
-					commandLine: "npx corepack install",
+					commandLine: "sudo npx -y n 22",
+				}}
+			/>,
+			<DevfileCommandX
+				id={"install-pnpm"}
+				exec={{
+					component: "source",
+					commandLine: "npx -y corepack install",
 				}}
 			/>,
 		]}

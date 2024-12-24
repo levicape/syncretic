@@ -51,17 +51,61 @@ jobs:
       - name: Install Dependencies
         run: pnpm install;
       - name: Compile
-        run: pnpx nx run-many -t compile --parallel=1 --verbose --no-cloud;
+        run: pnpm exec run-many -t compile --parallel=1 --verbose --no-cloud;
       - name: Lint
-        run: pnpx nx run-many -t lint --parallel=1 --verbose --no-cloud;
+        run: pnpm exec run-many -t lint --parallel=1 --verbose --no-cloud;
       - name: Test
-        run: pnpx nx run-many -t test --parallel=1 --verbose --no-cloud;
+        run: pnpm exec nx run-many -t test --parallel=1 --verbose --no-cloud;
+  build-image:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+      - name: Setup Node 22.12.0
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.12.0
+          registry-url: ${{ env.NPM_REGISTRY_PROTOCOL }}://${{ env.NPM_REGISTRY_HOST }}
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+          scope: "@levicape"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - id: cache-npm
+        name: Cache node modules
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-build-npm-node-modules-${{ hashFiles('**/pnpm-lock.json') }}
+          restore-keys: ${{ runner.os }}-build-npm-node-modules-
+      - name: Get pnpm store directory
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV;
+      - id: cache-pnpm-store
+        name: Cache pnpm files
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.json') }}
+          restore-keys: ${{ runner.os }}-pnpm-store-
+      - if: ${{ steps.cache-npm.outputs.cache-hit != 'true' }}
+        name: List Dependencies
+        continue-on-error: true
+        run: pnpm list;
+      - name: Install Dependencies
+        run: pnpm install;
+      - name: Build Docker Image
+        env:
+          IMAGE_NAME: levicape-fourtwo
+        run: pnpm exec nx pack:build iac-images-application --verbose;
 
 ########################################
 ########################################
 #**:_$~- {"$$":"head","filename":"[push(b:main)]GithubMainPush.yml","source":"iac/workflows/github/push/GithubMainPush.js"}
 #**:_$~- {"$$":"script","generator":"codegen/github/GenerateGithubWorkflow.mts"}
-#**:_$~- {"$$":"body","hashed":"580670b8bd6aeda5a37edf6f8a1ee780ab7f749f57fdf55a44b5709dfe74e35b"}
-#**:_$~- {"$$":"footer","started":"2024-12-20T13:05:22.435Z","now":"2024-12-20T13:05:22.441Z","elapsed":"6ms"}
+#**:_$~- {"$$":"body","hashed":"40a0c8546e5ac5de686a6ea1434107f19f0f59a5be1d67c1c8467d5ae58fc902"}
+#**:_$~- {"$$":"footer","started":"2024-12-24T15:10:48.227Z","now":"2024-12-24T15:10:48.233Z","elapsed":"6ms"}
 # END OF GENERATED FILE
 

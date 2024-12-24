@@ -14,7 +14,6 @@ import {
 } from "@levicape/fourtwo/x/github";
 import {
 	GithubStepNodeInstallX,
-	GithubStepNodeScriptsX,
 	GithubStepNodeSetupX,
 } from "@levicape/fourtwo/x/github/node";
 
@@ -70,20 +69,48 @@ export default (): GithubWorkflowBuilder<string, string> => (
 									<GithubStepX
 										name="Compile"
 										run={[
-											"pnpx nx run-many -t compile --parallel=1 --verbose --no-cloud",
+											"pnpm exec run-many -t compile --parallel=1 --verbose --no-cloud",
 										]}
 									/>
 									<GithubStepX
 										name="Lint"
 										run={[
-											"pnpx nx run-many -t lint --parallel=1 --verbose --no-cloud",
+											"pnpm exec run-many -t lint --parallel=1 --verbose --no-cloud",
 										]}
 									/>
 									<GithubStepX
 										name="Test"
 										run={[
-											"pnpx nx run-many -t test --parallel=1 --verbose --no-cloud",
+											"pnpm exec nx run-many -t test --parallel=1 --verbose --no-cloud",
 										]}
+									/>
+								</>
+							);
+						}}
+					</GithubStepNodeSetupX>
+				</>
+			}
+		/>
+		<GithubJobX
+			id="build-image"
+			name="Build Docker Image"
+			runsOn={GithubJobBuilder.defaultRunsOn()}
+			steps={
+				<>
+					<GithubStepCheckoutX />
+					<GithubStepNodeSetupX configuration={NodeGhaConfiguration({ env })}>
+						{(node) => {
+							return (
+								<>
+									<GithubStepNodeInstallX {...node} />
+									<GithubStepX
+										name="Build Docker Image"
+										run={[
+											"pnpm exec nx pack:build iac-images-application --verbose",
+										]}
+										env={{
+											IMAGE_NAME: "levicape-fourtwo",
+										}}
 									/>
 								</>
 							);

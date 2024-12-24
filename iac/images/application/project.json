@@ -6,13 +6,13 @@
 			"executor": "nx:run-commands",
 			"options": {
 				"env": {
-					"IMAGE_NAME": "fourtwo",
+					"DEFAULT_IMAGE_NAME": "fourtwo",
 					"PAKETO_BUILDER": "heroku/builder:24",
 					"CI": "true"
 				},
 				"commands": [
-					"npx nx run iac-images:cli:pack build $IMAGE_NAME --builder $PAKETO_BUILDER",
-					"npx nx run iac-images:cli:dive $IMAGE_NAME"
+					"npx nx run iac-images:cli:pack build $DEFAULT_IMAGE_NAME --builder $PAKETO_BUILDER",
+					"npx nx run iac-images:cli:dive $DEFAULT_IMAGE_NAME"
 				],
 				"parallel": false
 			}

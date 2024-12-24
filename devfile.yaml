@@ -9,12 +9,16 @@ components:
       command:
         - sleep
         - infinity
-  - name: dockerstore
 commands:
-  - id: pnpm
+  - id: update-node
     exec:
       component: source
-      commandLine: npx corepack install
+      commandLine: sudo npx -y n 22
+  - id: install-pnpm
+    exec:
+      component: source
+      commandLine: npx -y corepack install
 events:
   postStart:
-    - pnpm
+    - update-node
+    - install-pnpm

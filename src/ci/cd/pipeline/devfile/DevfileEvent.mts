@@ -1,3 +1,5 @@
+import VError from "verror";
+
 ///// Event
 export type DevfileEvent<Id extends string> = {
 	postStart: NoInfer<Id>[];
@@ -12,16 +14,17 @@ export class DevfileEventBuilder<Id extends string> {
 	}
 
 	build() {
+		this.postStart.forEach((id) => {
+			if (id.includes(" ")) {
+				throw new VError("Id cannot contain spaces");
+			}
+
+			if (id.match(/[^a-zA-Z0-9-]/)) {
+				throw new VError(
+					"Id can only contain alphanumeric characters and hyphens",
+				);
+			}
+		});
 		return { postStart: this.postStart };
 	}
 }
-
-export type DevfileEventProps<Id extends string> = {
-	postStart: NoInfer<Id>[];
-};
-
-export const DevfileEventX = <Id extends string>(
-	props: DevfileEventProps<Id>,
-): DevfileEventBuilder<Id> => {
-	return new DevfileEventBuilder<Id>().setPostStart(props.postStart);
-};

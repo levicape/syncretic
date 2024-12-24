@@ -139,6 +139,34 @@ export default async () => (
 					}}
 				</CodeCatalystActionGroupX>
 			),
+			image: (
+				<CodeCatalystActionGroupX>
+					{{
+						Build: (
+							<CodeCatalystBuildX
+								architecture={"arm64"}
+								timeout={10}
+								steps={
+									<>
+										<CodeCatalystStepX
+											run={"npm config set prefix=$(pwd)/.npm-global"}
+										/>
+										<CodeCatalystStepX
+											run={
+												"npm exec pnpm config set store-dir $(pwd)/.pnpm-store"
+											}
+										/>
+										<CodeCatalystStepX run="npm exec n 22" />
+										<CodeCatalystStepX run="npm exec pnpm install" />
+										<CodeCatalystStepX run="npm exec pnpm list" />
+										<CodeCatalystStepX run="npm exec pnpm exec nx pack:build iac-images-application --verbose" />
+									</>
+								}
+							/>
+						),
+					}}
+				</CodeCatalystActionGroupX>
+			),
 		}}
 	</CodeCatalystWorkflowX>
 );
