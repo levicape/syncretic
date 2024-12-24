@@ -549,9 +549,10 @@ export type CodeCatalystActionGroupPart<
 	$id: ParentDependsOn;
 	actions: CodeCatalystActionBuilder<
 		Identifiers,
-		DependsOn,
+		DependsOn | ParentDependsOn,
 		string,
 		Partial<Record<string, unknown>>,
 		Partial<Record<string, unknown>>
 	>[];
+	dependsOn?: ParentDependsOn[];
 };

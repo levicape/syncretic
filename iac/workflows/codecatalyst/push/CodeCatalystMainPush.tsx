@@ -140,7 +140,7 @@ export default async () => (
 				</CodeCatalystActionGroupX>
 			),
 			image: (
-				<CodeCatalystActionGroupX>
+				<CodeCatalystActionGroupX dependsOn={["ci"]}>
 					{{
 						Build: (
 							<CodeCatalystBuildX

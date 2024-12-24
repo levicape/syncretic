@@ -143,7 +143,7 @@ export class CodeCatalystWorkflowBuilder<
 			throw new VError("No triggers added to workflow");
 		}
 
-		return {
+		const workflow = {
 			Name: this.name,
 			RunMode: this.runMode,
 			SchemaVersion: "1.0",
@@ -172,8 +172,9 @@ export class CodeCatalystWorkflowBuilder<
 							  },
 					) => {
 						if ("$id" in factory) {
-							const { $id, actions } = factory as {
+							const { $id, actions, dependsOn } = factory as {
 								$id: string;
+								dependsOn?: DependsOn[];
 								actions: CodeCatalystActionBuilder<
 									Identifiers,
 									DependsOn,
@@ -205,7 +206,12 @@ export class CodeCatalystWorkflowBuilder<
 									children.forEach(recursive);
 									return gacc;
 								},
-								{ Actions: {} } as Record<
+
+								// This builds each action YAML
+								{
+									...(dependsOn ? { DependsOn: dependsOn } : {}),
+									Actions: {},
+								} as Record<
 									string,
 									// biome-ignore lint/suspicious/noExplicitAny:
 									CodeCatalystAction<string, string, any, any>
@@ -259,7 +265,7 @@ export class CodeCatalystWorkflowBuilder<
 						>,
 						path: string[],
 					) => {
-						if ("DependsOn" in node) {
+						if ("DependsOn" in node && node.DependsOn !== undefined) {
 							(node.DependsOn as unknown as string[]).forEach((id) => {
 								if (!allids.includes(id)) {
 									throw new VError(
@@ -290,5 +296,35 @@ export class CodeCatalystWorkflowBuilder<
 				{} as Record<string, CodeCatalystAction<string, string, any, any>>,
 			),
 		};
+
+		const isSharedCompute =
+			(
+				this.compute as {
+					SharedInstance?: string;
+				}
+			).SharedInstance === "TRUE";
+
+		if (isSharedCompute) {
+			let allDependsOn = Object.entries(workflow.Actions).map((action) => {
+				let dependsOn = action[1].DependsOn || [];
+				return [action[0], dependsOn] as [string, DependsOn[]];
+			});
+
+			let roots = allDependsOn.filter(([_, deps]) => deps.length === 0);
+
+			if (roots.length !== 1) {
+				throw new VError(
+					{
+						name: "INVALID_WORKFLOW",
+						info: { workflow, roots },
+					},
+					`Shared compute workflows must have exactly one root action. ${JSON.stringify(
+						roots,
+					)} found`,
+				);
+			}
+		}
+
+		return workflow as CodeCatalystWorkflow<DependsOn, Inputs, Outputs>;
 	}
 }

@@ -96,6 +96,7 @@ export const CodeCatalystWorkflowX = <
 			if ("actions" in action) {
 				let group = action as unknown as {
 					$id: string;
+					dependsOn: DependsOn[];
 					actions: CodeCatalystActionBuilder<
 						Identifiers,
 						DependsOn,

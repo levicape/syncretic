@@ -6,8 +6,10 @@ import type {
 
 export type CodeCatalystActionGroupXProps<
 	Identifiers extends string,
+	ParentDependsOn extends string,
 	DependsOn extends string,
 > = {
+	dependsOn?: ParentDependsOn[];
 	children?: Record<
 		DependsOn,
 		CodeCatalystActionBuilder<
@@ -25,7 +27,7 @@ export const CodeCatalystActionGroupX = <
 	ParentDependsOn extends string,
 	DependsOn extends string,
 >(
-	props: CodeCatalystActionGroupXProps<Identifiers, DependsOn>,
+	props: CodeCatalystActionGroupXProps<Identifiers, ParentDependsOn, DependsOn>,
 ): CodeCatalystActionGroupPart<Identifiers, ParentDependsOn, DependsOn> => {
 	const { children } = props;
 
@@ -38,7 +40,7 @@ export const CodeCatalystActionGroupX = <
 		string,
 		CodeCatalystActionBuilder<
 			Identifiers,
-			DependsOn,
+			DependsOn | ParentDependsOn,
 			string,
 			Partial<Record<string, unknown>>,
 			Partial<Record<string, unknown>>
@@ -52,5 +54,6 @@ export const CodeCatalystActionGroupX = <
 		$$kind: "group",
 		$id: "some-id" as ParentDependsOn,
 		actions,
+		dependsOn: props.dependsOn,
 	};
 };

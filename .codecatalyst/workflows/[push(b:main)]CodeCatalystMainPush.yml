@@ -85,6 +85,8 @@ Actions:
             - Run: npm exec pnpm list
             - Run: npm exec pnpm test
   image:
+    DependsOn:
+      - ci
     Actions:
       Build:
         Identifier: aws/build@v1.0.0
@@ -105,7 +107,7 @@ Actions:
 ########################################
 #**:_$~- {"$$":"head","filename":"[push(b:main)]CodeCatalystMainPush.yml","source":"iac/workflows/codecatalyst/push/CodeCatalystMainPush.js"}
 #**:_$~- {"$$":"script","generator":"codegen/codecatalyst/GenerateCodeCatalystWorkflow.mts"}
-#**:_$~- {"$$":"body","hashed":"0d6185a73b8a3b86b4bd9df4464909f005e1c4bfe864ad234ed9cff48bf777c3"}
-#**:_$~- {"$$":"footer","started":"2024-12-24T15:10:47.722Z","now":"2024-12-24T15:10:47.728Z","elapsed":"6ms"}
+#**:_$~- {"$$":"body","hashed":"902ffe05f07ab4cfe1660f8b22174e16fd1988cfd0dcad6c821dca52da9e3273"}
+#**:_$~- {"$$":"footer","started":"2024-12-24T15:42:20.766Z","now":"2024-12-24T15:42:20.771Z","elapsed":"5ms"}
 # END OF GENERATED FILE
 

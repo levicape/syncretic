@@ -69,13 +69,13 @@ export default (): GithubWorkflowBuilder<string, string> => (
 									<GithubStepX
 										name="Compile"
 										run={[
-											"pnpm exec run-many -t compile --parallel=1 --verbose --no-cloud",
+											"pnpm exec nx run-many -t compile --parallel=1 --verbose --no-cloud",
 										]}
 									/>
 									<GithubStepX
 										name="Lint"
 										run={[
-											"pnpm exec run-many -t lint --parallel=1 --verbose --no-cloud",
+											"pnpm exec nx run-many -t lint --parallel=1 --verbose --no-cloud",
 										]}
 									/>
 									<GithubStepX
