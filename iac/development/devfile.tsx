@@ -4,7 +4,6 @@
 
 import {
 	DevfileCommandX,
-	DevfileComponentX,
 	DevfileEventX,
 	DevfileMetadataX,
 	DevfileSourceComponentX,
@@ -15,7 +14,11 @@ let data = (
 	<DevfileX
 		metadata={<DevfileMetadataX name={"fourtwo"} />}
 		components={[<DevfileSourceComponentX name={"source"} />]}
-		events={<DevfileEventX postStart={["update-node", "install-pnpm"]} />}
+		events={
+			<DevfileEventX
+				postStart={["update-node", "install-pnpm", "start-docker"]}
+			/>
+		}
 	>
 		{[
 			<DevfileCommandX
@@ -29,7 +32,14 @@ let data = (
 				id={"install-pnpm"}
 				exec={{
 					component: "source",
-					commandLine: "npx -y corepack install",
+					commandLine: "npx -y corepack use pnpm@latest",
+				}}
+			/>,
+			<DevfileCommandX
+				id={"start-docker"}
+				exec={{
+					component: "source",
+					commandLine: "./entrypoint.sh",
 				}}
 			/>,
 		]}

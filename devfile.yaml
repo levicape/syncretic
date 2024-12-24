@@ -17,8 +17,14 @@ commands:
   - id: install-pnpm
     exec:
       component: source
-      commandLine: npx -y corepack install
+      commandLine: npx -y corepack use pnpm@latest
+  - id: start-docker
+    exec:
+      component: source
+      commandLine: ./entrypoint.sh
 events:
   postStart:
     - update-node
     - install-pnpm
+    - start-docker
+
