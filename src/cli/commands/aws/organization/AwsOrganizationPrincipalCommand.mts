@@ -199,24 +199,34 @@ export const AwsOrganizationPrincipalCommand = async () => {
 					roles = new AwsRole(assumed);
 
 					let farRole: Awaited<ReturnType<typeof roles.CreateRole>>;
+					let farPolicy = {
+						Version: "2012-10-17",
+						Statement: [
+							{
+								Effect: "Allow" as const,
+								Action: "sts:AssumeRole",
+								Principal: {
+									AWS: [
+										`arn:aws:iam::${org.Organization.MasterAccountId}:root`,
+									],
+									Service: [
+										"codebuild.amazonaws.com",
+										"codepipeline.amazonaws.com",
+										"codedeploy.amazonaws.com",
+										"codecommit.amazonaws.com",
+										"codeartifact.amazonaws.com",
+										"codecatalyst.amazonaws.com",
+										"codecatalyst-runner.amazonaws.com",
+									],
+								},
+							},
+						],
+					};
+
 					farRole = await roles.CreateRole(
 						{
 							RoleName: AwsOrganizationPrincipalFAR,
-							AssumeRolePolicyDocument: JSON.stringify({
-								Version: "2012-10-17",
-								Statement: [
-									{
-										Effect: "Allow",
-										Action: "sts:AssumeRole",
-										Principal: {
-											AWS: [
-												`arn:aws:iam::${org.Organization.MasterAccountId}:root`,
-												`arn:aws:iam::${org.Organization.MasterAccountId}:role/OrganizationAccountAccessRole`,
-											],
-										},
-									},
-								],
-							}),
+							AssumeRolePolicyDocument: JSON.stringify(farPolicy),
 						},
 						{ iam: principal?.Id ?? "<account-arn>" },
 					);
@@ -227,12 +237,27 @@ export const AwsOrganizationPrincipalCommand = async () => {
 								message:
 									farRole.$kind === "new"
 										? "Created Role"
-										: "Role already exists",
+										: "Role already exists. Updating role policy.",
 								farRole,
 							},
 						},
 						{ depth: null },
 					);
+
+					if (farRole.$kind === "existing") {
+						policies.UpdateAssumeRolePolicy({
+							RoleName: AwsOrganizationPrincipalFAR,
+							PolicyDocument: farPolicy,
+						});
+
+						console.dir({
+							PrincipalCommand: {
+								message: "Updated assume policy",
+								farRole,
+							},
+						});
+					}
+
 					await new Promise((resolve) =>
 						setTimeout(resolve, IAM_CONSISTENCY_DELAY),
 					);

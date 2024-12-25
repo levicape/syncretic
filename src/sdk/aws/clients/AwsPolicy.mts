@@ -19,6 +19,12 @@ export type RolePolicy = {
 			| {
 					AWS: string | string[];
 					Federated?: string | string[];
+					Service?: never;
+			  }
+			| {
+					AWS: string | string[];
+					Service?: string | string[];
+					Federated?: never;
 			  };
 		Action: string | string[];
 		Condition?: {

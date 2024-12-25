@@ -7,11 +7,10 @@
 			"options": {
 				"env": {
 					"DEFAULT_IMAGE_NAME": "fourtwo",
-					"PAKETO_BUILDER": "heroku/builder:24",
-					"CI": "true"
+					"PAKETO_BUILDER": "heroku/builder:24"
 				},
 				"commands": [
-					"npx nx run iac-images:cli:pack build $DEFAULT_IMAGE_NAME --builder $PAKETO_BUILDER"
+					"pnpm exec nx run iac-images:cli:pack build $DEFAULT_IMAGE_NAME --builder $PAKETO_BUILDER"
 				]
 			}
 		},
@@ -20,11 +19,9 @@
 			"dependsOn": ["pack:build"],
 			"options": {
 				"env": {
-					"DEFAULT_IMAGE_NAME": "fourtwo",
-					"PAKETO_BUILDER": "heroku/builder:24",
-					"CI": "true"
+					"DEFAULT_IMAGE_NAME": "fourtwo"
 				},
-				"commands": ["npx nx run iac-images:cli:dive $DEFAULT_IMAGE_NAME"]
+				"commands": ["pnpm exec nx run iac-images:cli:dive $DEFAULT_IMAGE_NAME"]
 			}
 		}
 	}

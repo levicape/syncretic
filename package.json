@@ -42,7 +42,7 @@
     "typescript": "catalog:dev"
   },
   "engines": {
-    "node": ">=22.0.0"
+    "node": ">=23.3.0"
   },
   "exports": {
     ".": {
