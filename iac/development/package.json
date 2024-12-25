@@ -1,4 +1,5 @@
 {
+  "name": "iac-development",
   "dependencies": {
     "@levicape/fourtwo": "workspace:"
   },

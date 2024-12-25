@@ -1,5 +1,8 @@
 import type { AwsClient } from "aws4fetch";
-import { z } from "zod";
+import { z, type infer as zinfer } from "zod";
+
+const putParameterResponse = z.object({ Version: z.number() });
+type PutParameterResponse = zinfer<typeof putParameterResponse>;
 
 export class AwsSystemsManager {
 	constructor(private client: AwsClient) {}
@@ -62,7 +65,7 @@ export class AwsSystemsManager {
 		Value: string;
 		Type: "String" | "StringList" | "SecureString";
 		Overwrite?: boolean;
-	}) {
+	}): Promise<PutParameterResponse> {
 		const response = await this.client.fetch(
 			`https://ssm.${this.client.region}.amazonaws.com`,
 			{
@@ -94,10 +97,6 @@ export class AwsSystemsManager {
 			throw new Error(`Failed to put parameter: ${response.statusText}`);
 		}
 
-		return z
-			.object({
-				Version: z.number(),
-			})
-			.parse(await response.json());
+		return putParameterResponse.parse(await response.json());
 	}
 }

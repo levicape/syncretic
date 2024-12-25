@@ -1,7 +1,13 @@
-import { buildRouteMap } from "@stricli/core";
+import {
+	type CommandContext,
+	type RouteMap,
+	buildRouteMap,
+} from "@stricli/core";
 import { AwsCodecatalystWorkflowsGenerateCommand } from "./AwsCodecatalystWorkflowsGenerateCommand.mjs";
 
-export const AwsCodecatalystWorkflowsRoutemap = async () => {
+export const AwsCodecatalystWorkflowsRoutemap = async (): Promise<
+	() => Promise<RouteMap<CommandContext>>
+> => {
 	const [prepareGenerate] = await Promise.all([
 		AwsCodecatalystWorkflowsGenerateCommand(),
 	]);
