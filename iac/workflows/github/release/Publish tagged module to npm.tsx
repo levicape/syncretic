@@ -16,7 +16,7 @@ import {
 	GithubStepNodeScriptsX,
 	GithubStepNodeSetupX,
 } from "@levicape/fourtwo/x/github/node";
-import { NodeGhaConfiguration } from "../push/GithubMainPush.js";
+import { NodeGhaConfiguration } from "../push/CI.js";
 
 type CompileAndPublishProps = {
 	cwd?: string;

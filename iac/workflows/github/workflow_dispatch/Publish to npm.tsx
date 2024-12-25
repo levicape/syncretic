@@ -13,7 +13,7 @@ import {
 	GithubStepNodeScriptsX,
 	GithubStepNodeSetupX,
 } from "@levicape/fourtwo/x/github/node";
-import { NodeGhaConfiguration } from "../push/GithubMainPush";
+import { NodeGhaConfiguration } from "../push/CI";
 
 // const enquirer = new Enquirer();
 // const prompt = enquirer.prompt.bind(enquirer);

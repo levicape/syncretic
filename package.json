@@ -111,9 +111,7 @@
       },
       "nx:sync": {
         "dependsOn": [
-          "ft:cc:sync:main",
-          "ft:gha:sync:main",
-          "ft:gha:sync:dispatch"
+          "iac-workflows:nx:sync"
         ]
       }
     }
@@ -142,15 +140,8 @@
     "dx:precommit:pre": "echo \"Starting precommit dx. This will recompile iac files and check package.json dependencies.\"",
     "dx:prepublish": "$npm_package_config_packageexecutor nx dx:prepublish:pre && $npm_package_config_packageexecutor nx dx:lint && $npm_package_config_packageexecutor nx prepublish",
     "dx:prepublish:pre": "echo \"Starting prepublish dx. This will compile the package, lint it, format package.json and verify all exports are valid. \"",
-    "dx:sync": "$npm_package_config_packageexecutor nx dx:sync:pre && $npm_package_config_packageexecutor nx nx:sync",
+    "dx:sync": "$npm_package_config_packageexecutor nx dx:sync:pre && $npm_package_config_packageexecutor nx nx:sync --verbose",
     "dx:sync:pre": "echo \"Starting sync dx. This will generate all the workflows and sync them with the repository.\"",
-    "ft:cc:push:main": "$npm_package_config_packagemanager dx:cli:bin aws codecatalyst workflows generate \"./iac/workflows/codecatalyst/push/CodeCatalystMainPush.js\" --output",
-    "ft:cc:sync:main": "$npm_package_config_packageexecutor nx ft:cc:push:main --write",
-    "ft:gha:dispatch:runner:publish:npm": "$npm_package_config_packagemanager dx:cli:bin github workflows gen \"./iac/workflows/github/workflow_dispatch/GithubDispatchRunnerPublishNpm.js\" --output",
-    "ft:gha:push:main": "$npm_package_config_packagemanager dx:cli:bin github workflows gen \"./iac/workflows/github/push/GithubMainPush.js\" --output",
-    "ft:gha:release:released": "$npm_package_config_packagemanager dx:cli:bin github workflows gen \"./iac/workflows/github/release/GithubReleaseReleased.js\" --output",
-    "ft:gha:sync:dispatch": "$npm_package_config_packageexecutor nx ft:gha:dispatch:runner:publish:npm --write",
-    "ft:gha:sync:main": "$npm_package_config_packageexecutor nx ft:gha:push:main --write && $npm_package_config_packageexecutor nx ft:gha:release:released --write",
     "lint": "$npm_package_config_packageexecutor nx exec -- biome check $npm_package_config_lintpaths",
     "lint:format": "$npm_package_config_packageexecutor nx exec -- biome check --write $npm_package_config_lintpaths",
     "lint:unsafe": "$npm_package_config_packageexecutor nx exec -- biome check --write --unsafe $npm_package_config_lintpaths",
