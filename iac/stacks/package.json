@@ -8,6 +8,7 @@
     "lintpaths": "./src ./canary ./iac"
   },
   "dependencies": {
+    "@levicape/fourtwo": "workspace:",
     "@levicape/fourtwo-pulumi": "workspace:",
     "@pulumi/aws": "^6.0.0",
     "@pulumi/awsx": "^2.0.2",
@@ -26,7 +27,6 @@
       },
       "dx:precommit": {
         "dependsOn": [
-          "^dx:precommit",
           "nx:compile",
           "iac_stacks_bootstrap:nx:precommit"
         ]

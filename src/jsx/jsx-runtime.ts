@@ -48,7 +48,9 @@ export function Fragment<Children, PropKeys extends string>(
 	config: { children?: Children[] } & Record<PropKeys, unknown>,
 ): Children[] {
 	const { children = [] } = config;
-	const childrenProps: Children[] = [...children].filter((child) => {
+	const childrenProps: Children[] = (
+		Array.isArray(children) ? [...children] : [children]
+	).filter((child) => {
 		return child !== undefined && child !== null && child !== false;
 	});
 

@@ -55,13 +55,15 @@
     "./jsx-runtime": "./module/jsx/jsx-runtime.js",
     "./jsx-runtime.js": "./module/jsx/jsx-runtime.js",
     "./ci": "./module/ci/index.mjs",
-    "./ci/codegen": "./module/ci/codegen/index.mjs",
-    "./ci/codegen/github": "./module/ci/codegen/github/index.mjs",
     "./ci/cd": "./module/ci/cd/index.mjs",
     "./ci/cd/pipeline": "./module/ci/cd/pipeline/index.mjs",
     "./ci/cd/pipeline/codecatalyst": "./module/ci/cd/pipeline/codecatalyst/index.mjs",
+    "./ci/cd/pipeline/codepipeline": "./module/ci/cd/pipeline/codepipeline/index.mjs",
+    "./ci/cd/pipeline/devfile": "./module/ci/cd/pipeline/devfile/index.mjs",
     "./ci/cd/pipeline/github": "./module/ci/cd/pipeline/github/index.mjs",
     "./ci/cd/state": "./module/ci/cd/state/index.mjs",
+    "./ci/codegen": "./module/ci/codegen/index.mjs",
+    "./ci/codegen/github": "./module/ci/codegen/github/index.mjs",
     "./cli": "./module/cli/index.mjs",
     "./sdk": "./module/sdk/index.mjs",
     "./sdk/aws": "./module/sdk/aws/index.mjs",
@@ -70,6 +72,7 @@
     "./x/codecatalyst": "./module/ci/cd/pipeline/codecatalyst/index-x.mjs",
     "./x/codecatalyst/actions": "./module/ci/cd/pipeline/codecatalyst/actions/index-x.mjs",
     "./x/codecatalyst/actions/aws": "./module/ci/cd/pipeline/codecatalyst/actions/aws/index-x.mjs",
+    "./x/codepipeline": "./module/ci/cd/pipeline/codepipeline/index-x.mjs",
     "./x/github": "./module/ci/cd/pipeline/github/index-x.mjs",
     "./x/github/node": "./module/ci/cd/pipeline/github/steps/node/index-x.mjs"
   },
@@ -116,7 +119,7 @@
       }
     }
   },
-  "packageManager": "pnpm@9.15.1+sha512.1acb565e6193efbebda772702950469150cf12bcc764262e7587e71d19dc98a423dff9536e57ea44c49bdf790ff694e83c27be5faa23d67e0c033b583be4bfcf",
+  "packageManager": "pnpm@9.15.2+sha512.93e57b0126f0df74ce6bff29680394c0ba54ec47246b9cf321f0121d8d9bb03f750a705f24edc3c1180853afd7c2c3b94196d0a3d53d3e069d9e2793ef11f321",
   "peerDependencies": {
     "typescript": "catalog:dev"
   },

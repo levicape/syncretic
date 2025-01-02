@@ -4,6 +4,8 @@
 		"target": "es2020",
 		"module": "preserve",
 		"moduleResolution": "bundler",
+		"jsx": "react-jsx",
+		"jsxImportSource": "@levicape/fourtwo",
 		"inlineSources": true,
 		"inlineSourceMap": true,
 		"experimentalDecorators": true,

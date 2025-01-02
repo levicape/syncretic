@@ -31,7 +31,8 @@
             "noStaticOnlyClass": "off",
             "noForEach": "off",
             "noBannedTypes": "off",
-            "useLiteralKeys": "off"
+            "useLiteralKeys": "off",
+            "noUselessFragments": "off"
         },
         "performance": {
             "noAccumulatingSpread": "off"
