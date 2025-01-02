@@ -102,12 +102,13 @@ Actions:
             - Run: npm exec pnpm install
             - Run: npm exec pnpm list
             - Run: npm exec pnpm exec nx pack:build iac-images-application --verbose
+            - Run: docker run --rm -e CI=true --entrypoint launcher fourtwo -- pnpm run dx:cli:mjs aws pulumi ci
 
 ########################################
 ########################################
 #**:_$~- {"$$":"head","filename":"[push(b:main)]CI.yml","source":"iac/workflows/codecatalyst/push/CI.js"}
 #**:_$~- {"$$":"script","generator":"codegen/codecatalyst/GenerateCodeCatalystWorkflow.mts"}
-#**:_$~- {"$$":"body","hashed":"902ffe05f07ab4cfe1660f8b22174e16fd1988cfd0dcad6c821dca52da9e3273"}
-#**:_$~- {"$$":"footer","started":"2024-12-25T21:48:43.446Z","now":"2024-12-25T21:48:43.451Z","elapsed":"5ms"}
+#**:_$~- {"$$":"body","hashed":"4df87b20360e756ec23d46bb10793c79b7745660a1984954d874ea696657dbe6"}
+#**:_$~- {"$$":"footer","started":"2025-01-03T06:05:22.188Z","now":"2025-01-03T06:05:22.196Z","elapsed":"8ms"}
 # END OF GENERATED FILE
 

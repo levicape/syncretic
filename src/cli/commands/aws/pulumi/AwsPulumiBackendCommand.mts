@@ -22,7 +22,7 @@ import {
 	type UniqueIdReplaceFlags,
 	UniqueIdReplaceParameterFlags,
 } from "../../../flags/UniqueIdReplace.mjs";
-import { RunAwsPrincipalFarAssumeSequence } from "../../../sequences/aws/principal/AwsPrincipalFarAssumeSequence.mjs";
+import { RunAwsPrincipalFarAssumeSequence } from "../../../sequences/aws/principal/AwsPrincipalAssumeSequence.mjs";
 import { AwsCodebuildOIDCParameter } from "../codebuild/github/AwsCodebuildGithubOidcCommand.mjs";
 import {
 	AwsOrganizationPrincipalFARParameter,

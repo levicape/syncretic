@@ -7,7 +7,7 @@ import {
 	type PrefixPrincipalFlags,
 	PrefixPrincipalParameterFlags,
 } from "../../../../flags/PrefixPrincipal.mjs";
-import { RunAwsPrincipalFarAssumeSequence } from "../../../../sequences/aws/principal/AwsPrincipalFarAssumeSequence.mjs";
+import { RunAwsPrincipalFarAssumeSequence } from "../../../../sequences/aws/principal/AwsPrincipalAssumeSequence.mjs";
 
 type Flags = {
 	region: string;

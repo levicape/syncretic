@@ -4,6 +4,10 @@ import { AwsClientBuilder } from "../../../../sdk/aws/AwsClientBuilder.mjs";
 import { AwsRole } from "../../../../sdk/aws/clients/AwsRole.mjs";
 import { AwsSystemsManager } from "../../../../sdk/aws/clients/AwsSystemsManager.mjs";
 import { AwsSystemsManagerParameterGenerator } from "../../../../sdk/aws/generators/AwsSystemsManagerParameterGenerator.mjs";
+import {
+	AwsOrganizationPrincipalFARParameter,
+	AwsOrganizationPrincipalOAAParameter,
+} from "../../../commands/aws/organization/AwsOrganizationPrincipalCommand.mjs";
 
 export async function* AwsPrincipalAssumeSequence({
 	region,
@@ -217,3 +221,42 @@ export const RunAwsPrincipalAssumeSequence = async ({
 		user,
 	};
 };
+export const RunAwsPrincipalFarAssumeSequence = async ({
+	principal,
+	region,
+}: {
+	principal: string;
+	region: string;
+}) =>
+	await RunAwsPrincipalAssumeSequence({
+		region,
+		principal,
+		role: {
+			parameter: AwsOrganizationPrincipalFARParameter,
+		},
+		help: {
+			resolution:
+				"Please run `fourtwo aws organization principal` to initialize the required role.",
+			reminder: `Please verify you are using the correct principal or prefix (currently ${principal}). Fourtwo will try to infer the principal from the package.json file.`,
+		},
+	});
+
+export const RunAwsPrincipalOaaAssumeSequence = async ({
+	principal,
+	region,
+}: {
+	principal: string;
+	region: string;
+}) =>
+	RunAwsPrincipalAssumeSequence({
+		region,
+		principal,
+		role: {
+			parameter: AwsOrganizationPrincipalOAAParameter,
+		},
+		help: {
+			resolution:
+				"Please run `fourtwo aws principal` to initialize the required role.",
+			reminder: `Please verify you are using the correct principal flag (currently ${principal}).`,
+		},
+	});

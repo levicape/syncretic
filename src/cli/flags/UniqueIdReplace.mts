@@ -1,5 +1,4 @@
 import VError from "verror";
-import { AwsPrincipalNameFromPackageJson } from "../context/PackageJson.mjs";
 
 export type UniqueIdReplaceFlags<Replace extends boolean | never> = {
 	uniqueId?: string;
@@ -30,7 +29,7 @@ export type UniqueIdReplaceConfiguration = {
 	};
 };
 
-export const UniqueIdReplaceParameterFlags = () =>
+export const UniqueIdParameterFlags = () =>
 	({
 		uniqueId: {
 			brief:
@@ -39,11 +38,21 @@ export const UniqueIdReplaceParameterFlags = () =>
 			parse: (value: string) => value,
 			optional: true,
 		},
+	}) as const;
+
+export const ReplaceParameterFlags = () =>
+	({
 		replace: {
 			brief: "Replace the unique ID with a new one.",
 			kind: "boolean",
 			optional: true,
 		},
+	}) as const;
+
+export const UniqueIdReplaceParameterFlags = () =>
+	({
+		...UniqueIdParameterFlags(),
+		...ReplaceParameterFlags(),
 	}) as const;
 
 // () => ScopedResourceName

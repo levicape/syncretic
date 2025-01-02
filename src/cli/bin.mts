@@ -1,4 +1,4 @@
-#!/usr/bin/env node --import tsx --no-deprecation --no-warnings --experimental-strip-types
+#!/usr/bin/env node --import tsx --no-deprecation --no-warnings
 import { run } from "@stricli/core";
 import { FourtwoCliApp } from "./FourtwoCliApp.mjs";
 
@@ -9,9 +9,11 @@ export const AfterExit = {
 	},
 };
 
+const ci = process.env.CI === "true";
 const production = process.env.NODE_ENV === "production";
 const app = await FourtwoCliApp();
 const args = process.argv.slice(2);
+const supress = ci || production;
 const cleanargs = args.map((a, i) => {
 	if (i > 0) {
 		if (["--token"].includes(args[i - 1] ?? "")) {
@@ -20,7 +22,7 @@ const cleanargs = args.map((a, i) => {
 	}
 	return a;
 });
-!production &&
+!supress &&
 	console.dir({
 		Cli: {
 			message: "Command execution started",
@@ -31,7 +33,7 @@ await run(app, process.argv.slice(2), {
 	process: {
 		...process,
 		exit: (code: number) => {
-			!production &&
+			!supress &&
 				console.dir({
 					Cli: {
 						message: "Command execution complete",

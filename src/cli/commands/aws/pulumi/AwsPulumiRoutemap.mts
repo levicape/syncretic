@@ -1,12 +1,15 @@
 import { buildRouteMap } from "@stricli/core";
 import { AwsPulumiBackendCommand } from "./AwsPulumiBackendCommand.mjs";
+import { AwsPulumiCiCommand } from "./AwsPulumiCiCommand.mjs";
 
 export const AwsPulumiRouteMap = async () => {
-	const [prepareCodebuildGithubRoutemap] = await Promise.all([
-		AwsPulumiBackendCommand(),
-	]);
+	const [preparePulumiBackendCommand, preparePulumiCiCommand] =
+		await Promise.all([AwsPulumiBackendCommand(), AwsPulumiCiCommand()]);
 
-	const [backend] = await Promise.all([prepareCodebuildGithubRoutemap()]);
+	const [backend, ci] = await Promise.all([
+		preparePulumiBackendCommand(),
+		preparePulumiCiCommand(),
+	]);
 
 	return async () =>
 		buildRouteMap({
@@ -16,6 +19,7 @@ export const AwsPulumiRouteMap = async () => {
 			},
 			routes: {
 				backend,
+				ci,
 			},
 			docs: {
 				brief: "Commands to manage pulumi state on AWS.",

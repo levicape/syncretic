@@ -27,6 +27,38 @@ const parser = new XMLParser();
 export class AwsRole {
 	constructor(private client: AwsClient) {}
 
+	async GetCallerIdentity() {
+		const response = await this.client.fetch("https://sts.amazonaws.com", {
+			aws: { signQuery: true, region: undefined },
+		});
+
+		if (response.status !== 200) {
+			console.dir(
+				{
+					Role: {
+						status: response.status,
+						statusText: response.statusText,
+						body: await response.text(),
+					},
+				},
+				{ depth: null },
+			);
+			throw new Error(`Failed to get caller identity: ${response.statusText}`);
+		}
+
+		return z
+			.object({
+				GetCallerIdentityResponse: z.object({
+					GetCallerIdentityResult: z.object({
+						Account: z.string(),
+						Arn: z.string(),
+						UserId: z.string(),
+					}),
+				}),
+			})
+			.parse(parser.parse(await response.text())).GetCallerIdentityResponse;
+	}
+
 	async CreateRole(
 		{
 			RoleName,

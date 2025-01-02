@@ -19,7 +19,7 @@ import {
 	type UniqueIdReplaceFlags,
 } from "../../../../flags/UniqueIdReplace.mjs";
 import { WaitForReadySequence } from "../../../../sequences/WaitForReadySequence.mjs";
-import { RunAwsPrincipalFarAssumeSequence } from "../../../../sequences/aws/principal/AwsPrincipalFarAssumeSequence.mjs";
+import { RunAwsPrincipalFarAssumeSequence } from "../../../../sequences/aws/principal/AwsPrincipalAssumeSequence.mjs";
 import { AwsCodebuildGithubAuthCredentialsParameter } from "./AwsCodebuildGithubAuthCommand.mjs";
 import { AwsCodebuildOIDCParameter } from "./AwsCodebuildGithubOidcCommand.mjs";
 

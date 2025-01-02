@@ -160,6 +160,7 @@ export default async () => (
 										<CodeCatalystStepX run="npm exec pnpm install" />
 										<CodeCatalystStepX run="npm exec pnpm list" />
 										<CodeCatalystStepX run="npm exec pnpm exec nx pack:build iac-images-application --verbose" />
+										<CodeCatalystStepX run="docker run --rm -e CI=true --entrypoint launcher fourtwo -- pnpm run dx:cli:mjs aws pulumi ci" />
 									</>
 								}
 							/>
