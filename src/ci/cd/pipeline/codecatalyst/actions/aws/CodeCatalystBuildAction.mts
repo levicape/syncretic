@@ -60,6 +60,10 @@ export type CodeCatalystBuildCachingSpec = {
 	};
 };
 
+export type CodeCatalystBuildEnvironmentSpec = {
+	Name: string;
+};
+
 export type CodeCatalystBuildAction<
 	DependsOn extends string,
 	Input extends {
@@ -99,5 +103,6 @@ export type CodeCatalystBuildAction<
 		Packages?: CodeCatalystBuildPackagesSpec;
 		Timeout?: number;
 		Caching?: CodeCatalystBuildCachingSpec;
+		Environment?: CodeCatalystBuildEnvironmentSpec;
 	}
 >;

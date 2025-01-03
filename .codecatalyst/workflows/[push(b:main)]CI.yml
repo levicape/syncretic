@@ -2,7 +2,7 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, DO NOT MODIFY
 ########################################
 Name: onPush_Test-Package
-RunMode: PARALLEL
+RunMode: QUEUED
 SchemaVersion: "1.0"
 Compute:
   Type: EC2
@@ -17,13 +17,21 @@ Actions:
     Actions:
       Install:
         Identifier: aws/build@v1.0.0
+        Timeout: 5
         Caching:
           FileCaching:
             a64_npm_global:
               Path: .npm-global
+              RestoreKeys:
+                - npminstall
             a64_pnpm_store:
               Path: .pnpm-store
-        Timeout: 5
+              RestoreKeys:
+                - pnpminstall
+            a64_pulumi:
+              Path: .pulumi
+              RestoreKeys:
+                - pulumi
         Inputs:
           Sources:
             - WorkflowSource
@@ -42,6 +50,7 @@ Actions:
             - Run: npm config set prefix=$(pwd)/.npm-global
             - Run: npm config set @levicape:registry=$NPM_REGISTRY_PROTOCOL://$NPM_REGISTRY_HOST --location project
             - Run: npm config set //$NPM_REGISTRY_HOST/:_authToken=$NODE_AUTH_TOKEN --location project
+            - Run: mkdir -p ./.pulumi
             - Run: mkdir -p ./.npm-global
             - Run: mkdir -p ./.pnpm-store
             - Run: npm root -g
@@ -53,11 +62,12 @@ Actions:
             - Run: npm exec pnpm config set store-dir $(pwd)/.pnpm-store
             - Run: npm exec pnpm install
             - Run: npm exec pnpm list
+            - Run: curl -fsSL https://get.pulumi.com | sh -s -- --install-root $(pwd)/.pulumi
       Compile:
         Identifier: aws/build@v1.0.0
-        Timeout: 8
         DependsOn:
           - Install
+        Timeout: 8
         Configuration:
           Container:
             Registry: CODECATALYST
@@ -84,11 +94,11 @@ Actions:
             - Run: npm exec n 22
             - Run: npm exec pnpm list
             - Run: npm exec pnpm test
-  image:
+  cd:
     DependsOn:
       - ci
     Actions:
-      Build:
+      Image:
         Identifier: aws/build@v1.0.0
         Timeout: 10
         Configuration:
@@ -99,16 +109,51 @@ Actions:
             - Run: npm config set prefix=$(pwd)/.npm-global
             - Run: npm exec pnpm config set store-dir $(pwd)/.pnpm-store
             - Run: npm exec n 22
-            - Run: npm exec pnpm install
-            - Run: npm exec pnpm list
             - Run: npm exec pnpm exec nx pack:build iac-images-application --verbose
-            - Run: docker run --rm -e CI=true --entrypoint launcher fourtwo -- pnpm run dx:cli:mjs aws pulumi ci
+            - Run: env
+            - Run: aws configure list
+            - Run: aws configure export-credentials
+            - Run: docker run --rm -e CI=true --entrypoint launcher fourtwo -- pnpm run dx:cli:mjs aws pulumi ci --region us-west-2
+      Preview_current:
+        Identifier: aws/build@v1.0.0
+        DependsOn:
+          - Image
+        Timeout: 10
+        Environment:
+          Name: current
+        Inputs:
+          Variables:
+            - Name: CI_ENVIRONMENT
+              Value: current
+            - Name: CI_REGION
+              Value: us-west-2
+        Configuration:
+          Container:
+            Registry: CODECATALYST
+            Image: CodeCatalystLinux_Arm64:2024_03
+          Steps:
+            - Run: docker run --rm -e CI=true --entrypoint launcher fourtwo -- pnpm run dx:cli:mjs aws pulumi ci --region $CI_REGION
+            - Run: docker images
+            - Run: ./.pulumi/bin/pulumi stack init $CI_ENVIRONMENT -C iac/stacks/code
+            - Run: ./.pulumi/bin/pulumi preview -C iac/stacks/code
+            - Run: ./.pulumi/bin/pulumi stack init $CI_ENVIRONMENT -C iac/stacks/domain
+            - Run: ./.pulumi/bin/pulumi preview -C iac/stacks/domain
+            - Run: ./.pulumi/bin/pulumi stack init $CI_ENVIRONMENT -C iac/stacks/environment
+            - Run: ./.pulumi/bin/pulumi preview -C iac/stacks/environment
+            - Run: ./.pulumi/bin/pulumi stack init $CI_ENVIRONMENT -C iac/stacks/platform
+            - Run: ./.pulumi/bin/pulumi preview -C iac/stacks/platform
+            - Run: ./.pulumi/bin/pulumi stack init $CI_ENVIRONMENT -C iac/stacks/schedule
+            - Run: ./.pulumi/bin/pulumi preview -C iac/stacks/schedule
+            - Run: ./.pulumi/bin/pulumi stack init $CI_ENVIRONMENT -C iac/stacks/test
+            - Run: ./.pulumi/bin/pulumi preview -C iac/stacks/test
+            - Run: ./.pulumi/bin/pulumi stack init $CI_ENVIRONMENT -C iac/stacks/website
+            - Run: ./.pulumi/bin/pulumi preview -C iac/stacks/website
 
 ########################################
 ########################################
 #**:_$~- {"$$":"head","filename":"[push(b:main)]CI.yml","source":"iac/workflows/codecatalyst/push/CI.js"}
 #**:_$~- {"$$":"script","generator":"codegen/codecatalyst/GenerateCodeCatalystWorkflow.mts"}
-#**:_$~- {"$$":"body","hashed":"4df87b20360e756ec23d46bb10793c79b7745660a1984954d874ea696657dbe6"}
-#**:_$~- {"$$":"footer","started":"2025-01-03T06:05:22.188Z","now":"2025-01-03T06:05:22.196Z","elapsed":"8ms"}
+#**:_$~- {"$$":"body","hashed":"cbd57f9b35c8b64cf78c487bb5e54750de589666672151a7a0a1115b597310d6"}
+#**:_$~- {"$$":"footer","started":"2025-01-03T21:44:26.195Z","now":"2025-01-03T21:44:26.200Z","elapsed":"5ms"}
 # END OF GENERATED FILE
 

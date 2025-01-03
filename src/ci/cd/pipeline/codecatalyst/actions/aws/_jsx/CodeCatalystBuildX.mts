@@ -32,6 +32,9 @@ export type CodeCatalystBuildXConfiguration<
 		Input,
 		Output
 	>["Configuration"]["Container"];
+	environment?: NonNullable<
+		CodeCatalystBuildAction<DependsOn, Input, Output>["Environment"]
+	>["Name"];
 };
 
 export type CodeCatalystBuildXProps<
@@ -65,6 +68,11 @@ export type CodeCatalystBuildXProps<
 	packages?: CodeCatalystBuildAction<DependsOn, Input, Output>["Packages"];
 	caching?: CodeCatalystBuildAction<DependsOn, Input, Output>["Caching"];
 	timeout?: CodeCatalystBuildAction<DependsOn, Input, Output>["Timeout"];
+	environment?: CodeCatalystBuildAction<
+		DependsOn,
+		Input,
+		Output
+	>["Environment"];
 };
 
 export const CodeCatalystBuildX = <
@@ -104,6 +112,11 @@ export const CodeCatalystBuildX = <
 		DependsOn?: CodeCatalystBuildAction<DependsOn, Input, Output>["DependsOn"];
 		Timeout?: CodeCatalystBuildAction<DependsOn, Input, Output>["Timeout"];
 		Caching?: CodeCatalystBuildAction<DependsOn, Input, Output>["Caching"];
+		Environment?: CodeCatalystBuildAction<
+			DependsOn,
+			Input,
+			Output
+		>["Environment"];
 	}
 > => {
 	const { dependsOn, configuration, steps } = props;
@@ -129,6 +142,11 @@ export const CodeCatalystBuildX = <
 			>["DependsOn"];
 			Timeout?: CodeCatalystBuildAction<DependsOn, Input, Output>["Timeout"];
 			Caching?: CodeCatalystBuildAction<DependsOn, Input, Output>["Caching"];
+			Environment?: CodeCatalystBuildAction<
+				DependsOn,
+				Input,
+				Output
+			>["Environment"];
 		}
 	>("aws/build@v1.0.0", undefined);
 
@@ -163,10 +181,11 @@ export const CodeCatalystBuildX = <
 	}
 
 	factory.setRest({
-		Caching: props?.caching,
-		Timeout: props?.timeout,
-		Compute: props.compute,
 		DependsOn: dependsOn,
+		Timeout: props?.timeout,
+		Environment: props.environment,
+		Caching: props?.caching,
+		Compute: props.compute,
 		Inputs: props.inputs,
 		Outputs: props.outputs,
 		Packages: props.packages,

@@ -19,7 +19,7 @@ let {
 export default async () => (
 	<CodeCatalystWorkflowX
 		name="onPush_Test-Package"
-		runMode={"PARALLEL"}
+		runMode={"QUEUED"}
 		compute={{
 			Type: "EC2",
 			Fleet: "Linux.Arm64.XLarge",
@@ -54,9 +54,15 @@ export default async () => (
 									FileCaching: {
 										a64_npm_global: {
 											Path: ".npm-global",
+											RestoreKeys: ["npminstall"],
 										},
 										a64_pnpm_store: {
 											Path: ".pnpm-store",
+											RestoreKeys: ["pnpminstall"],
+										},
+										a64_pulumi: {
+											Path: ".pulumi",
+											RestoreKeys: ["pulumi"],
 										},
 									},
 								}}
@@ -72,6 +78,7 @@ export default async () => (
 										<CodeCatalystStepX
 											run={`npm config set //${env("NPM_REGISTRY_HOST")}/:_authToken=${env("NODE_AUTH_TOKEN")} --location project`}
 										/>
+										<CodeCatalystStepX run={`mkdir -p ./.pulumi`} />
 										<CodeCatalystStepX run={`mkdir -p ./.npm-global`} />
 										<CodeCatalystStepX run={`mkdir -p ./.pnpm-store`} />
 										<CodeCatalystStepX run="npm root -g" />
@@ -87,6 +94,7 @@ export default async () => (
 										/>
 										<CodeCatalystStepX run="npm exec pnpm install" />
 										<CodeCatalystStepX run="npm exec pnpm list" />
+										<CodeCatalystStepX run="curl -fsSL https://get.pulumi.com | sh -s -- --install-root $(pwd)/.pulumi" />
 									</>
 								}
 							/>
@@ -139,10 +147,10 @@ export default async () => (
 					}}
 				</CodeCatalystActionGroupX>
 			),
-			image: (
+			cd: (
 				<CodeCatalystActionGroupX dependsOn={["ci"]}>
 					{{
-						Build: (
+						Image: (
 							<CodeCatalystBuildX
 								architecture={"arm64"}
 								timeout={10}
@@ -157,14 +165,73 @@ export default async () => (
 											}
 										/>
 										<CodeCatalystStepX run="npm exec n 22" />
-										<CodeCatalystStepX run="npm exec pnpm install" />
-										<CodeCatalystStepX run="npm exec pnpm list" />
-										<CodeCatalystStepX run="npm exec pnpm exec nx pack:build iac-images-application --verbose" />
-										<CodeCatalystStepX run="docker run --rm -e CI=true --entrypoint launcher fourtwo -- pnpm run dx:cli:mjs aws pulumi ci" />
+										<CodeCatalystStepX
+											run={
+												"npm exec pnpm exec nx pack:build iac-images-application --verbose"
+											}
+										/>
+										<CodeCatalystStepX run="env" />
+										<CodeCatalystStepX run="aws configure list" />
+										<CodeCatalystStepX run="aws configure export-credentials" />
+										<CodeCatalystStepX
+											run={
+												"docker run --rm -e CI=true --entrypoint launcher fourtwo -- pnpm run dx:cli:mjs aws pulumi ci --region us-west-2"
+											}
+										/>
 									</>
 								}
 							/>
 						),
+						Preview_current: (
+							<CodeCatalystBuildX
+								dependsOn={["Image"]}
+								architecture={"arm64"}
+								timeout={10}
+								inputs={{
+									Variables: [
+										register("CI_ENVIRONMENT", "current"),
+										register("CI_REGION", "us-west-2"),
+									],
+								}}
+								environment={{
+									Name: "current",
+								}}
+								steps={
+									<>
+										<CodeCatalystStepX
+											run={
+												"docker run --rm -e CI=true --entrypoint launcher fourtwo -- pnpm run dx:cli:mjs aws pulumi ci --region $CI_REGION"
+											}
+										/>
+										<CodeCatalystStepX run={"docker images"} />
+										{...[
+											"code",
+											"domain",
+											"environment",
+											"platform",
+											"schedule",
+											"test",
+											"website",
+										].flatMap((stack) => (
+											<>
+												<CodeCatalystStepX
+													run={
+														`./.pulumi/bin/pulumi stack init $CI_ENVIRONMENT -C iac/stacks/${stack}`
+														// "./.pulumi/bin/pulumi -y up -C iac/stacks/bootstrap"
+													}
+												/>
+												<CodeCatalystStepX
+													run={
+														`./.pulumi/bin/pulumi preview -C iac/stacks/${stack}`
+														// "./.pulumi/bin/pulumi -y up -C iac/stacks/bootstrap"
+													}
+												/>
+											</>
+										))}
+									</>
+								}
+							/>
+						), // Deploy_current, Preview_stable, Approve_stable, Deploy_stable
 					}}
 				</CodeCatalystActionGroupX>
 			),
