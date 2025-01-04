@@ -18,7 +18,7 @@ let {
 
 export default async () => (
 	<CodeCatalystWorkflowX
-		name="onPush_Test-Package"
+		name="main_OnPush__CI_CD"
 		runMode={"QUEUED"}
 		compute={{
 			Type: "EC2",
@@ -170,14 +170,15 @@ export default async () => (
 												"npm exec pnpm exec nx pack:build iac-images-application --verbose"
 											}
 										/>
-										<CodeCatalystStepX run="env" />
+										<CodeCatalystStepX run="export CREDENTIALS_PORT=$(echo $AWS_CONTAINER_CREDENTIALS_FULL_URI | awk -F':' '{print $3}')" />
+										<CodeCatalystStepX run="export CREDENTIALS_PORT=$(echo $CREDENTIALS_PORT | awk -F'/' '{print $1}')" />
 										<CodeCatalystStepX
 											run={[
 												"docker run --rm",
 												"-e CI=true",
 												"-e AWS_EXECUTION_ENV",
-												"-e AWS_CONTAINER_TOKEN_ENDPOINT",
 												"-e AWS_CONTAINER_CREDENTIALS_FULL_URI",
+												`--network="host"`,
 												"--entrypoint launcher",
 												"fourtwo",
 												"-- pnpm run dx:cli:mjs aws pulumi ci",
@@ -206,6 +207,8 @@ export default async () => (
 								}}
 								steps={
 									<>
+										<CodeCatalystStepX run="export CREDENTIALS_PORT=$(echo $AWS_CONTAINER_CREDENTIALS_FULL_URI | awk -F':' '{print $3}')" />
+										<CodeCatalystStepX run="export CREDENTIALS_PORT=$(echo $CREDENTIALS_PORT | awk -F'/' '{print $1}')" />
 										<CodeCatalystStepX
 											run={[
 												"docker run --rm",
@@ -213,6 +216,7 @@ export default async () => (
 												"-e AWS_EXECUTION_ENV",
 												"-e AWS_CONTAINER_TOKEN_ENDPOINT",
 												"-e AWS_CONTAINER_CREDENTIALS_FULL_URI",
+												`--network="host"`,
 												"--entrypoint launcher",
 												"fourtwo",
 												"-- pnpm run dx:cli:mjs aws pulumi ci",

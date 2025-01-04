@@ -1,4 +1,4 @@
-import { mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { buildCommand } from "@stricli/core";
 import VError from "verror";
@@ -213,17 +213,49 @@ export const GithubWorkflowsGenerateCommand = async () => {
 					// Report
 
 					if (write) {
-						const { filename, content } = value;
+						const { filename, content, hashed } = value;
 						let resolved = resolve(join(".", path));
 						mkdirSync(resolved, { recursive: true });
-						writeFileSync(join(resolved, filename), content);
 
-						console.debug({
-							GenerateCommand: {
-								message: "Wrote workflow file",
-								filename,
-							},
-						});
+						if (!isDirectory(resolved)) {
+							throw new VError(`Failed to create directory: ${resolved}`);
+						}
+
+						let isSameHash = false;
+						const file = join(resolved, filename);
+						if (existsSync(file)) {
+							const data = readFileSync(file, "ascii");
+							const lines = data.split("\n");
+							const meta = lines.filter((line: string) =>
+								line.startsWith("#**:_$~-"),
+							);
+							if (meta.length > 0) {
+								meta.forEach((hash) => {
+									const parsed = JSON.parse(hash.split("#**:_$~- ")[1]);
+									if (parsed.$$ === "body" && parsed.hashed === hashed) {
+										isSameHash = true;
+									}
+								});
+							}
+						}
+
+						if (!isSameHash) {
+							writeFileSync(file, content);
+							console.debug({
+								GenerateCommand: {
+									message: "Wrote workflow file",
+									filename,
+								},
+							});
+						} else {
+							console.debug({
+								GenerateCommand: {
+									message: "Workflow file already exists",
+									filename,
+									hashed,
+								},
+							});
+						}
 					}
 				};
 			},

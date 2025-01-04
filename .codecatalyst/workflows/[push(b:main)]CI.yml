@@ -1,7 +1,7 @@
 ########################################
 # THIS FILE WAS AUTOMATICALLY GENERATED, DO NOT MODIFY
 ########################################
-Name: onPush_Test-Package
+Name: main_OnPush__CI_CD
 RunMode: QUEUED
 SchemaVersion: "1.0"
 Compute:
@@ -110,8 +110,9 @@ Actions:
             - Run: npm exec pnpm config set store-dir $(pwd)/.pnpm-store
             - Run: npm exec n 22
             - Run: npm exec pnpm exec nx pack:build iac-images-application --verbose
-            - Run: env
-            - Run: docker run --rm -e CI=true -e AWS_EXECUTION_ENV -e AWS_CONTAINER_TOKEN_ENDPOINT -e AWS_CONTAINER_CREDENTIALS_FULL_URI --entrypoint launcher fourtwo -- pnpm run dx:cli:mjs aws pulumi ci --region us-west-2
+            - Run: export CREDENTIALS_PORT=$(echo $AWS_CONTAINER_CREDENTIALS_FULL_URI | awk -F':' '{print $3}')
+            - Run: export CREDENTIALS_PORT=$(echo $CREDENTIALS_PORT | awk -F'/' '{print $1}')
+            - Run: docker run --rm -e CI=true -e AWS_EXECUTION_ENV -e AWS_CONTAINER_CREDENTIALS_FULL_URI --network="host" --entrypoint launcher fourtwo -- pnpm run dx:cli:mjs aws pulumi ci --region us-west-2
       Preview_current:
         Identifier: aws/build@v1.0.0
         DependsOn:
@@ -130,7 +131,9 @@ Actions:
             Registry: CODECATALYST
             Image: CodeCatalystLinux_Arm64:2024_03
           Steps:
-            - Run: docker run --rm -e CI=true -e AWS_EXECUTION_ENV -e AWS_CONTAINER_TOKEN_ENDPOINT -e AWS_CONTAINER_CREDENTIALS_FULL_URI --entrypoint launcher fourtwo -- pnpm run dx:cli:mjs aws pulumi ci --region us-west-2 > .pulumi-ci
+            - Run: export CREDENTIALS_PORT=$(echo $AWS_CONTAINER_CREDENTIALS_FULL_URI | awk -F':' '{print $3}')
+            - Run: export CREDENTIALS_PORT=$(echo $CREDENTIALS_PORT | awk -F'/' '{print $1}')
+            - Run: docker run --rm -e CI=true -e AWS_EXECUTION_ENV -e AWS_CONTAINER_TOKEN_ENDPOINT -e AWS_CONTAINER_CREDENTIALS_FULL_URI --network="host" --entrypoint launcher fourtwo -- pnpm run dx:cli:mjs aws pulumi ci --region us-west-2 > .pulumi-ci
             - Run: cat .pulumi-ci
             - Run: docker images
             - Run: ./.pulumi/bin/pulumi stack init $CI_ENVIRONMENT -C iac/stacks/code
@@ -152,7 +155,7 @@ Actions:
 ########################################
 #**:_$~- {"$$":"head","filename":"[push(b:main)]CI.yml","source":"iac/workflows/codecatalyst/push/CI.js"}
 #**:_$~- {"$$":"script","generator":"codegen/codecatalyst/GenerateCodeCatalystWorkflow.mts"}
-#**:_$~- {"$$":"body","hashed":"868442768bfda96c4b4dc83e9fd411a97dc4357b81ac9e8d9e8367d29526a7ea"}
-#**:_$~- {"$$":"footer","started":"2025-01-04T01:03:29.891Z","now":"2025-01-04T01:03:29.896Z","elapsed":"5ms"}
+#**:_$~- {"$$":"body","hashed":"8def476bb09153b504b300b905644e25fc895211f1015424be1b39404ec441bf"}
+#**:_$~- {"$$":"footer","started":"2025-01-04T06:58:40.263Z","now":"2025-01-04T06:58:40.268Z","elapsed":"5ms"}
 # END OF GENERATED FILE
 

@@ -227,5 +227,5 @@ export const GenerateGithubWorkflow = async function* () {
 	);
 	yield { $state: "validate", state } as const;
 
-	return { $state: "done", filename, content } as const;
+	return { $state: "done", filename, content, hashed } as const;
 };

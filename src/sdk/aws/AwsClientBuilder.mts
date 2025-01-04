@@ -1,9 +1,10 @@
 import { readFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { resolve } from "node:path";
-import { parse } from "ini";
+import { parse as parseIni } from "ini";
 import VError from "verror";
 import { z } from "zod";
+
 import { AwsEnvironment } from "./AwsEnvironment.mjs";
 
 export type AWSCredentials = {
@@ -23,14 +24,19 @@ export class AwsClientBuilder {
 	static containerCredentials = async () => {
 		const envs = AwsEnvironment.parse(process.env);
 		if (envs.AWS_CONTAINER_CREDENTIALS_FULL_URI) {
+			const parsed = new URL(envs.AWS_CONTAINER_CREDENTIALS_FULL_URI);
+			parsed.hostname = parsed.hostname.replace(/^\[(.+)\]$/, "$1");
+
 			console.dir({
 				AWS_CONTAINER_CREDENTIALS_FULL_URI:
 					envs.AWS_CONTAINER_CREDENTIALS_FULL_URI,
+				parsed,
 			});
 
-			const credsResponse = await fetch(
-				envs.AWS_CONTAINER_CREDENTIALS_FULL_URI,
-			);
+			const credsResponse = await fetch(parsed, {
+				method: "GET",
+			});
+
 			console.dir(
 				{
 					credsResponse,
@@ -96,7 +102,7 @@ export class AwsClientBuilder {
 			process.env.AWS_DEFAULT_PROFILE ||
 			"default";
 		const rawData = await readFile(awsCredentialsPath, "utf8");
-		const credentialsData = parse(rawData);
+		const credentialsData = parseIni(rawData);
 
 		if (!credentialsData || !credentialsData[awsCredentialsProfile]) {
 			throw new VError(
@@ -132,7 +138,7 @@ export class AwsClientBuilder {
 			process.env.AWS_CREDENTIALS_PATH ||
 			resolve(homedir(), "./.aws/credentials");
 		return readFile(awsCredentialsPath, "utf8")
-			.then((rawData) => parse(rawData))
+			.then((rawData) => parseIni(rawData))
 			.then((credentials) =>
 				credentials && typeof credentials === "object"
 					? Object.keys(credentials)

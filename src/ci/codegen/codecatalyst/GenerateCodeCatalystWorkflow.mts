@@ -179,5 +179,5 @@ export const GenerateCodeCatalystWorkflow = async function* () {
 		},
 	} as const;
 
-	return { $state: "done", filename, content } as const;
+	return { $state: "done", filename, content, hashed } as const;
 };
