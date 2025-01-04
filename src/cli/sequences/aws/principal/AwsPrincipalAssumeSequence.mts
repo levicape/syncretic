@@ -137,7 +137,10 @@ export const RunAwsPrincipalAssumeSequence = async ({
 		...credentials,
 		region,
 	});
-	const root = new AwsSystemsManager(client);
+	const root = new AwsSystemsManager(
+		client,
+		AwsClientBuilder.getAWSCredentials,
+	);
 	let roles = new AwsRole(client);
 
 	let oaa = AwsPrincipalAssumeSequence({
@@ -206,7 +209,10 @@ export const RunAwsPrincipalAssumeSequence = async ({
 		region,
 	});
 	let iam = new AwsRole(assumed);
-	const systems = new AwsSystemsManager(assumed);
+	const systems = new AwsSystemsManager(
+		assumed,
+		AwsClientBuilder.getAWSCredentials,
+	);
 	let parameters = AwsSystemsManagerParameterGenerator({
 		root,
 		systems,

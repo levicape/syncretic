@@ -1,14 +1,23 @@
-import type { AwsClient } from "aws4fetch";
+import { AwsClient } from "aws4fetch";
 import { z, type infer as zinfer } from "zod";
+import type { AWSCredentials } from "../AwsClientBuilder.mjs";
 
 const putParameterResponse = z.object({ Version: z.number() });
 type PutParameterResponse = zinfer<typeof putParameterResponse>;
 
 export class AwsSystemsManager {
-	constructor(private client: AwsClient) {}
+	constructor(
+		private client: AwsClient,
+		private credentialProvider: () => Promise<AWSCredentials>,
+	) {}
 
 	async GetParameter({ Name }: { Name: string }) {
-		const response = await this.client.fetch(
+		const client = new AwsClient({
+			...this.client,
+			...(await this.credentialProvider()),
+		});
+
+		const response = await client.fetch(
 			`https://ssm.${this.client.region}.amazonaws.com`,
 			{
 				method: "POST",
@@ -66,7 +75,11 @@ export class AwsSystemsManager {
 		Type: "String" | "StringList" | "SecureString";
 		Overwrite?: boolean;
 	}): Promise<PutParameterResponse> {
-		const response = await this.client.fetch(
+		const client = new AwsClient({
+			...this.client,
+			...(await this.credentialProvider()),
+		});
+		const response = await client.fetch(
 			`https://ssm.${this.client.region}.amazonaws.com`,
 			{
 				method: "POST",

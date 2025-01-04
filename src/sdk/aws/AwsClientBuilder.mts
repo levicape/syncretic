@@ -37,12 +37,6 @@ export class AwsClientBuilder {
 				method: "GET",
 			});
 
-			console.dir(
-				{
-					credsResponse,
-				},
-				{ depth: null },
-			);
 			const creds = z
 				.object({
 					AccessKeyId: z.string(),
@@ -54,7 +48,7 @@ export class AwsClientBuilder {
 
 			console.dir(
 				{
-					credsResponse,
+					creds,
 				},
 				{ depth: null },
 			);

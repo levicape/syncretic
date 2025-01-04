@@ -46,7 +46,10 @@ export const AwsOrganizationPrincipalCommand = async () => {
 					});
 					const organizations = new AwsOrganizations(client);
 					let roles = new AwsRole(client);
-					const root = new AwsSystemsManager(client);
+					const root = new AwsSystemsManager(
+						client,
+						AwsClientBuilder.getAWSCredentials,
+					);
 
 					const principalName = await new PrefixPrincipal(
 						{ prefix: prefix, principal: principalFlag },
@@ -293,7 +296,15 @@ export const AwsOrganizationPrincipalCommand = async () => {
 
 					let parameters = AwsSystemsManagerParameterGenerator({
 						root,
-						systems: new AwsSystemsManager(assumed),
+						systems: new AwsSystemsManager(assumed, async () => {
+							return {
+								$kind: "ecr",
+								accessKeyId: Credentials.AccessKeyId,
+								secretAccessKey: Credentials.SecretAccessKey,
+								sessionToken: Credentials.SessionToken,
+								expiration: new Date(Credentials.Expiration),
+							};
+						}),
 					});
 					await parameters.next();
 

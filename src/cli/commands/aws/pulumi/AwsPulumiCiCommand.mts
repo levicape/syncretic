@@ -23,7 +23,10 @@ export const AwsPulumiCiCommand = async () => {
 						region,
 					});
 
-					const ssm = new AwsSystemsManager(client);
+					const ssm = new AwsSystemsManager(
+						client,
+						AwsClientBuilder.getAWSCredentials,
+					);
 					{
 						let commandsParameter = await ssm.GetParameter({
 							Name: AwsStateBackendCommandsParameter(),
