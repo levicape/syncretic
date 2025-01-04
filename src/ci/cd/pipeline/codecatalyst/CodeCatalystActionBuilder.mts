@@ -505,6 +505,22 @@ export class CodeCatalystActionBuilder<
 		// 	Configuration[DependsOn] = dependsOn;
 		// }
 
+		const caching = rest as unknown as {
+			Caching: {
+				FileCaching?: {
+					[CacheName: string]: { RestoreKeys: string[]; Path: string };
+				};
+			};
+		};
+		if ("Caching" in caching) {
+			if ("FileCaching" in caching) {
+				const fileCaching = caching.FileCaching as Record<string, unknown>;
+				if (Object.keys(fileCaching).length > 5) {
+					throw new VError("Maximum number of caches reached");
+				}
+			}
+		}
+
 		let restwithoutUndefined: Record<string, unknown> = {};
 		for (const [key, value] of Object.entries(rest)) {
 			if (value !== undefined) {

@@ -44,6 +44,10 @@ Actions:
           Sources:
             - WorkflowSource
           Variables:
+            - Name: PAKETO_BUILDER_IMAGE
+              Value: heroku/builder:24
+            - Name: PULUMI_VERSION
+              Value: 3.144.1
             - Name: NPM_REGISTRY_PROTOCOL
               Value: https
             - Name: NPM_REGISTRY_HOST
@@ -61,8 +65,10 @@ Actions:
             - Run: mkdir -p /tmp/pulumi
             - Run: mkdir -p /tmp/npm-global
             - Run: mkdir -p /tmp/pnpm-store
-            - Run: mkdir -p /tmp/docker-cache
-            - Run: mkdir -p /.artifacts
+            - Run: mkdir -p /tmp/docker-cache/images
+            - Run: docker load --input /tmp/docker-cache/images/builder.tar || true
+            - Run: docker pull $PAKETO_BUILDER_IMAGE
+            - Run: docker save -o /tmp/docker-cache/images/builder.tar $PAKETO_BUILDER_IMAGE
             - Run: npm root -g
             - Run: npm install --g pnpm
             - Run: npm install --g n
@@ -72,7 +78,7 @@ Actions:
             - Run: npm exec pnpm config set store-dir /tmp/pnpm-store
             - Run: npm exec pnpm install
             - Run: npm exec pnpm list
-            - Run: curl -fsSL https://get.pulumi.com | sh -s -- --install-root /tmp/pulumi
+            - Run: "[ -f /tmp/pulumi/bin/pulumi ] && /tmp/pulumi/bin/pulumi version | grep $PULUMI_VERSION || curl -fsSL https://get.pulumi.com | sh -s -- --version $PULUMI_VERSION --install-root /tmp/pulumi"
       Compile:
         Identifier: aws/build@v1.0.0
         DependsOn:
@@ -186,6 +192,8 @@ Actions:
             Registry: CODECATALYST
             Image: CodeCatalystLinux_Arm64:2024_03
           Steps:
+            - Run: docker load --input /tmp/docker-cache/images/builder.tar || true
+            - Run: mkdir -p /.artifacts
             - Run: npm config set prefix=/tmp/npm-global
             - Run: npm exec pnpm config set store-dir /tmp/pnpm-store
             - Run: npm exec n 22
@@ -255,7 +263,7 @@ Actions:
 ########################################
 #**:_$~- {"$$":"head","filename":"[push(b:main)]CI.yml","source":"iac/workflows/codecatalyst/push/CI.js"}
 #**:_$~- {"$$":"script","generator":"codegen/codecatalyst/GenerateCodeCatalystWorkflow.mts"}
-#**:_$~- {"$$":"body","hashed":"99fa42541c9d7ce7006a0191c706048cb4d73b5431a0afe66ba8e05eeccc53b3"}
-#**:_$~- {"$$":"footer","started":"2025-01-04T23:03:14.874Z","now":"2025-01-04T23:03:14.880Z","elapsed":"6ms"}
+#**:_$~- {"$$":"body","hashed":"88a4410d781fb89c5ef00ab9844b8ea2b3eebc2d80cd2a9c9e082ea708a97938"}
+#**:_$~- {"$$":"footer","started":"2025-01-05T00:11:10.611Z","now":"2025-01-05T00:11:10.617Z","elapsed":"6ms"}
 # END OF GENERATED FILE
 

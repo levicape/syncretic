@@ -17,28 +17,30 @@ let {
 	current: { register, context: _$_, env, secret },
 } = CodeCatalystWorkflowExpressions;
 
-let FileCaching = {
-	a64_npm_global: {
-		Path: "/tmp/npm-global",
-		RestoreKeys: ["npminstall"],
+let FileCaching = () => ({
+	FileCaching: {
+		a64_npm_global: {
+			Path: "/tmp/npm-global",
+			RestoreKeys: ["npminstall"],
+		},
+		a64_pnpm_store: {
+			Path: "/tmp/pnpm-store",
+			RestoreKeys: ["pnpminstall"],
+		},
+		a64_pulumi: {
+			Path: "/tmp/pulumi",
+			RestoreKeys: ["pulumi"],
+		},
+		a64_docker: {
+			Path: "/tmp/docker-cache",
+			RestoreKeys: ["docker"],
+		},
+		a64_nx: {
+			Path: "/tmp/nx-cache",
+			RestoreKeys: ["nx"],
+		},
 	},
-	a64_pnpm_store: {
-		Path: "/tmp/pnpm-store",
-		RestoreKeys: ["pnpminstall"],
-	},
-	a64_pulumi: {
-		Path: "/tmp/pulumi",
-		RestoreKeys: ["pulumi"],
-	},
-	a64_docker: {
-		Path: "/tmp/docker-cache",
-		RestoreKeys: ["docker"],
-	},
-	a64_nx: {
-		Path: "/tmp/nx-cache",
-		RestoreKeys: ["nx"],
-	},
-};
+});
 
 export default async () => (
 	<CodeCatalystWorkflowX
@@ -66,6 +68,8 @@ export default async () => (
 								inputs={{
 									Sources: ["WorkflowSource"],
 									Variables: [
+										register("PAKETO_BUILDER_IMAGE", "heroku/builder:24"),
+										register("PULUMI_VERSION", "3.144.1"),
 										register("NPM_REGISTRY_PROTOCOL", "https"),
 										register("NPM_REGISTRY_HOST", "npm.pkg.github.com"),
 										register(
@@ -74,9 +78,7 @@ export default async () => (
 										),
 									],
 								}}
-								caching={{
-									FileCaching,
-								}}
+								caching={FileCaching()}
 								timeout={5}
 								steps={
 									<>
@@ -92,8 +94,18 @@ export default async () => (
 										<CodeCatalystStepX run={`mkdir -p /tmp/pulumi`} />
 										<CodeCatalystStepX run={`mkdir -p /tmp/npm-global`} />
 										<CodeCatalystStepX run={`mkdir -p /tmp/pnpm-store`} />
-										<CodeCatalystStepX run={`mkdir -p /tmp/docker-cache`} />
-										<CodeCatalystStepX run={`mkdir -p /.artifacts`} />
+										<CodeCatalystStepX
+											run={`mkdir -p /tmp/docker-cache/images`}
+										/>
+										<CodeCatalystStepX
+											run={`docker load --input /tmp/docker-cache/images/builder.tar || true`}
+										/>
+										<CodeCatalystStepX
+											run={`docker pull $PAKETO_BUILDER_IMAGE`}
+										/>
+										<CodeCatalystStepX
+											run={`docker save -o /tmp/docker-cache/images/builder.tar $PAKETO_BUILDER_IMAGE`}
+										/>
 										<CodeCatalystStepX run="npm root -g" />
 										<CodeCatalystStepX run="npm install --g pnpm" />
 										<CodeCatalystStepX run="npm install --g n" />
@@ -105,7 +117,11 @@ export default async () => (
 										/>
 										<CodeCatalystStepX run="npm exec pnpm install" />
 										<CodeCatalystStepX run="npm exec pnpm list" />
-										<CodeCatalystStepX run="curl -fsSL https://get.pulumi.com | sh -s -- --install-root /tmp/pulumi" />
+										<CodeCatalystStepX
+											run={
+												"[ -f /tmp/pulumi/bin/pulumi ] && /tmp/pulumi/bin/pulumi version | grep $PULUMI_VERSION || curl -fsSL https://get.pulumi.com | sh -s -- --version $PULUMI_VERSION --install-root /tmp/pulumi"
+											}
+										/>
 									</>
 								}
 							/>
@@ -114,9 +130,7 @@ export default async () => (
 							<CodeCatalystBuildX
 								architecture={"arm64"}
 								dependsOn={["Install"]}
-								caching={{
-									FileCaching,
-								}}
+								caching={FileCaching()}
 								timeout={8}
 								steps={
 									<>
@@ -138,9 +152,7 @@ export default async () => (
 							<CodeCatalystTestX
 								architecture={"arm64"}
 								dependsOn={["Compile"]}
-								caching={{
-									FileCaching,
-								}}
+								caching={FileCaching()}
 								timeout={10}
 								steps={
 									<>
@@ -166,15 +178,17 @@ export default async () => (
 						Image: (
 							<CodeCatalystBuildX
 								architecture={"arm64"}
-								caching={{
-									FileCaching,
-								}}
+								caching={FileCaching()}
 								timeout={10}
 								inputs={{
 									Variables: [register("APPLICATION_IMAGE_NAME", "fourtwo")],
 								}}
 								steps={
 									<>
+										<CodeCatalystStepX
+											run={`docker load --input /tmp/docker-cache/images/builder.tar || true`}
+										/>
+										<CodeCatalystStepX run={`mkdir -p /.artifacts`} />
 										<CodeCatalystStepX
 											run={"npm config set prefix=/tmp/npm-global"}
 										/>
@@ -200,9 +214,7 @@ export default async () => (
 							<CodeCatalystBuildX
 								dependsOn={["Image"]}
 								architecture={"arm64"}
-								caching={{
-									FileCaching,
-								}}
+								caching={FileCaching()}
 								timeout={10}
 								inputs={{
 									Variables: [
