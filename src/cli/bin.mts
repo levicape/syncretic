@@ -1,13 +1,7 @@
 #!/usr/bin/env node --import tsx --no-deprecation --no-warnings
 import { run } from "@stricli/core";
+import { AfterExit } from "./AfterExit.mjs";
 import { FourtwoCliApp } from "./FourtwoCliApp.mjs";
-
-export const AfterExit = {
-	commands: [] as (() => void)[],
-	execute(fn: () => void) {
-		this.commands.push(fn);
-	},
-};
 
 const ci = process.env.CI === "true";
 const production = process.env.NODE_ENV === "production";

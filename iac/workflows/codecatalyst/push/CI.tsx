@@ -1,6 +1,7 @@
 /** @jsxImportSource @levicape/fourtwo */
 /** @jsxRuntime automatic */
 
+import { AwsStateBackendBucketNameParameter } from "@levicape/fourtwo";
 import { CodeCatalystWorkflowExpressions } from "@levicape/fourtwo/ci/cd/pipeline/codecatalyst";
 import {
 	CodeCatalystActionGroupX,
@@ -64,6 +65,14 @@ export default async () => (
 											Path: ".pulumi",
 											RestoreKeys: ["pulumi"],
 										},
+										a64_docker: {
+											Path: ".docker-cache",
+											RestoreKeys: ["docker"],
+										},
+										a64_nx: {
+											Path: ".nx",
+											RestoreKeys: ["nx"],
+										},
 									},
 								}}
 								timeout={5}
@@ -81,6 +90,7 @@ export default async () => (
 										<CodeCatalystStepX run={`mkdir -p ./.pulumi`} />
 										<CodeCatalystStepX run={`mkdir -p ./.npm-global`} />
 										<CodeCatalystStepX run={`mkdir -p ./.pnpm-store`} />
+										<CodeCatalystStepX run={`mkdir -p ./.docker-cache`} />
 										<CodeCatalystStepX run="npm root -g" />
 										<CodeCatalystStepX run="npm install --g pnpm" />
 										<CodeCatalystStepX run="npm install --g n" />
@@ -170,23 +180,6 @@ export default async () => (
 												"npm exec pnpm exec nx pack:build iac-images-application --verbose"
 											}
 										/>
-										<CodeCatalystStepX run="export CREDENTIALS_PORT=$(echo $AWS_CONTAINER_CREDENTIALS_FULL_URI | awk -F':' '{print $3}')" />
-										<CodeCatalystStepX run="export CREDENTIALS_PORT=$(echo $CREDENTIALS_PORT | awk -F'/' '{print $1}')" />
-										<CodeCatalystStepX
-											run={[
-												"docker run --rm",
-												"-e CI=true",
-												"-e AWS_EXECUTION_ENV",
-												"-e AWS_CONTAINER_CREDENTIALS_FULL_URI",
-												`--network="host"`,
-												"--entrypoint launcher",
-												"fourtwo",
-												"-- pnpm run dx:cli:mjs aws pulumi ci",
-												"--region us-west-2",
-											]
-												.map((x) => x.trim())
-												.join(" ")}
-										/>
 									</>
 								}
 							/>
@@ -207,27 +200,26 @@ export default async () => (
 								}}
 								steps={
 									<>
-										<CodeCatalystStepX run="export CREDENTIALS_PORT=$(echo $AWS_CONTAINER_CREDENTIALS_FULL_URI | awk -F':' '{print $3}')" />
-										<CodeCatalystStepX run="export CREDENTIALS_PORT=$(echo $CREDENTIALS_PORT | awk -F'/' '{print $1}')" />
+										<CodeCatalystStepX run={"docker images"} />
+										<CodeCatalystStepX
+											run={`aws ssm get-parameter --name ${AwsStateBackendBucketNameParameter()}`}
+										/>
 										<CodeCatalystStepX
 											run={[
 												"docker run --rm",
 												"-e CI=true",
 												"-e AWS_EXECUTION_ENV",
-												"-e AWS_CONTAINER_TOKEN_ENDPOINT",
 												"-e AWS_CONTAINER_CREDENTIALS_FULL_URI",
 												`--network="host"`,
 												"--entrypoint launcher",
 												"fourtwo",
 												"-- pnpm run dx:cli:mjs aws pulumi ci",
 												"--region us-west-2",
-												" > .pulumi-ci",
 											]
 												.map((x) => x.trim())
 												.join(" ")}
 										/>
 										<CodeCatalystStepX run={"cat .pulumi-ci"} />
-										<CodeCatalystStepX run={"docker images"} />
 										{...[
 											"code",
 											"domain",

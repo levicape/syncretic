@@ -32,6 +32,14 @@ Actions:
               Path: .pulumi
               RestoreKeys:
                 - pulumi
+            a64_docker:
+              Path: .docker-cache
+              RestoreKeys:
+                - docker
+            a64_nx:
+              Path: .nx
+              RestoreKeys:
+                - nx
         Inputs:
           Sources:
             - WorkflowSource
@@ -53,6 +61,7 @@ Actions:
             - Run: mkdir -p ./.pulumi
             - Run: mkdir -p ./.npm-global
             - Run: mkdir -p ./.pnpm-store
+            - Run: mkdir -p ./.docker-cache
             - Run: npm root -g
             - Run: npm install --g pnpm
             - Run: npm install --g n
@@ -110,9 +119,6 @@ Actions:
             - Run: npm exec pnpm config set store-dir $(pwd)/.pnpm-store
             - Run: npm exec n 22
             - Run: npm exec pnpm exec nx pack:build iac-images-application --verbose
-            - Run: export CREDENTIALS_PORT=$(echo $AWS_CONTAINER_CREDENTIALS_FULL_URI | awk -F':' '{print $3}')
-            - Run: export CREDENTIALS_PORT=$(echo $CREDENTIALS_PORT | awk -F'/' '{print $1}')
-            - Run: docker run --rm -e CI=true -e AWS_EXECUTION_ENV -e AWS_CONTAINER_CREDENTIALS_FULL_URI --network="host" --entrypoint launcher fourtwo -- pnpm run dx:cli:mjs aws pulumi ci --region us-west-2
       Preview_current:
         Identifier: aws/build@v1.0.0
         DependsOn:
@@ -131,11 +137,10 @@ Actions:
             Registry: CODECATALYST
             Image: CodeCatalystLinux_Arm64:2024_03
           Steps:
-            - Run: export CREDENTIALS_PORT=$(echo $AWS_CONTAINER_CREDENTIALS_FULL_URI | awk -F':' '{print $3}')
-            - Run: export CREDENTIALS_PORT=$(echo $CREDENTIALS_PORT | awk -F'/' '{print $1}')
-            - Run: docker run --rm -e CI=true -e AWS_EXECUTION_ENV -e AWS_CONTAINER_TOKEN_ENDPOINT -e AWS_CONTAINER_CREDENTIALS_FULL_URI --network="host" --entrypoint launcher fourtwo -- pnpm run dx:cli:mjs aws pulumi ci --region us-west-2 > .pulumi-ci
-            - Run: cat .pulumi-ci
             - Run: docker images
+            - Run: aws ssm get-parameter --name /fourtwo/_principal/pulumi/backend/StateBackendBucketName
+            - Run: docker run --rm -e CI=true -e AWS_EXECUTION_ENV -e AWS_CONTAINER_CREDENTIALS_FULL_URI --network="host" --entrypoint launcher fourtwo -- pnpm run dx:cli:mjs aws pulumi ci --region us-west-2
+            - Run: cat .pulumi-ci
             - Run: ./.pulumi/bin/pulumi stack init $CI_ENVIRONMENT -C iac/stacks/code
             - Run: ./.pulumi/bin/pulumi preview -C iac/stacks/code
             - Run: ./.pulumi/bin/pulumi stack init $CI_ENVIRONMENT -C iac/stacks/domain
@@ -155,7 +160,7 @@ Actions:
 ########################################
 #**:_$~- {"$$":"head","filename":"[push(b:main)]CI.yml","source":"iac/workflows/codecatalyst/push/CI.js"}
 #**:_$~- {"$$":"script","generator":"codegen/codecatalyst/GenerateCodeCatalystWorkflow.mts"}
-#**:_$~- {"$$":"body","hashed":"8def476bb09153b504b300b905644e25fc895211f1015424be1b39404ec441bf"}
-#**:_$~- {"$$":"footer","started":"2025-01-04T06:58:40.263Z","now":"2025-01-04T06:58:40.268Z","elapsed":"5ms"}
+#**:_$~- {"$$":"body","hashed":"1797429b133694e861595855d1114d5537e66d17600fcd9d440e6583d1a894a7"}
+#**:_$~- {"$$":"footer","started":"2025-01-04T21:31:41.832Z","now":"2025-01-04T21:31:41.838Z","elapsed":"6ms"}
 # END OF GENERATED FILE
 

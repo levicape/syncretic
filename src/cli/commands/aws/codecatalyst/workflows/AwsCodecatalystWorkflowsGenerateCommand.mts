@@ -4,7 +4,7 @@ import { buildCommand } from "@stricli/core";
 import VError from "verror";
 import type { CodeCatalystWorkflowBuilder } from "../../../../../ci/cd/pipeline/codecatalyst/CodeCatalystWorkflowBuilder.mjs";
 import { GenerateCodeCatalystWorkflow } from "../../../../../ci/codegen/codecatalyst/GenerateCodeCatalystWorkflow.mjs";
-import { AfterExit } from "../../../../bin.mjs";
+import { AfterExit } from "../../../../AfterExit.mjs";
 
 const isDirectory = (path: string) => {
 	const resolved = resolve(path);

@@ -4,7 +4,7 @@ import { buildCommand } from "@stricli/core";
 import VError from "verror";
 import type { GithubWorkflowBuilder } from "../../../../ci/cd/pipeline/github/GithubWorkflowBuilder.mjs";
 import { GenerateGithubWorkflow } from "../../../../ci/codegen/github/GenerateGithubWorkflow.mjs";
-import { AfterExit } from "../../../bin.mjs";
+import { AfterExit } from "../../../AfterExit.mjs";
 
 const isDirectory = (path: string) => {
 	const resolved = resolve(path);
