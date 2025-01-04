@@ -171,12 +171,20 @@ export default async () => (
 											}
 										/>
 										<CodeCatalystStepX run="env" />
-										<CodeCatalystStepX run="aws configure list" />
-										<CodeCatalystStepX run="aws configure export-credentials" />
 										<CodeCatalystStepX
-											run={
-												"docker run --rm -e CI=true --entrypoint launcher fourtwo -- pnpm run dx:cli:mjs aws pulumi ci --region us-west-2"
-											}
+											run={[
+												"docker run --rm",
+												"-e CI=true",
+												"-e AWS_EXECUTION_ENV",
+												"-e AWS_CONTAINER_TOKEN_ENDPOINT",
+												"-e AWS_CONTAINER_CREDENTIALS_FULL_URI",
+												"--entrypoint launcher",
+												"fourtwo",
+												"-- pnpm run dx:cli:mjs aws pulumi ci",
+												"--region us-west-2",
+											]
+												.map((x) => x.trim())
+												.join(" ")}
 										/>
 									</>
 								}
@@ -199,10 +207,22 @@ export default async () => (
 								steps={
 									<>
 										<CodeCatalystStepX
-											run={
-												"docker run --rm -e CI=true --entrypoint launcher fourtwo -- pnpm run dx:cli:mjs aws pulumi ci --region $CI_REGION"
-											}
+											run={[
+												"docker run --rm",
+												"-e CI=true",
+												"-e AWS_EXECUTION_ENV",
+												"-e AWS_CONTAINER_TOKEN_ENDPOINT",
+												"-e AWS_CONTAINER_CREDENTIALS_FULL_URI",
+												"--entrypoint launcher",
+												"fourtwo",
+												"-- pnpm run dx:cli:mjs aws pulumi ci",
+												"--region us-west-2",
+												" > .pulumi-ci",
+											]
+												.map((x) => x.trim())
+												.join(" ")}
 										/>
+										<CodeCatalystStepX run={"cat .pulumi-ci"} />
 										<CodeCatalystStepX run={"docker images"} />
 										{...[
 											"code",

@@ -111,9 +111,7 @@ Actions:
             - Run: npm exec n 22
             - Run: npm exec pnpm exec nx pack:build iac-images-application --verbose
             - Run: env
-            - Run: aws configure list
-            - Run: aws configure export-credentials
-            - Run: docker run --rm -e CI=true --entrypoint launcher fourtwo -- pnpm run dx:cli:mjs aws pulumi ci --region us-west-2
+            - Run: docker run --rm -e CI=true -e AWS_EXECUTION_ENV -e AWS_CONTAINER_TOKEN_ENDPOINT -e AWS_CONTAINER_CREDENTIALS_FULL_URI --entrypoint launcher fourtwo -- pnpm run dx:cli:mjs aws pulumi ci --region us-west-2
       Preview_current:
         Identifier: aws/build@v1.0.0
         DependsOn:
@@ -132,7 +130,8 @@ Actions:
             Registry: CODECATALYST
             Image: CodeCatalystLinux_Arm64:2024_03
           Steps:
-            - Run: docker run --rm -e CI=true --entrypoint launcher fourtwo -- pnpm run dx:cli:mjs aws pulumi ci --region $CI_REGION
+            - Run: docker run --rm -e CI=true -e AWS_EXECUTION_ENV -e AWS_CONTAINER_TOKEN_ENDPOINT -e AWS_CONTAINER_CREDENTIALS_FULL_URI --entrypoint launcher fourtwo -- pnpm run dx:cli:mjs aws pulumi ci --region us-west-2 > .pulumi-ci
+            - Run: cat .pulumi-ci
             - Run: docker images
             - Run: ./.pulumi/bin/pulumi stack init $CI_ENVIRONMENT -C iac/stacks/code
             - Run: ./.pulumi/bin/pulumi preview -C iac/stacks/code
@@ -153,7 +152,7 @@ Actions:
 ########################################
 #**:_$~- {"$$":"head","filename":"[push(b:main)]CI.yml","source":"iac/workflows/codecatalyst/push/CI.js"}
 #**:_$~- {"$$":"script","generator":"codegen/codecatalyst/GenerateCodeCatalystWorkflow.mts"}
-#**:_$~- {"$$":"body","hashed":"cbd57f9b35c8b64cf78c487bb5e54750de589666672151a7a0a1115b597310d6"}
-#**:_$~- {"$$":"footer","started":"2025-01-03T21:44:26.195Z","now":"2025-01-03T21:44:26.200Z","elapsed":"5ms"}
+#**:_$~- {"$$":"body","hashed":"868442768bfda96c4b4dc83e9fd411a97dc4357b81ac9e8d9e8367d29526a7ea"}
+#**:_$~- {"$$":"footer","started":"2025-01-04T01:03:29.891Z","now":"2025-01-04T01:03:29.896Z","elapsed":"5ms"}
 # END OF GENERATED FILE
 

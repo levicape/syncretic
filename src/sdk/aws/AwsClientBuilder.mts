@@ -3,6 +3,8 @@ import { homedir } from "node:os";
 import { resolve } from "node:path";
 import { parse } from "ini";
 import VError from "verror";
+import { z } from "zod";
+import { AwsEnvironment } from "./AwsEnvironment.mjs";
 
 export type AWSCredentials = {
 	accessKeyId: string;
@@ -11,20 +13,77 @@ export type AWSCredentials = {
 	credentialScope?: string;
 	expiration?: Date;
 	sessionToken?: string;
-} & ({ $kind: "profile"; profile: string } | { $kind: "environment" });
+} & (
+	| { $kind: "profile"; profile: string }
+	| { $kind: "environment" }
+	| { $kind: "ecr" }
+);
 
 export class AwsClientBuilder {
+	static containerCredentials = async () => {
+		const envs = AwsEnvironment.parse(process.env);
+		if (envs.AWS_CONTAINER_CREDENTIALS_FULL_URI) {
+			console.dir({
+				AWS_CONTAINER_CREDENTIALS_FULL_URI:
+					envs.AWS_CONTAINER_CREDENTIALS_FULL_URI,
+			});
+
+			const credsResponse = await fetch(
+				envs.AWS_CONTAINER_CREDENTIALS_FULL_URI,
+			);
+			console.dir(
+				{
+					credsResponse,
+				},
+				{ depth: null },
+			);
+			const creds = z
+				.object({
+					AccessKeyId: z.string(),
+					SecretAccessKey: z.string(),
+					Token: z.string(),
+					Expiration: z.string(),
+				})
+				.parse(await credsResponse.json());
+
+			console.dir(
+				{
+					credsResponse,
+				},
+				{ depth: null },
+			);
+			return {
+				$kind: "ecr",
+				accessKeyId: creds.AccessKeyId,
+				secretAccessKey: creds.SecretAccessKey,
+				sessionToken: creds.Token,
+				expiration: new Date(creds.Expiration),
+			} as const;
+		}
+
+		return undefined;
+	};
+
 	static getAWSCredentials = async (
 		profileOverride?: string,
 		pathOverride?: string,
 	): Promise<AWSCredentials> => {
-		const { AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY } = process.env;
+		const { AWS_ACCESS_KEY_ID, AWS_EXECUTION_ENV, AWS_SECRET_ACCESS_KEY } =
+			process.env;
 		if (AWS_ACCESS_KEY_ID && AWS_SECRET_ACCESS_KEY) {
 			return {
 				$kind: "environment",
 				accessKeyId: AWS_ACCESS_KEY_ID,
 				secretAccessKey: AWS_SECRET_ACCESS_KEY,
 			};
+		}
+
+		if (AWS_EXECUTION_ENV !== undefined) {
+			const containerCredentials =
+				await AwsClientBuilder.containerCredentials();
+			if (containerCredentials) {
+				return containerCredentials;
+			}
 		}
 
 		const awsCredentialsPath =
