@@ -19,7 +19,7 @@ Actions:
         Identifier: aws/build@v1.0.0
         Timeout: 5
         Caching:
-          FileCaching: &a1
+          FileCaching:
             a64_npm_global:
               Path: /tmp/npm-global
               RestoreKeys:
@@ -79,7 +79,27 @@ Actions:
           - Install
         Timeout: 8
         Caching:
-          FileCaching: *a1
+          FileCaching:
+            a64_npm_global:
+              Path: /tmp/npm-global
+              RestoreKeys:
+                - npminstall
+            a64_pnpm_store:
+              Path: /tmp/pnpm-store
+              RestoreKeys:
+                - pnpminstall
+            a64_pulumi:
+              Path: /tmp/pulumi
+              RestoreKeys:
+                - pulumi
+            a64_docker:
+              Path: /tmp/docker-cache
+              RestoreKeys:
+                - docker
+            a64_nx:
+              Path: /tmp/nx-cache
+              RestoreKeys:
+                - nx
         Configuration:
           Container:
             Registry: CODECATALYST
@@ -95,7 +115,27 @@ Actions:
         Identifier: aws/managed-test@v1.0.0
         Timeout: 10
         Caching:
-          FileCaching: *a1
+          FileCaching:
+            a64_npm_global:
+              Path: /tmp/npm-global
+              RestoreKeys:
+                - npminstall
+            a64_pnpm_store:
+              Path: /tmp/pnpm-store
+              RestoreKeys:
+                - pnpminstall
+            a64_pulumi:
+              Path: /tmp/pulumi
+              RestoreKeys:
+                - pulumi
+            a64_docker:
+              Path: /tmp/docker-cache
+              RestoreKeys:
+                - docker
+            a64_nx:
+              Path: /tmp/nx-cache
+              RestoreKeys:
+                - nx
         DependsOn:
           - Compile
         Configuration:
@@ -116,7 +156,27 @@ Actions:
         Identifier: aws/build@v1.0.0
         Timeout: 10
         Caching:
-          FileCaching: *a1
+          FileCaching:
+            a64_npm_global:
+              Path: /tmp/npm-global
+              RestoreKeys:
+                - npminstall
+            a64_pnpm_store:
+              Path: /tmp/pnpm-store
+              RestoreKeys:
+                - pnpminstall
+            a64_pulumi:
+              Path: /tmp/pulumi
+              RestoreKeys:
+                - pulumi
+            a64_docker:
+              Path: /tmp/docker-cache
+              RestoreKeys:
+                - docker
+            a64_nx:
+              Path: /tmp/nx-cache
+              RestoreKeys:
+                - nx
         Inputs:
           Variables:
             - Name: APPLICATION_IMAGE_NAME
@@ -139,7 +199,27 @@ Actions:
         Environment:
           Name: current
         Caching:
-          FileCaching: *a1
+          FileCaching:
+            a64_npm_global:
+              Path: /tmp/npm-global
+              RestoreKeys:
+                - npminstall
+            a64_pnpm_store:
+              Path: /tmp/pnpm-store
+              RestoreKeys:
+                - pnpminstall
+            a64_pulumi:
+              Path: /tmp/pulumi
+              RestoreKeys:
+                - pulumi
+            a64_docker:
+              Path: /tmp/docker-cache
+              RestoreKeys:
+                - docker
+            a64_nx:
+              Path: /tmp/nx-cache
+              RestoreKeys:
+                - nx
         Inputs:
           Variables:
             - Name: CI_ENVIRONMENT
@@ -175,7 +255,7 @@ Actions:
 ########################################
 #**:_$~- {"$$":"head","filename":"[push(b:main)]CI.yml","source":"iac/workflows/codecatalyst/push/CI.js"}
 #**:_$~- {"$$":"script","generator":"codegen/codecatalyst/GenerateCodeCatalystWorkflow.mts"}
-#**:_$~- {"$$":"body","hashed":"c2bdfbced859fdacae36ef9e02da6fa793f5d78e38065db75105862d673a5375"}
-#**:_$~- {"$$":"footer","started":"2025-01-04T22:41:39.890Z","now":"2025-01-04T22:41:39.895Z","elapsed":"5ms"}
+#**:_$~- {"$$":"body","hashed":"99fa42541c9d7ce7006a0191c706048cb4d73b5431a0afe66ba8e05eeccc53b3"}
+#**:_$~- {"$$":"footer","started":"2025-01-04T23:03:14.874Z","now":"2025-01-04T23:03:14.880Z","elapsed":"6ms"}
 # END OF GENERATED FILE
 

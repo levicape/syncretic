@@ -1,10 +1,7 @@
 /** @jsxImportSource @levicape/fourtwo */
 /** @jsxRuntime automatic */
 
-import {
-	AwsStateBackendBucketNameParameter,
-	AwsStateBackendCommandsParameter,
-} from "@levicape/fourtwo";
+import { AwsStateBackendCommandsParameter } from "@levicape/fourtwo";
 import { CodeCatalystWorkflowExpressions } from "@levicape/fourtwo/ci/cd/pipeline/codecatalyst";
 import {
 	CodeCatalystActionGroupX,

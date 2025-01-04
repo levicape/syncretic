@@ -172,6 +172,7 @@ export const GenerateGithubWorkflow = async function* () {
 
 	const yaml = stringify(rendered, {
 		collectionStyle: "block",
+		aliasDuplicateObjects: false,
 		doubleQuotedAsJSON: true,
 		minContentWidth: 0,
 		lineWidth: 0,
