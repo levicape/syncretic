@@ -1,7 +1,10 @@
 /** @jsxImportSource @levicape/fourtwo */
 /** @jsxRuntime automatic */
 
-import { AwsStateBackendBucketNameParameter } from "@levicape/fourtwo";
+import {
+	AwsStateBackendBucketNameParameter,
+	AwsStateBackendCommandsParameter,
+} from "@levicape/fourtwo";
 import { CodeCatalystWorkflowExpressions } from "@levicape/fourtwo/ci/cd/pipeline/codecatalyst";
 import {
 	CodeCatalystActionGroupX,
@@ -16,6 +19,29 @@ import {
 let {
 	current: { register, context: _$_, env, secret },
 } = CodeCatalystWorkflowExpressions;
+
+let FileCaching = {
+	a64_npm_global: {
+		Path: "/tmp/npm-global",
+		RestoreKeys: ["npminstall"],
+	},
+	a64_pnpm_store: {
+		Path: "/tmp/pnpm-store",
+		RestoreKeys: ["pnpminstall"],
+	},
+	a64_pulumi: {
+		Path: "/tmp/pulumi",
+		RestoreKeys: ["pulumi"],
+	},
+	a64_docker: {
+		Path: "/tmp/docker-cache",
+		RestoreKeys: ["docker"],
+	},
+	a64_nx: {
+		Path: "/tmp/nx-cache",
+		RestoreKeys: ["nx"],
+	},
+};
 
 export default async () => (
 	<CodeCatalystWorkflowX
@@ -52,34 +78,13 @@ export default async () => (
 									],
 								}}
 								caching={{
-									FileCaching: {
-										a64_npm_global: {
-											Path: ".npm-global",
-											RestoreKeys: ["npminstall"],
-										},
-										a64_pnpm_store: {
-											Path: ".pnpm-store",
-											RestoreKeys: ["pnpminstall"],
-										},
-										a64_pulumi: {
-											Path: ".pulumi",
-											RestoreKeys: ["pulumi"],
-										},
-										a64_docker: {
-											Path: ".docker-cache",
-											RestoreKeys: ["docker"],
-										},
-										a64_nx: {
-											Path: ".nx",
-											RestoreKeys: ["nx"],
-										},
-									},
+									FileCaching,
 								}}
 								timeout={5}
 								steps={
 									<>
 										<CodeCatalystStepX
-											run={"npm config set prefix=$(pwd)/.npm-global"}
+											run={"npm config set prefix=/tmp/npm-global"}
 										/>
 										<CodeCatalystStepX
 											run={`npm config set @levicape:registry=${env("NPM_REGISTRY_PROTOCOL")}://${env("NPM_REGISTRY_HOST")} --location project`}
@@ -87,24 +92,23 @@ export default async () => (
 										<CodeCatalystStepX
 											run={`npm config set //${env("NPM_REGISTRY_HOST")}/:_authToken=${env("NODE_AUTH_TOKEN")} --location project`}
 										/>
-										<CodeCatalystStepX run={`mkdir -p ./.pulumi`} />
-										<CodeCatalystStepX run={`mkdir -p ./.npm-global`} />
-										<CodeCatalystStepX run={`mkdir -p ./.pnpm-store`} />
-										<CodeCatalystStepX run={`mkdir -p ./.docker-cache`} />
+										<CodeCatalystStepX run={`mkdir -p /tmp/pulumi`} />
+										<CodeCatalystStepX run={`mkdir -p /tmp/npm-global`} />
+										<CodeCatalystStepX run={`mkdir -p /tmp/pnpm-store`} />
+										<CodeCatalystStepX run={`mkdir -p /tmp/docker-cache`} />
+										<CodeCatalystStepX run={`mkdir -p /.artifacts`} />
 										<CodeCatalystStepX run="npm root -g" />
 										<CodeCatalystStepX run="npm install --g pnpm" />
 										<CodeCatalystStepX run="npm install --g n" />
 										<CodeCatalystStepX run="npm exec n 22" />
-										<CodeCatalystStepX run="ls -la ./.npm-global/lib/node_modules" />
-										<CodeCatalystStepX run="ls -la ./.npm-global/lib/node_modules/pnpm || true" />
+										<CodeCatalystStepX run="ls -la /tmp/npm-global/lib/node_modules" />
+										<CodeCatalystStepX run="ls -la /tmp/npm-global/lib/node_modules/pnpm || true" />
 										<CodeCatalystStepX
-											run={
-												"npm exec pnpm config set store-dir $(pwd)/.pnpm-store"
-											}
+											run={"npm exec pnpm config set store-dir /tmp/pnpm-store"}
 										/>
 										<CodeCatalystStepX run="npm exec pnpm install" />
 										<CodeCatalystStepX run="npm exec pnpm list" />
-										<CodeCatalystStepX run="curl -fsSL https://get.pulumi.com | sh -s -- --install-root $(pwd)/.pulumi" />
+										<CodeCatalystStepX run="curl -fsSL https://get.pulumi.com | sh -s -- --install-root /tmp/pulumi" />
 									</>
 								}
 							/>
@@ -113,16 +117,17 @@ export default async () => (
 							<CodeCatalystBuildX
 								architecture={"arm64"}
 								dependsOn={["Install"]}
+								caching={{
+									FileCaching,
+								}}
 								timeout={8}
 								steps={
 									<>
 										<CodeCatalystStepX
-											run={"npm config set prefix=$(pwd)/.npm-global"}
+											run={"npm config set prefix=/tmp/npm-global"}
 										/>
 										<CodeCatalystStepX
-											run={
-												"npm exec pnpm config set store-dir $(pwd)/.pnpm-store"
-											}
+											run={"npm exec pnpm config set store-dir /tmp/pnpm-store"}
 										/>
 										<CodeCatalystStepX run="npm exec n 22" />
 										<CodeCatalystStepX run="npm exec pnpm list" />
@@ -136,16 +141,17 @@ export default async () => (
 							<CodeCatalystTestX
 								architecture={"arm64"}
 								dependsOn={["Compile"]}
+								caching={{
+									FileCaching,
+								}}
 								timeout={10}
 								steps={
 									<>
 										<CodeCatalystStepX
-											run={"npm config set prefix=$(pwd)/.npm-global"}
+											run={"npm config set prefix=/tmp/npm-global"}
 										/>
 										<CodeCatalystStepX
-											run={
-												"npm exec pnpm config set store-dir $(pwd)/.pnpm-store"
-											}
+											run={"npm exec pnpm config set store-dir /tmp/pnpm-store"}
 										/>
 										<CodeCatalystStepX run="npm exec n 22" />
 										<CodeCatalystStepX run="npm exec pnpm list" />
@@ -163,21 +169,30 @@ export default async () => (
 						Image: (
 							<CodeCatalystBuildX
 								architecture={"arm64"}
+								caching={{
+									FileCaching,
+								}}
 								timeout={10}
+								inputs={{
+									Variables: [register("APPLICATION_IMAGE_NAME", "fourtwo")],
+								}}
 								steps={
 									<>
 										<CodeCatalystStepX
-											run={"npm config set prefix=$(pwd)/.npm-global"}
+											run={"npm config set prefix=/tmp/npm-global"}
 										/>
 										<CodeCatalystStepX
-											run={
-												"npm exec pnpm config set store-dir $(pwd)/.pnpm-store"
-											}
+											run={"npm exec pnpm config set store-dir /tmp/pnpm-store"}
 										/>
 										<CodeCatalystStepX run="npm exec n 22" />
 										<CodeCatalystStepX
 											run={
 												"npm exec pnpm exec nx pack:build iac-images-application --verbose"
+											}
+										/>
+										<CodeCatalystStepX
+											run={
+												"docker save -o $(pwd)/.artifacts/application.tar $APPLICATION_IMAGE_NAME"
 											}
 										/>
 									</>
@@ -188,6 +203,9 @@ export default async () => (
 							<CodeCatalystBuildX
 								dependsOn={["Image"]}
 								architecture={"arm64"}
+								caching={{
+									FileCaching,
+								}}
 								timeout={10}
 								inputs={{
 									Variables: [
@@ -200,9 +218,14 @@ export default async () => (
 								}}
 								steps={
 									<>
+										<CodeCatalystStepX
+											run={
+												"docker load --input $(pwd)/.artifacts/application.tar"
+											}
+										/>
 										<CodeCatalystStepX run={"docker images"} />
 										<CodeCatalystStepX
-											run={`aws ssm get-parameter --name ${AwsStateBackendBucketNameParameter()}`}
+											run={`aws ssm get-parameter --name ${AwsStateBackendCommandsParameter()}`}
 										/>
 										<CodeCatalystStepX
 											run={[
@@ -215,6 +238,7 @@ export default async () => (
 												"fourtwo",
 												"-- pnpm run dx:cli:mjs aws pulumi ci",
 												"--region us-west-2",
+												"> .pulumi-ci",
 											]
 												.map((x) => x.trim())
 												.join(" ")}
@@ -232,13 +256,13 @@ export default async () => (
 											<>
 												<CodeCatalystStepX
 													run={
-														`./.pulumi/bin/pulumi stack init $CI_ENVIRONMENT -C iac/stacks/${stack}`
+														`/tmp/pulumi/bin/pulumi stack init $CI_ENVIRONMENT -C iac/stacks/${stack}`
 														// "./.pulumi/bin/pulumi -y up -C iac/stacks/bootstrap"
 													}
 												/>
 												<CodeCatalystStepX
 													run={
-														`./.pulumi/bin/pulumi preview -C iac/stacks/${stack}`
+														`/tmp/pulumi/bin/pulumi preview -C iac/stacks/${stack}`
 														// "./.pulumi/bin/pulumi -y up -C iac/stacks/bootstrap"
 													}
 												/>
