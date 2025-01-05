@@ -54,31 +54,37 @@ export const AwsPulumiCiCommand = async () => {
 
 						let commands = z
 							.object({
-								pulumi: z.object({
-									backend: z.object({
-										url: z.string(),
-										key: z.string(),
-										commands: z.object({
-											login: z.string(),
-											init: z.string(),
-										}),
-									}),
-								}),
+								pulumi: z
+									.object({
+										backend: z
+											.object({
+												url: z.string().optional(),
+												key: z.string().optional(),
+												commands: z
+													.object({
+														login: z.string().optional(),
+														init: z.string().optional(),
+													})
+													.optional(),
+											})
+											.optional(),
+									})
+									.optional(),
 							})
-							.parse(commandsParameter);
+							.parse(JSON.parse(commandsParameter.Parameter.Value));
 
 						process.stdout.write(`\n`);
 						process.stdout.write(
-							`export PULUMI_BACKEND_URL=${commands.pulumi.backend.url}\n`,
+							`export PULUMI_BACKEND_URL="${commands.pulumi?.backend?.url}"\n`,
 						);
 						process.stdout.write(
-							`export PULUMI_BACKEND_KEY=${commands.pulumi.backend.key}\n`,
+							`export PULUMI_BACKEND_KEY="${commands.pulumi?.backend?.key}"\n`,
 						);
 						process.stdout.write(
-							`export PULUMI_COMMANDS_LOGIN=${commands.pulumi.backend.commands.login}\n`,
+							`export PULUMI_COMMANDS_LOGIN="${commands.pulumi?.backend?.commands?.login}"\n`,
 						);
 						process.stdout.write(
-							`export PULUMI_COMMANDS_INIT=${commands.pulumi.backend.commands.init}\n`,
+							`export PULUMI_COMMANDS_INIT="${commands.pulumi?.backend?.commands?.init}"\n`,
 						);
 					}
 				};

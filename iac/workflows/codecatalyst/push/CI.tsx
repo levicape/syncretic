@@ -17,28 +17,48 @@ let {
 	current: { register, context: _$_, env, secret },
 } = CodeCatalystWorkflowExpressions;
 
-let FileCaching = () => ({
+let FileCaching = ({
+	docker,
+	pulumi,
+	pnpm,
+}: {
+	docker?: boolean;
+	pulumi?: boolean;
+	pnpm?: boolean;
+} = {}) => ({
 	FileCaching: {
 		a64_npm_global: {
 			Path: "/tmp/npm-global",
 			RestoreKeys: ["npminstall"],
 		},
-		a64_pnpm_store: {
-			Path: "/tmp/pnpm-store",
-			RestoreKeys: ["pnpminstall"],
-		},
-		a64_pulumi: {
-			Path: "/tmp/pulumi",
-			RestoreKeys: ["pulumi"],
-		},
-		a64_docker: {
-			Path: "/tmp/docker-cache",
-			RestoreKeys: ["docker"],
-		},
+		...(pnpm
+			? {
+					a64_pnpm_store: {
+						Path: "/tmp/pnpm-store",
+						RestoreKeys: ["pnpminstall"],
+					},
+				}
+			: {}),
 		a64_nx: {
 			Path: "/tmp/nx-cache",
 			RestoreKeys: ["nx"],
 		},
+		...(docker
+			? {
+					a64_docker: {
+						Path: "/tmp/docker-cache",
+						RestoreKeys: ["docker"],
+					},
+				}
+			: {}),
+		...(pulumi
+			? {
+					a64_pulumi: {
+						Path: "/tmp/pulumi",
+						RestoreKeys: ["pulumi"],
+					},
+				}
+			: {}),
 	},
 });
 
@@ -59,7 +79,7 @@ export default async () => (
 		]}
 	>
 		{{
-			ci: (
+			Integration: (
 				<CodeCatalystActionGroupX>
 					{{
 						Install: (
@@ -68,7 +88,9 @@ export default async () => (
 								inputs={{
 									Sources: ["WorkflowSource"],
 									Variables: [
+										register("PAKETO_CLI_IMAGE", "buildpacksio/pack:latest"),
 										register("PAKETO_BUILDER_IMAGE", "heroku/builder:24"),
+										register("PAKETO_LAUNCHER_IMAGE", "heroku/heroku:24"),
 										register("PULUMI_VERSION", "3.144.1"),
 										register("NPM_REGISTRY_PROTOCOL", "https"),
 										register("NPM_REGISTRY_HOST", "npm.pkg.github.com"),
@@ -78,7 +100,11 @@ export default async () => (
 										),
 									],
 								}}
-								caching={FileCaching()}
+								caching={FileCaching({
+									docker: true,
+									pulumi: true,
+									pnpm: true,
+								})}
 								timeout={5}
 								steps={
 									<>
@@ -97,15 +123,23 @@ export default async () => (
 										<CodeCatalystStepX
 											run={`mkdir -p /tmp/docker-cache/images`}
 										/>
-										<CodeCatalystStepX
-											run={`docker load --input /tmp/docker-cache/images/builder.tar || true`}
-										/>
-										<CodeCatalystStepX
-											run={`docker pull $PAKETO_BUILDER_IMAGE`}
-										/>
-										<CodeCatalystStepX
-											run={`docker save -o /tmp/docker-cache/images/builder.tar $PAKETO_BUILDER_IMAGE`}
-										/>
+										{...[
+											["cli-pack.tar", "$PAKETO_CLI_IMAGE"],
+											["builder.tar", "$PAKETO_BUILDER_IMAGE"],
+											["launcher.tar", "$PAKETO_LAUNCHER_IMAGE"],
+										].flatMap(([file, image]) => {
+											return (
+												<>
+													<CodeCatalystStepX
+														run={`docker load --input /tmp/docker-cache/images/${file} || true`}
+													/>
+													<CodeCatalystStepX run={`docker pull ${image}`} />
+													<CodeCatalystStepX
+														run={`docker save -o /tmp/docker-cache/images/${file} ${image}`}
+													/>
+												</>
+											);
+										})}
 										<CodeCatalystStepX run="npm root -g" />
 										<CodeCatalystStepX run="npm install --g pnpm" />
 										<CodeCatalystStepX run="npm install --g n" />
@@ -137,11 +171,7 @@ export default async () => (
 										<CodeCatalystStepX
 											run={"npm config set prefix=/tmp/npm-global"}
 										/>
-										<CodeCatalystStepX
-											run={"npm exec pnpm config set store-dir /tmp/pnpm-store"}
-										/>
 										<CodeCatalystStepX run="npm exec n 22" />
-										<CodeCatalystStepX run="npm exec pnpm list" />
 										<CodeCatalystStepX run="npm exec pnpm compile" />
 										<CodeCatalystStepX run="npm exec pnpm lint" />
 									</>
@@ -159,11 +189,7 @@ export default async () => (
 										<CodeCatalystStepX
 											run={"npm config set prefix=/tmp/npm-global"}
 										/>
-										<CodeCatalystStepX
-											run={"npm exec pnpm config set store-dir /tmp/pnpm-store"}
-										/>
 										<CodeCatalystStepX run="npm exec n 22" />
-										<CodeCatalystStepX run="npm exec pnpm list" />
 										<CodeCatalystStepX run="npm exec pnpm test" />
 									</>
 								}
@@ -172,28 +198,33 @@ export default async () => (
 					}}
 				</CodeCatalystActionGroupX>
 			),
-			cd: (
-				<CodeCatalystActionGroupX dependsOn={["ci"]}>
+			Deployment: (
+				<CodeCatalystActionGroupX dependsOn={["Integration"]}>
 					{{
 						Image: (
 							<CodeCatalystBuildX
 								architecture={"arm64"}
-								caching={FileCaching()}
+								caching={FileCaching({ docker: true })}
 								timeout={10}
 								inputs={{
 									Variables: [register("APPLICATION_IMAGE_NAME", "fourtwo")],
 								}}
 								steps={
 									<>
-										<CodeCatalystStepX
-											run={`docker load --input /tmp/docker-cache/images/builder.tar || true`}
-										/>
-										<CodeCatalystStepX run={`mkdir -p /.artifacts`} />
+										{...["cli-pack.tar", "builder.tar", "launcher.tar"].flatMap(
+											(file) => {
+												return (
+													<>
+														<CodeCatalystStepX
+															run={`docker load --input /tmp/docker-cache/images/${file} || true`}
+														/>
+													</>
+												);
+											},
+										)}
+										<CodeCatalystStepX run={`mkdir -p $(pwd)/.artifacts`} />
 										<CodeCatalystStepX
 											run={"npm config set prefix=/tmp/npm-global"}
-										/>
-										<CodeCatalystStepX
-											run={"npm exec pnpm config set store-dir /tmp/pnpm-store"}
 										/>
 										<CodeCatalystStepX run="npm exec n 22" />
 										<CodeCatalystStepX
@@ -214,12 +245,18 @@ export default async () => (
 							<CodeCatalystBuildX
 								dependsOn={["Image"]}
 								architecture={"arm64"}
-								caching={FileCaching()}
+								caching={FileCaching({ pulumi: true })}
 								timeout={10}
 								inputs={{
 									Variables: [
+										register("APPLICATION_IMAGE_NAME", "fourtwo"),
 										register("CI_ENVIRONMENT", "current"),
 										register("CI_REGION", "us-west-2"),
+										register(
+											"PULUMI_CONFIG_PASSPHRASE",
+											secret("PULUMI_CONFIG_PASSPHRASE"),
+										),
+										register("PULUMI_HOME", "/tmp/pulumi"),
 									],
 								}}
 								environment={{
@@ -252,7 +289,11 @@ export default async () => (
 												.map((x) => x.trim())
 												.join(" ")}
 										/>
+										<CodeCatalystStepX
+											run={`cat .pulumi-ci | grep "export PULUMI" > .pulumi-ci`}
+										/>
 										<CodeCatalystStepX run={"cat .pulumi-ci"} />
+										<CodeCatalystStepX run={`source .pulumi-ci`} />
 										{...[
 											"code",
 											"domain",
@@ -265,7 +306,7 @@ export default async () => (
 											<>
 												<CodeCatalystStepX
 													run={
-														`/tmp/pulumi/bin/pulumi stack init $CI_ENVIRONMENT -C iac/stacks/${stack}`
+														`/tmp/pulumi/bin/pulumi stack init --secrets-provider $PULUMI_BACKEND_KEY -C iac/stacks/${stack} $APPLICATION_IMAGE_NAME.$CI_ENVIRONMENT.${stack}`
 														// "./.pulumi/bin/pulumi -y up -C iac/stacks/bootstrap"
 													}
 												/>

@@ -24,24 +24,8 @@ export class AwsClientBuilder {
 	static containerCredentials = async () => {
 		const envs = AwsEnvironment.parse(process.env);
 		if (envs.AWS_CONTAINER_CREDENTIALS_FULL_URI) {
-			if (envs.AWS_CONTAINER_TOKEN_ENDPOINT) {
-				const tokenResponse = await fetch(envs.AWS_CONTAINER_TOKEN_ENDPOINT, {
-					method: "GET",
-				});
-				const token = await tokenResponse.text();
-				console.dir({
-					token,
-				});
-			}
-
 			const parsed = new URL(envs.AWS_CONTAINER_CREDENTIALS_FULL_URI);
 			parsed.hostname = parsed.hostname.replace(/^\[(.+)\]$/, "$1");
-
-			console.dir({
-				AWS_CONTAINER_CREDENTIALS_FULL_URI:
-					envs.AWS_CONTAINER_CREDENTIALS_FULL_URI,
-				parsed,
-			});
 
 			const credsResponse = await fetch(parsed, {
 				method: "GET",
@@ -56,12 +40,6 @@ export class AwsClientBuilder {
 				})
 				.parse(await credsResponse.json());
 
-			console.dir(
-				{
-					creds,
-				},
-				{ depth: null },
-			);
 			return {
 				$kind: "ecr",
 				accessKeyId: creds.AccessKeyId,
