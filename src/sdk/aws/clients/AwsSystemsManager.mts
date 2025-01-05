@@ -8,13 +8,13 @@ type PutParameterResponse = zinfer<typeof putParameterResponse>;
 export class AwsSystemsManager {
 	constructor(
 		private client: AwsClient,
-		private credentialProvider: () => Promise<AWSCredentials>,
+		private credentialProvider?: () => Promise<AWSCredentials>,
 	) {}
 
 	async GetParameter({ Name }: { Name: string }) {
 		const client = new AwsClient({
 			...this.client,
-			...(await this.credentialProvider()),
+			...(this.credentialProvider ? await this.credentialProvider() : {}),
 		});
 
 		const response = await client.fetch(
@@ -77,7 +77,7 @@ export class AwsSystemsManager {
 	}): Promise<PutParameterResponse> {
 		const client = new AwsClient({
 			...this.client,
-			...(await this.credentialProvider()),
+			...(this.credentialProvider ? await this.credentialProvider() : {}),
 		});
 		const response = await client.fetch(
 			`https://ssm.${this.client.region}.amazonaws.com`,

@@ -37,12 +37,8 @@ type Flags = {
 export type PulumiBackendCommandReturn = {
 	pulumi: {
 		backend: {
-			url: `s3://${string}`;
-			key: `awskms:///${string}`;
-			commands: {
-				login: `pulumi login s3://${string}`;
-				init: `pulumi stack init --secrets-provider='awskms:///${string}' ${string}`;
-			};
+			url: `s3:${string}`;
+			key: `awskms:${string}`;
 		};
 	};
 };
@@ -706,19 +702,11 @@ export const AwsPulumiBackendCommand = async () => {
 							},
 						});
 
-						let stackName = prefix
-							? `${principal.replace(new RegExp(`^${prefix}-`), "")}.${prefix}`
-							: `${principal}.dev`;
-
 						let commands: PulumiBackendCommandReturn = {
 							pulumi: {
 								backend: {
-									url: `s3://${bucketLocation}`,
-									key: `awskms:///${encryptionKey}`,
-									commands: {
-										login: `pulumi login s3://${bucketLocation}`,
-										init: `pulumi stack init --secrets-provider='awskms:///${encryptionKey}' ${stackName}`,
-									},
+									url: `s3:/${bucketLocation}?region=us-east-1`,
+									key: `awskms://${encryptionKey}`,
 								},
 							},
 						};

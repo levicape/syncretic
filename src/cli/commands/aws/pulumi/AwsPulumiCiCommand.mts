@@ -60,12 +60,6 @@ export const AwsPulumiCiCommand = async () => {
 											.object({
 												url: z.string().optional(),
 												key: z.string().optional(),
-												commands: z
-													.object({
-														login: z.string().optional(),
-														init: z.string().optional(),
-													})
-													.optional(),
 											})
 											.optional(),
 									})
@@ -79,12 +73,6 @@ export const AwsPulumiCiCommand = async () => {
 						);
 						process.stdout.write(
 							`export PULUMI_BACKEND_KEY="${commands.pulumi?.backend?.key}"\n`,
-						);
-						process.stdout.write(
-							`export PULUMI_COMMANDS_LOGIN="${commands.pulumi?.backend?.commands?.login}"\n`,
-						);
-						process.stdout.write(
-							`export PULUMI_COMMANDS_INIT="${commands.pulumi?.backend?.commands?.init}"\n`,
 						);
 					}
 				};
