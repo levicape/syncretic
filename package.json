@@ -35,6 +35,7 @@
     "@types/verror": "catalog:types",
     "depcheck": "catalog:package",
     "expect": "catalog:test",
+    "jsonc-parser": "catalog:core",
     "nx": "catalog:package",
     "publint": "catalog:package",
     "syncpack": "catalog:package",

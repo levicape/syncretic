@@ -29,6 +29,7 @@ catalog:
 
 catalogs:
   core:
+    "jsonc-parser": "^3.3.1"
     "long": "^5.2.3"
     "zod": "3.24.1"
     "yaml": "^2.7.0"

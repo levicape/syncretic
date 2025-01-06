@@ -4,3 +4,4 @@ ignores:
 - "@bufbuild/protobuf"
 - "ts-proto"
 - "expect"
+- "jsonc-parser"

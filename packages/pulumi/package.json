@@ -12,6 +12,7 @@
     "@pulumi/aws": "catalog:pulumi",
     "@pulumi/awsx": "catalog:pulumi",
     "@pulumi/command": "catalog:pulumi",
+    "@pulumi/docker": "catalog:pulumi",
     "@pulumi/docker-build": "catalog:pulumi",
     "@pulumi/kubernetes": "catalog:pulumi",
     "@pulumi/pulumi": "catalog:pulumi",

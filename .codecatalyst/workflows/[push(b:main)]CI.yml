@@ -2,7 +2,7 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, DO NOT MODIFY
 ########################################
 Name: main_OnPush__CI_CD
-RunMode: QUEUED
+RunMode: SUPERSEDED
 SchemaVersion: "1.0"
 Compute:
   Type: EC2
@@ -49,51 +49,50 @@ Actions:
               Value: heroku/builder:24
             - Name: PAKETO_LAUNCHER_IMAGE
               Value: heroku/heroku:24
-            - Name: PULUMI_VERSION
-              Value: 3.144.1
             - Name: NPM_REGISTRY_PROTOCOL
               Value: https
             - Name: NPM_REGISTRY_HOST
               Value: npm.pkg.github.com
+            - Name: PULUMI_VERSION
+              Value: 3.144.1
             - Name: NODE_AUTH_TOKEN
               Value: ${Secrets.GITHUB_LEVICAPE_PAT}
-        Outputs:
-          Artifacts:
-            - Name: node_modules
-              Files:
-                - node_modules/**/*
-                - "**/node_modules/**/*"
         Configuration:
           Container:
             Registry: CODECATALYST
             Image: CodeCatalystLinux_Arm64:2024_03
           Steps:
-            - Run: npm config set prefix=/tmp/npm-global
             - Run: npm config set @levicape:registry=$NPM_REGISTRY_PROTOCOL://$NPM_REGISTRY_HOST --location project
             - Run: npm config set //$NPM_REGISTRY_HOST/:_authToken=$NODE_AUTH_TOKEN --location project
-            - Run: mkdir -p /tmp/pulumi
-            - Run: mkdir -p /tmp/npm-global
-            - Run: mkdir -p /tmp/pnpm-store
-            - Run: mkdir -p /tmp/docker-cache/images
-            - Run: docker load --input /tmp/docker-cache/images/cli-pack.tar || true
-            - Run: docker pull $PAKETO_CLI_IMAGE
-            - Run: docker save -o /tmp/docker-cache/images/cli-pack.tar $PAKETO_CLI_IMAGE
-            - Run: docker load --input /tmp/docker-cache/images/builder.tar || true
-            - Run: docker pull $PAKETO_BUILDER_IMAGE
-            - Run: docker save -o /tmp/docker-cache/images/builder.tar $PAKETO_BUILDER_IMAGE
-            - Run: docker load --input /tmp/docker-cache/images/launcher.tar || true
-            - Run: docker pull $PAKETO_LAUNCHER_IMAGE
-            - Run: docker save -o /tmp/docker-cache/images/launcher.tar $PAKETO_LAUNCHER_IMAGE
+            - Run: npm config set prefix=/tmp/npm-global
             - Run: npm root -g
             - Run: npm install --g pnpm
             - Run: npm install --g n
             - Run: npm exec n 22
-            - Run: ls -la /tmp/npm-global/lib/node_modules
-            - Run: ls -la /tmp/npm-global/lib/node_modules/pnpm || true
             - Run: npm exec pnpm config set store-dir /tmp/pnpm-store
             - Run: npm exec pnpm install
-            - Run: npm exec pnpm list
+            - Run: mkdir -p /tmp/npm-global
+            - Run: mkdir -p /tmp/pnpm-store
+            - Run: mkdir -p /tmp/nx-cache
+            - Run: mkdir -p /tmp/docker-cache
+            - Run: mkdir -p /tmp/pulumi
+            - Run: mkdir -p /tmp/docker-cache/images
+            - Run: docker load --input /tmp/docker-cache/images/cli-pack.tar.gz || true
+            - Run: docker pull $PAKETO_CLI_IMAGE
+            - Run: docker save $PAKETO_CLI_IMAGE | gzip > /tmp/docker-cache/images/cli-pack.tar.gz
+            - Run: du -sh /tmp/docker-cache/images/cli-pack.tar.gz
+            - Run: docker load --input /tmp/docker-cache/images/builder.tar.gz || true
+            - Run: docker pull $PAKETO_BUILDER_IMAGE
+            - Run: docker save $PAKETO_BUILDER_IMAGE | gzip > /tmp/docker-cache/images/builder.tar.gz
+            - Run: du -sh /tmp/docker-cache/images/builder.tar.gz
+            - Run: docker load --input /tmp/docker-cache/images/launcher.tar.gz || true
+            - Run: docker pull $PAKETO_LAUNCHER_IMAGE
+            - Run: docker save $PAKETO_LAUNCHER_IMAGE | gzip > /tmp/docker-cache/images/launcher.tar.gz
+            - Run: du -sh /tmp/docker-cache/images/launcher.tar.gz
             - Run: "[ -f /tmp/pulumi/bin/pulumi ] && /tmp/pulumi/bin/pulumi version | grep $PULUMI_VERSION || curl -fsSL https://get.pulumi.com | sh -s -- --version $PULUMI_VERSION --install-root /tmp/pulumi"
+            - Run: du -sh /tmp/pulumi
+            - Run: npm exec pnpm list
+            - Run: du -sh node_modules /tmp/npm-global /tmp/pnpm-store
       Compile:
         Identifier: aws/build@v1.0.0
         DependsOn:
@@ -116,8 +115,6 @@ Actions:
         Inputs:
           Sources:
             - WorkflowSource
-          Artifacts:
-            - node_modules
         Outputs:
           AutoDiscoverReports:
             Enabled: true
@@ -129,10 +126,12 @@ Actions:
           Steps:
             - Run: npm config set prefix=/tmp/npm-global
             - Run: npm exec n 22
-            - Run: npm exec pnpm install --offline
+            - Run: npm exec pnpm config set store-dir /tmp/pnpm-store
+            - Run: npm exec pnpm install --prefer-offline
             - Run: npm exec pnpm compile
             - Run: npm exec pnpm lint
             - Run: npm exec pnpm test
+            - Run: du -sh $(pwd)/**/module $(pwd)/**/commonjs || true
       Image:
         Identifier: aws/build@v1.0.0
         DependsOn:
@@ -162,28 +161,29 @@ Actions:
           Variables:
             - Name: APPLICATION_IMAGE_NAME
               Value: fourtwo
-          Artifacts:
-            - node_modules
         Outputs:
           Artifacts:
-            - Name: artifacts
+            - Name: images
               Files:
-                - .artifacts/**/*
+                - _images/**/*
         Configuration:
           Container:
             Registry: CODECATALYST
             Image: CodeCatalystLinux_Arm64:2024_03
           Steps:
-            - Run: docker load --input /tmp/docker-cache/images/cli-pack.tar || true
-            - Run: docker load --input /tmp/docker-cache/images/builder.tar || true
-            - Run: docker load --input /tmp/docker-cache/images/launcher.tar || true
-            - Run: mkdir -p $(pwd)/.artifacts
+            - Run: docker load --input /tmp/docker-cache/images/cli-pack.tar.gz || true
+            - Run: docker load --input /tmp/docker-cache/images/builder.tar.gz || true
+            - Run: docker load --input /tmp/docker-cache/images/launcher.tar.gz || true
+            - Run: mkdir -p _images
             - Run: npm config set prefix=/tmp/npm-global
             - Run: npm exec n 22
-            - Run: npm exec pnpm install --offline
+            - Run: npm exec pnpm config set store-dir /tmp/pnpm-store
+            - Run: npm exec pnpm install --prefer-offline
             - Run: npm exec pnpm exec nx pack:build iac-images-application --verbose
-            - Run: docker save -o $(pwd)/.artifacts/application.tar $APPLICATION_IMAGE_NAME
-      Preview_current:
+            - Run: docker save $APPLICATION_IMAGE_NAME | gzip > _images/application.tar.gz
+            - Run: du -sh _images/application.tar.gz
+            - Run: ls -la _images
+      Preview:
         Identifier: aws/build@v1.0.0
         DependsOn:
           - Image
@@ -209,52 +209,55 @@ Actions:
               RestoreKeys:
                 - pulumi
         Inputs:
+          Sources:
+            - WorkflowSource
           Variables:
             - Name: APPLICATION_IMAGE_NAME
               Value: fourtwo
+            - Name: BRANCH_NAME
+              Value: ${BranchName}
+            - Name: COMMIT_ID
+              Value: ${CommitId}
             - Name: CI_ENVIRONMENT
               Value: current
-            - Name: CI_REGION
+            - Name: AWS_REGION
               Value: us-west-2
-            - Name: PULUMI_CONFIG_PASSPHRASE
-              Value: ${{ Secrets.PULUMI_CONFIG_PASSPHRASE }}
             - Name: PULUMI_HOME
               Value: /tmp/pulumi
+            - Name: PULUMI_CONFIG_PASSPHRASE
+              Value: ${{ Secrets.PULUMI_CONFIG_PASSPHRASE }}
           Artifacts:
-            - artifacts
-            - node_modules
+            - images
         Configuration:
           Container:
             Registry: CODECATALYST
             Image: CodeCatalystLinux_Arm64:2024_03
           Steps:
-            - Run: docker load --input $(pwd)/.artifacts/application.tar
+            - Run: npm config set prefix=/tmp/npm-global
+            - Run: npm exec pnpm config set store-dir /tmp/pnpm-store
+            - Run: npm exec n 22
+            - Run: npm exec pnpm install --prefer-offline
+            - Run: ls -la $CATALYST_SOURCE_DIR_images/_images
+            - Run: docker load --input $CATALYST_SOURCE_DIR_images/_images/application.tar.gz
             - Run: docker images
             - Run: aws ssm get-parameter --name /fourtwo/_principal/pulumi/backend/StateBackendCommandReference
-            - Run: docker run --rm -e CI=true -e AWS_EXECUTION_ENV -e AWS_CONTAINER_CREDENTIALS_FULL_URI --network="host" --entrypoint launcher fourtwo -- pnpm run dx:cli:mjs aws pulumi ci --region us-west-2 > .pulumi-ci
-            - Run: cat .pulumi-ci | grep "export PULUMI" > .pulumi-ci
+            - Run: docker run --rm -e CI=true -e AWS_EXECUTION_ENV -e AWS_CONTAINER_CREDENTIALS_FULL_URI --network="host" --entrypoint launcher fourtwo -- pnpm run dx:cli:mjs aws pulumi ci --region $AWS_REGION > .pulumi-ci
             - Run: cat .pulumi-ci
-            - Run: source .pulumi-ci
-            - Run: /tmp/pulumi/bin/pulumi stack init --secrets-provider $PULUMI_BACKEND_KEY -C iac/stacks/code $APPLICATION_IMAGE_NAME.$CI_ENVIRONMENT.code
-            - Run: /tmp/pulumi/bin/pulumi preview -C iac/stacks/code
-            - Run: /tmp/pulumi/bin/pulumi stack init --secrets-provider $PULUMI_BACKEND_KEY -C iac/stacks/domain $APPLICATION_IMAGE_NAME.$CI_ENVIRONMENT.domain
-            - Run: /tmp/pulumi/bin/pulumi preview -C iac/stacks/domain
-            - Run: /tmp/pulumi/bin/pulumi stack init --secrets-provider $PULUMI_BACKEND_KEY -C iac/stacks/environment $APPLICATION_IMAGE_NAME.$CI_ENVIRONMENT.environment
-            - Run: /tmp/pulumi/bin/pulumi preview -C iac/stacks/environment
-            - Run: /tmp/pulumi/bin/pulumi stack init --secrets-provider $PULUMI_BACKEND_KEY -C iac/stacks/platform $APPLICATION_IMAGE_NAME.$CI_ENVIRONMENT.platform
-            - Run: /tmp/pulumi/bin/pulumi preview -C iac/stacks/platform
-            - Run: /tmp/pulumi/bin/pulumi stack init --secrets-provider $PULUMI_BACKEND_KEY -C iac/stacks/schedule $APPLICATION_IMAGE_NAME.$CI_ENVIRONMENT.schedule
-            - Run: /tmp/pulumi/bin/pulumi preview -C iac/stacks/schedule
-            - Run: /tmp/pulumi/bin/pulumi stack init --secrets-provider $PULUMI_BACKEND_KEY -C iac/stacks/test $APPLICATION_IMAGE_NAME.$CI_ENVIRONMENT.test
-            - Run: /tmp/pulumi/bin/pulumi preview -C iac/stacks/test
-            - Run: /tmp/pulumi/bin/pulumi stack init --secrets-provider $PULUMI_BACKEND_KEY -C iac/stacks/website $APPLICATION_IMAGE_NAME.$CI_ENVIRONMENT.website
-            - Run: /tmp/pulumi/bin/pulumi preview -C iac/stacks/website
+            - Run: cat .pulumi-ci | grep "export" >> .export-cd
+            - Run: cat .export-cd
+            - Run: source .export-cd
+            - Run: /tmp/pulumi/bin/pulumi stack init $APPLICATION_IMAGE_NAME.$CI_ENVIRONMENT.code -C $(pwd)/iac/stacks/code || true
+            - Run: /tmp/pulumi/bin/pulumi stack select $APPLICATION_IMAGE_NAME.$CI_ENVIRONMENT.code -C $(pwd)/iac/stacks/code || true
+            - Run: /tmp/pulumi/bin/pulumi config set aws:skipMetadataApiCheck false -C $(pwd)/iac/stacks/code
+            - Run: /tmp/pulumi/bin/pulumi stack change-secrets-provider $AWS_PROVIDER_KEY -C $(pwd)/iac/stacks/code
+            - Run: /tmp/pulumi/bin/pulumi preview -C $(pwd)/iac/stacks/code  --show-replacement-steps --json --suppress-progress --non-interactive --diff --message "$BRANCH_NAME-$COMMIT_ID"
+            - Run: /tmp/pulumi/bin/pulumi up -C $(pwd)/iac/stacks/code --yes --suppress-progress --non-interactive --diff --message "$BRANCH_NAME-$COMMIT_ID"
 
 ########################################
 ########################################
 #**:_$~- {"$$":"head","filename":"[push(b:main)]CI.yml","source":"iac/workflows/codecatalyst/push/CI.js"}
 #**:_$~- {"$$":"script","generator":"codegen/codecatalyst/GenerateCodeCatalystWorkflow.mts"}
-#**:_$~- {"$$":"body","hashed":"a00c8f67a4d6b3a94a83ca255962298f5f68103b9f860eb8bd089b4059b5228c"}
-#**:_$~- {"$$":"footer","started":"2025-01-06T06:13:10.964Z","now":"2025-01-06T06:13:10.970Z","elapsed":"6ms"}
+#**:_$~- {"$$":"body","hashed":"2e0f852485afaae7f4823392c0b2ca4ff349de0562224ca989e6e258a97098d9"}
+#**:_$~- {"$$":"footer","started":"2025-01-07T08:46:36.524Z","now":"2025-01-07T08:46:36.530Z","elapsed":"6ms"}
 # END OF GENERATED FILE
 

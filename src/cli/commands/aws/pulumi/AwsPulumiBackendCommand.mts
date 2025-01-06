@@ -493,7 +493,12 @@ export const AwsPulumiBackendCommand = async () => {
 							),
 						);
 
-						let kms = new AwsKms(assumed);
+						let kms = new AwsKms(
+							new AwsClient({
+								...assumed,
+								region: "us-east-1",
+							}),
+						);
 						let encryptionKeyParameter = (
 							await parameters.next({
 								template: AwsStateBackendEncryptionKeyParameter,
@@ -529,22 +534,28 @@ export const AwsPulumiBackendCommand = async () => {
 										AwsStateBackendEncryptionKeyAlias(principal),
 							);
 
-							console.dir({
-								AwsPulumiBackendCommand: {
-									message: "Found previous encryption key",
-									encryptionKey,
-									exists,
+							console.dir(
+								{
+									AwsPulumiBackendCommand: {
+										message: "Found previous encryption key",
+										encryptionKey,
+										exists,
+									},
 								},
-							});
+								{ depth: null },
+							);
 
 							if (!exists) {
-								console.dir({
-									AwsPulumiBackendCommand: {
-										message:
-											"Encryption key does not exist on this account, the existing parameter will be replaced, regardless of replace flag",
-										encryptionKey,
+								console.dir(
+									{
+										AwsPulumiBackendCommand: {
+											message:
+												"Encryption key does not exist on this account, the existing parameter will be replaced, regardless of replace flag",
+											encryptionKey,
+										},
 									},
-								});
+									{ depth: null },
+								);
 								encryptionKey = undefined;
 							}
 						}
@@ -613,32 +624,43 @@ export const AwsPulumiBackendCommand = async () => {
 								} satisfies RolePolicy),
 							});
 
-							console.dir({
-								AwsPulumiBackendCommand: {
-									message: "Encryption key created",
-									key,
+							console.dir(
+								{
+									AwsPulumiBackendCommand: {
+										message: "Encryption key created",
+										key,
+									},
 								},
-							});
+								{ depth: null },
+							);
 
 							await kms.CreateAlias({
 								AliasName: AwsStateBackendEncryptionKeyAlias(principal),
 								TargetKeyId: key.KeyMetadata.KeyId,
 							});
 
-							console.dir({
-								AwsPulumiBackendCommand: {
-									message: "Encryption key alias created",
+							console.dir(
+								{
+									AwsPulumiBackendCommand: {
+										message: "Encryption key alias created",
+										key: key.KeyMetadata.KeyId,
+										alias: AwsStateBackendEncryptionKeyAlias(principal),
+									},
 								},
-							});
+								{ depth: null },
+							);
 
 							await encryptionKeyParameter.update(key.KeyMetadata.KeyId);
 
-							console.dir({
-								AwsPulumiBackendCommand: {
-									message: "Encryption key parameter updated",
-									key: key.KeyMetadata.KeyId,
+							console.dir(
+								{
+									AwsPulumiBackendCommand: {
+										message: "Encryption key parameter updated",
+										key: key.KeyMetadata.KeyId,
+									},
 								},
-							});
+								{ depth: null },
+							);
 
 							encryptionKey = key.KeyMetadata.KeyId;
 						}
@@ -692,21 +714,24 @@ export const AwsPulumiBackendCommand = async () => {
 							},
 						});
 
-						console.dir({
-							AwsPulumiBackendCommand: {
-								message: "Pulumi backend initialized and configured.",
-								principal,
-								region,
-								encryptionKey,
-								bucketLocation,
+						console.dir(
+							{
+								AwsPulumiBackendCommand: {
+									message: "Pulumi backend initialized and configured.",
+									principal,
+									region,
+									encryptionKey,
+									bucketLocation,
+								},
 							},
-						});
+							{ depth: null },
+						);
 
 						let commands: PulumiBackendCommandReturn = {
 							pulumi: {
 								backend: {
 									url: `s3:/${bucketLocation}?region=us-east-1`,
-									key: `awskms://arn:aws:kms:${region}:${account}:key/${encryptionKey}?region=${region}&awssdk=v2`,
+									key: `awskms://${encryptionKey}?region=us-east-1&awssdk=v2`,
 								},
 							},
 						};

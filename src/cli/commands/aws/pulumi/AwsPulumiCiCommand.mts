@@ -72,7 +72,7 @@ export const AwsPulumiCiCommand = async () => {
 							`export PULUMI_BACKEND_URL="${commands.pulumi?.backend?.url}"\n`,
 						);
 						process.stdout.write(
-							`export PULUMI_BACKEND_KEY="${commands.pulumi?.backend?.key}"\n`,
+							`export AWS_PROVIDER_KEY="${commands.pulumi?.backend?.key}"\n`,
 						);
 					}
 				};
