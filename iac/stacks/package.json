@@ -10,13 +10,13 @@
   "dependencies": {
     "@levicape/fourtwo": "workspace:",
     "@levicape/fourtwo-pulumi": "workspace:",
-    "@pulumi/aws": "^6.0.0",
-    "@pulumi/awsx": "^2.0.2",
-    "@pulumi/pulumi": "^3.113.0"
+    "@pulumi/aws": "catalog:pulumi",
+    "@pulumi/awsx": "catalog:pulumi",
+    "@pulumi/pulumi": "catalog:pulumi"
   },
   "devDependencies": {
-    "@types/node": "^18",
-    "typescript": "^5.0.0"
+    "@types/node": "catalog:types",
+    "typescript": "catalog:dev"
   },
   "nx": {
     "targets": {

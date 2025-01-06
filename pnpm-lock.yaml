@@ -202,6 +202,10 @@ importers:
       '@levicape/paloma':
         specifier: 'catalog:'
         version: 0.0.7-nx-main.2(typescript@5.7.2)
+    devDependencies:
+      typescript:
+        specifier: catalog:dev
+        version: 5.7.2
 
   iac/development:
     dependencies:
@@ -218,20 +222,20 @@ importers:
         specifier: 'workspace:'
         version: link:../../packages/pulumi
       '@pulumi/aws':
-        specifier: ^6.0.0
-        version: 6.66.2(typescript@5.7.2)
+        specifier: catalog:pulumi
+        version: 6.65.0(typescript@5.7.2)
       '@pulumi/awsx':
-        specifier: ^2.0.2
+        specifier: catalog:pulumi
         version: 2.19.0(typescript@5.7.2)
       '@pulumi/pulumi':
-        specifier: ^3.113.0
-        version: 3.144.1(typescript@5.7.2)
+        specifier: catalog:pulumi
+        version: 3.143.0(typescript@5.7.2)
     devDependencies:
       '@types/node':
-        specifier: ^18
-        version: 18.19.69
+        specifier: catalog:types
+        version: 22.10.3
       typescript:
-        specifier: ^5.0.0
+        specifier: catalog:dev
         version: 5.7.2
 
   iac/workflows:
@@ -1307,9 +1311,6 @@ packages:
 
   '@types/minimatch@3.0.5':
     resolution: {integrity: sha512-Klz949h02Gz2uZCMGwDUSDS1YBlTdDDgbWHi+81l29tQALUtvz4rAYi5uoVhE5Lagoq6DeqAUlbrHvW/mXDgdQ==}
-
-  '@types/node@18.19.69':
-    resolution: {integrity: sha512-ECPdY1nlaiO/Y6GUnwgtAAhLNaQ53AyIVz+eILxpEo5OvuqE6yWkqWBIb5dU0DqhKQtMeny+FBD3PK6lm7L5xQ==}
 
   '@types/node@22.10.3':
     resolution: {integrity: sha512-DifAyw4BkrufCILvD3ucnuN8eydUfc/C1GlyrnI+LK6543w5/L3VeVgf05o3B4fqSXP1dKYLOZsKfutpxPzZrw==}
@@ -3132,9 +3133,6 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
-  undici-types@5.26.5:
-    resolution: {integrity: sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA==}
-
   undici-types@6.20.0:
     resolution: {integrity: sha512-Ny6QZ2Nju20vw1SRHe3d9jVu6gJ+4e3+MMpqu7pqE5HT6WsTSlce++GQmK5UXS8mzV8DSYHrQH+Xrf2jVcuKNg==}
 
@@ -3856,7 +3854,7 @@ snapshots:
       '@jest/schemas': 29.6.3
       '@types/istanbul-lib-coverage': 2.0.6
       '@types/istanbul-reports': 3.0.4
-      '@types/node': 18.19.69
+      '@types/node': 22.10.3
       '@types/yargs': 17.0.33
       chalk: 4.1.2
 
@@ -4213,7 +4211,7 @@ snapshots:
 
   '@pulumi/aws@6.65.0(typescript@5.7.2)':
     dependencies:
-      '@pulumi/pulumi': 3.143.0(typescript@5.7.2)
+      '@pulumi/pulumi': 3.144.1(typescript@5.7.2)
       builtin-modules: 3.0.0
       mime: 2.6.0
       resolve: 1.22.10
@@ -4236,9 +4234,9 @@ snapshots:
   '@pulumi/awsx@2.19.0(typescript@5.7.2)':
     dependencies:
       '@aws-sdk/client-ecs': 3.716.0
-      '@pulumi/aws': 6.65.0(typescript@5.7.2)
+      '@pulumi/aws': 6.66.2(typescript@5.7.2)
       '@pulumi/docker': 4.5.8(typescript@5.7.2)
-      '@pulumi/pulumi': 3.143.0(typescript@5.7.2)
+      '@pulumi/pulumi': 3.144.1(typescript@5.7.2)
       '@types/aws-lambda': 8.10.146
       docker-classic: '@pulumi/docker@3.6.1(typescript@5.7.2)'
       mime: 2.6.0
@@ -4251,7 +4249,7 @@ snapshots:
 
   '@pulumi/command@1.0.1(typescript@5.7.2)':
     dependencies:
-      '@pulumi/pulumi': 3.143.0(typescript@5.7.2)
+      '@pulumi/pulumi': 3.144.1(typescript@5.7.2)
     transitivePeerDependencies:
       - bluebird
       - supports-color
@@ -4260,7 +4258,7 @@ snapshots:
 
   '@pulumi/docker-build@0.0.7(typescript@5.7.2)':
     dependencies:
-      '@pulumi/pulumi': 3.143.0(typescript@5.7.2)
+      '@pulumi/pulumi': 3.144.1(typescript@5.7.2)
     transitivePeerDependencies:
       - bluebird
       - supports-color
@@ -4279,7 +4277,7 @@ snapshots:
 
   '@pulumi/docker@4.5.8(typescript@5.7.2)':
     dependencies:
-      '@pulumi/pulumi': 3.143.0(typescript@5.7.2)
+      '@pulumi/pulumi': 3.144.1(typescript@5.7.2)
       semver: 5.7.2
     transitivePeerDependencies:
       - bluebird
@@ -4289,7 +4287,7 @@ snapshots:
 
   '@pulumi/kubernetes@4.19.0(typescript@5.7.2)':
     dependencies:
-      '@pulumi/pulumi': 3.143.0(typescript@5.7.2)
+      '@pulumi/pulumi': 3.144.1(typescript@5.7.2)
       glob: 10.4.5
       shell-quote: 1.8.2
     transitivePeerDependencies:
@@ -4378,7 +4376,7 @@ snapshots:
 
   '@pulumi/random@4.16.8(typescript@5.7.2)':
     dependencies:
-      '@pulumi/pulumi': 3.143.0(typescript@5.7.2)
+      '@pulumi/pulumi': 3.144.1(typescript@5.7.2)
     transitivePeerDependencies:
       - bluebird
       - supports-color
@@ -4387,7 +4385,7 @@ snapshots:
 
   '@pulumi/synced-folder@0.11.1(typescript@5.7.2)':
     dependencies:
-      '@pulumi/pulumi': 3.143.0(typescript@5.7.2)
+      '@pulumi/pulumi': 3.144.1(typescript@5.7.2)
     transitivePeerDependencies:
       - bluebird
       - supports-color
@@ -4396,7 +4394,7 @@ snapshots:
 
   '@pulumiverse/time@0.1.0(typescript@5.7.2)':
     dependencies:
-      '@pulumi/pulumi': 3.143.0(typescript@5.7.2)
+      '@pulumi/pulumi': 3.144.1(typescript@5.7.2)
     transitivePeerDependencies:
       - bluebird
       - supports-color
@@ -4741,7 +4739,7 @@ snapshots:
     dependencies:
       '@types/http-cache-semantics': 4.0.4
       '@types/keyv': 3.1.4
-      '@types/node': 18.19.69
+      '@types/node': 22.10.3
       '@types/responselike': 1.0.3
 
   '@types/folder-hash@4.0.4': {}
@@ -4766,13 +4764,9 @@ snapshots:
 
   '@types/keyv@3.1.4':
     dependencies:
-      '@types/node': 18.19.69
+      '@types/node': 22.10.3
 
   '@types/minimatch@3.0.5': {}
-
-  '@types/node@18.19.69':
-    dependencies:
-      undici-types: 5.26.5
 
   '@types/node@22.10.3':
     dependencies:
@@ -4782,7 +4776,7 @@ snapshots:
 
   '@types/responselike@1.0.3':
     dependencies:
-      '@types/node': 18.19.69
+      '@types/node': 22.10.3
 
   '@types/semver@7.5.8': {}
 
@@ -5659,7 +5653,7 @@ snapshots:
   jest-util@29.7.0:
     dependencies:
       '@jest/types': 29.6.3
-      '@types/node': 18.19.69
+      '@types/node': 22.10.3
       chalk: 4.1.2
       ci-info: 3.9.0
       graceful-fs: 4.2.11
@@ -6246,7 +6240,7 @@ snapshots:
       '@protobufjs/path': 1.1.2
       '@protobufjs/pool': 1.1.0
       '@protobufjs/utf8': 1.1.0
-      '@types/node': 18.19.69
+      '@types/node': 22.10.3
       long: 5.2.3
 
   proxy-from-env@1.1.0: {}
@@ -6625,8 +6619,6 @@ snapshots:
       safe-buffer: 5.2.1
 
   typescript@5.7.2: {}
-
-  undici-types@5.26.5: {}
 
   undici-types@6.20.0: {}
 

@@ -64,7 +64,7 @@ export default async () => (
 		runMode={"QUEUED"}
 		compute={{
 			Type: "EC2",
-			Fleet: "Linux.Arm64.XLarge",
+			Fleet: "Linux.Arm64.2XLarge",
 		}}
 		triggers={[
 			{
@@ -184,7 +184,7 @@ export default async () => (
 											run={"npm config set prefix=/tmp/npm-global"}
 										/>
 										<CodeCatalystStepX run="npm exec n 22" />
-										<CodeCatalystStepX run="npm exec pnpm install --prefer-offline" />
+										<CodeCatalystStepX run="npm exec pnpm install --offline" />
 										<CodeCatalystStepX run="npm exec pnpm compile" />
 										<CodeCatalystStepX run="npm exec pnpm lint" />
 										<CodeCatalystStepX run="npm exec pnpm test" />
@@ -227,7 +227,7 @@ export default async () => (
 											run={"npm config set prefix=/tmp/npm-global"}
 										/>
 										<CodeCatalystStepX run="npm exec n 22" />
-										<CodeCatalystStepX run="npm exec pnpm install --prefer-offline" />
+										<CodeCatalystStepX run="npm exec pnpm install --offline" />
 										<CodeCatalystStepX
 											run={
 												"npm exec pnpm exec nx pack:build iac-images-application --verbose"

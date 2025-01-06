@@ -1,5 +1,5 @@
 import type { BucketV2 as BucketV2Type } from "@pulumi/aws/s3";
-import type { ComponentResourceOptions, Inputs } from "@pulumi/pulumi";
+import type { ComponentResourceOptions, Inputs, Output } from "@pulumi/pulumi";
 
 import { type GetCallerIdentityResult, getCallerIdentity } from "@pulumi/aws";
 import { Key } from "@pulumi/aws/kms";
@@ -23,10 +23,10 @@ export class PulumiStateAws extends ComponentResource<{
 }> {
 	public readonly bucket: BucketV2Type;
 
-	public readonly PULUMI_BACKEND_URL;
-	public readonly PULUMI_SECRETS_PROVIDER;
-	public readonly PulumiBackendLoginCommand;
-	public readonly PulumiStackInitCommand;
+	public readonly PULUMI_BACKEND_URL: Output<string>;
+	public readonly PULUMI_SECRETS_PROVIDER: Output<string>;
+	public readonly PulumiBackendLoginCommand: Output<string>;
+	public readonly PulumiStackInitCommand: Output<string>;
 
 	protected async initialize(args: Inputs) {
 		const identity = await getCallerIdentity();

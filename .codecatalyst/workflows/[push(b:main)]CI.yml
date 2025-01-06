@@ -6,7 +6,7 @@ RunMode: QUEUED
 SchemaVersion: "1.0"
 Compute:
   Type: EC2
-  Fleet: Linux.Arm64.XLarge
+  Fleet: Linux.Arm64.2XLarge
 Triggers:
   - Type: PUSH
     Branches:
@@ -129,7 +129,7 @@ Actions:
           Steps:
             - Run: npm config set prefix=/tmp/npm-global
             - Run: npm exec n 22
-            - Run: npm exec pnpm install --prefer-offline
+            - Run: npm exec pnpm install --offline
             - Run: npm exec pnpm compile
             - Run: npm exec pnpm lint
             - Run: npm exec pnpm test
@@ -180,7 +180,7 @@ Actions:
             - Run: mkdir -p $(pwd)/.artifacts
             - Run: npm config set prefix=/tmp/npm-global
             - Run: npm exec n 22
-            - Run: npm exec pnpm install --prefer-offline
+            - Run: npm exec pnpm install --offline
             - Run: npm exec pnpm exec nx pack:build iac-images-application --verbose
             - Run: docker save -o $(pwd)/.artifacts/application.tar $APPLICATION_IMAGE_NAME
       Preview_current:
@@ -254,7 +254,7 @@ Actions:
 ########################################
 #**:_$~- {"$$":"head","filename":"[push(b:main)]CI.yml","source":"iac/workflows/codecatalyst/push/CI.js"}
 #**:_$~- {"$$":"script","generator":"codegen/codecatalyst/GenerateCodeCatalystWorkflow.mts"}
-#**:_$~- {"$$":"body","hashed":"34646854e26e417a7958eeb3e4fcc694858d8ed9cef2d2786930f9483ba1e2ae"}
-#**:_$~- {"$$":"footer","started":"2025-01-06T04:30:12.721Z","now":"2025-01-06T04:30:12.728Z","elapsed":"7ms"}
+#**:_$~- {"$$":"body","hashed":"a00c8f67a4d6b3a94a83ca255962298f5f68103b9f860eb8bd089b4059b5228c"}
+#**:_$~- {"$$":"footer","started":"2025-01-06T06:13:10.964Z","now":"2025-01-06T06:13:10.970Z","elapsed":"6ms"}
 # END OF GENERATED FILE
 

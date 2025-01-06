@@ -10,7 +10,9 @@ export type CodeCatalystBuildContainerSpec = {
 
 export type CodeCatalystBuildComputeSpec = {
 	type: "EC2";
-	Fleet: "Linux.Arm64.Large" | "Linux.x86-64.Large";
+	Fleet:
+		| `Linux.Arm64.${"X" | "2X" | ""}Large`
+		| `Linux.x86-64.${"X" | "2X" | ""}Large`;
 };
 
 export type CodeCatalystBuildInputsSpec<

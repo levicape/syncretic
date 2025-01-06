@@ -4,6 +4,9 @@
   "dependencies": {
     "@levicape/paloma": "catalog:"
   },
+  "devDependencies": {
+    "typescript": "catalog:dev"
+  },
   "nx": {
     "targets": {
       "nx:test": {

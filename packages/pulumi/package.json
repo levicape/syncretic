@@ -67,9 +67,6 @@
       }
     }
   },
-  "peerDependencies": {
-    "typescript": "catalog:dev"
-  },
   "publishConfig": {
     "registry": "https://npm.pkg.github.com/"
   },
