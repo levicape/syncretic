@@ -706,7 +706,7 @@ export const AwsPulumiBackendCommand = async () => {
 							pulumi: {
 								backend: {
 									url: `s3:/${bucketLocation}?region=us-east-1`,
-									key: `awskms://${encryptionKey}`,
+									key: `awskms://arn:aws:kms:${region}:${account}:key/${encryptionKey}?region=${region}&awssdk=v2`,
 								},
 							},
 						};

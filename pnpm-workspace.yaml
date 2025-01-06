@@ -54,7 +54,6 @@ catalogs:
     "hookable": "^5.5.3"
     "@stricjs/cluster": "^2.0.0"
     "@stricjs/utils": "^2.0.7"
-
     "node-html-parser": "^6.1.13"
     "lru-cache": "^11.0.2"
     "unzipper": "^0.12.3"
@@ -93,7 +92,6 @@ catalogs:
     "@types/qrcode": "^1.5.5"
     "@types/react": "^19.0.0"
     "@types/react-dom": "^19.0.0"
-
     "@types/folder-hash": "^4.0.4"
     "@types/node": "^22.10.3"
     "@types/unzipper": "^0.10.10"
@@ -102,7 +100,6 @@ catalogs:
     "@types/module-alias": "^2.0.4"
     "@types/ini": "^4.1.1"
     "@types/verror": "^1.10.10"
-
     "@types/js-yaml": "^4.0.9"
   test:
     "expect": "^29.7.0"
@@ -122,11 +119,9 @@ catalogs:
   http:
     "http-status-codes": "^2.3.0"
     "odata-filter-parser": "^0.5.5"
-
     "cookie": "^1.0.2"
     "cookie-signature": "^1.2.2"
     "isbot": "^4.4.0"
-
   build:
     "node-gyp": "^10.2.0"
     "autoprefixer": "^10.4.20"
@@ -186,7 +181,6 @@ catalogs:
   web-cloudscape:
     "@cloudscape-design/components": "^3.0.839"
     "@cloudscape-design/global-styles": "^1.0.32"
-
   pulumi:
     "@pulumi/docker-build": "^0.0.7"
     "@pulumi/synced-folder": "^0.11.1"
@@ -198,6 +192,5 @@ catalogs:
     "@pulumi/pulumi": "^3.142.0"
     "@pulumi/random": "^4.16.7"
     "@pulumiverse/time": "^0.1.0"
-
   kubernetes:
     "@kubernetes-models/postgres-operator": "^0.4.2"

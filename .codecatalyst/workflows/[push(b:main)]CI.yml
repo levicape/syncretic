@@ -7,7 +7,6 @@ SchemaVersion: "1.0"
 Compute:
   Type: EC2
   Fleet: Linux.Arm64.XLarge
-  SharedInstance: "TRUE"
 Triggers:
   - Type: PUSH
     Branches:
@@ -17,7 +16,7 @@ Actions:
     Actions:
       Install:
         Identifier: aws/build@v1.0.0
-        Timeout: 5
+        Timeout: 9
         Caching:
           FileCaching:
             a64_npm_global:
@@ -58,6 +57,12 @@ Actions:
               Value: npm.pkg.github.com
             - Name: NODE_AUTH_TOKEN
               Value: ${Secrets.GITHUB_LEVICAPE_PAT}
+        Outputs:
+          Artifacts:
+            - Name: node_modules
+              Files:
+                - node_modules/**/*
+                - "**/node_modules/**/*"
         Configuration:
           Container:
             Registry: CODECATALYST
@@ -100,10 +105,23 @@ Actions:
               Path: /tmp/npm-global
               RestoreKeys:
                 - npminstall
+            a64_pnpm_store:
+              Path: /tmp/pnpm-store
+              RestoreKeys:
+                - pnpminstall
             a64_nx:
               Path: /tmp/nx-cache
               RestoreKeys:
                 - nx
+        Inputs:
+          Sources:
+            - WorkflowSource
+          Artifacts:
+            - node_modules
+        Outputs:
+          AutoDiscoverReports:
+            Enabled: true
+            ReportNamePrefix: junit
         Configuration:
           Container:
             Registry: CODECATALYST
@@ -111,37 +129,14 @@ Actions:
           Steps:
             - Run: npm config set prefix=/tmp/npm-global
             - Run: npm exec n 22
+            - Run: npm exec pnpm install --prefer-offline
             - Run: npm exec pnpm compile
             - Run: npm exec pnpm lint
-      Test:
-        Identifier: aws/managed-test@v1.0.0
-        Timeout: 10
-        Caching:
-          FileCaching:
-            a64_npm_global:
-              Path: /tmp/npm-global
-              RestoreKeys:
-                - npminstall
-            a64_nx:
-              Path: /tmp/nx-cache
-              RestoreKeys:
-                - nx
-        DependsOn:
-          - Compile
-        Configuration:
-          Container:
-            Registry: CODECATALYST
-            Image: CodeCatalystLinux_Arm64:2024_03
-          Steps:
-            - Run: npm config set prefix=/tmp/npm-global
-            - Run: npm exec n 22
             - Run: npm exec pnpm test
-  Deployment:
-    DependsOn:
-      - Integration
-    Actions:
       Image:
         Identifier: aws/build@v1.0.0
+        DependsOn:
+          - Install
         Timeout: 10
         Caching:
           FileCaching:
@@ -149,6 +144,10 @@ Actions:
               Path: /tmp/npm-global
               RestoreKeys:
                 - npminstall
+            a64_pnpm_store:
+              Path: /tmp/pnpm-store
+              RestoreKeys:
+                - pnpminstall
             a64_nx:
               Path: /tmp/nx-cache
               RestoreKeys:
@@ -158,9 +157,18 @@ Actions:
               RestoreKeys:
                 - docker
         Inputs:
+          Sources:
+            - WorkflowSource
           Variables:
             - Name: APPLICATION_IMAGE_NAME
               Value: fourtwo
+          Artifacts:
+            - node_modules
+        Outputs:
+          Artifacts:
+            - Name: artifacts
+              Files:
+                - .artifacts/**/*
         Configuration:
           Container:
             Registry: CODECATALYST
@@ -172,6 +180,7 @@ Actions:
             - Run: mkdir -p $(pwd)/.artifacts
             - Run: npm config set prefix=/tmp/npm-global
             - Run: npm exec n 22
+            - Run: npm exec pnpm install --prefer-offline
             - Run: npm exec pnpm exec nx pack:build iac-images-application --verbose
             - Run: docker save -o $(pwd)/.artifacts/application.tar $APPLICATION_IMAGE_NAME
       Preview_current:
@@ -187,6 +196,10 @@ Actions:
               Path: /tmp/npm-global
               RestoreKeys:
                 - npminstall
+            a64_pnpm_store:
+              Path: /tmp/pnpm-store
+              RestoreKeys:
+                - pnpminstall
             a64_nx:
               Path: /tmp/nx-cache
               RestoreKeys:
@@ -207,6 +220,9 @@ Actions:
               Value: ${{ Secrets.PULUMI_CONFIG_PASSPHRASE }}
             - Name: PULUMI_HOME
               Value: /tmp/pulumi
+          Artifacts:
+            - artifacts
+            - node_modules
         Configuration:
           Container:
             Registry: CODECATALYST
@@ -238,7 +254,7 @@ Actions:
 ########################################
 #**:_$~- {"$$":"head","filename":"[push(b:main)]CI.yml","source":"iac/workflows/codecatalyst/push/CI.js"}
 #**:_$~- {"$$":"script","generator":"codegen/codecatalyst/GenerateCodeCatalystWorkflow.mts"}
-#**:_$~- {"$$":"body","hashed":"b91f6c91de83af175e8777ad7f0e050e09329c569d3ae9bb2a5bbdda0f3ae6cf"}
-#**:_$~- {"$$":"footer","started":"2025-01-05T17:54:08.711Z","now":"2025-01-05T17:54:08.718Z","elapsed":"7ms"}
+#**:_$~- {"$$":"body","hashed":"34646854e26e417a7958eeb3e4fcc694858d8ed9cef2d2786930f9483ba1e2ae"}
+#**:_$~- {"$$":"footer","started":"2025-01-06T04:30:12.721Z","now":"2025-01-06T04:30:12.728Z","elapsed":"7ms"}
 # END OF GENERATED FILE
 

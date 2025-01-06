@@ -20,25 +20,21 @@ let {
 let FileCaching = ({
 	docker,
 	pulumi,
-	pnpm,
 }: {
 	docker?: boolean;
 	pulumi?: boolean;
-	pnpm?: boolean;
 } = {}) => ({
 	FileCaching: {
 		a64_npm_global: {
 			Path: "/tmp/npm-global",
 			RestoreKeys: ["npminstall"],
 		},
-		...(pnpm
-			? {
-					a64_pnpm_store: {
-						Path: "/tmp/pnpm-store",
-						RestoreKeys: ["pnpminstall"],
-					},
-				}
-			: {}),
+		...{
+			a64_pnpm_store: {
+				Path: "/tmp/pnpm-store",
+				RestoreKeys: ["pnpminstall"],
+			},
+		},
 		a64_nx: {
 			Path: "/tmp/nx-cache",
 			RestoreKeys: ["nx"],
@@ -69,7 +65,6 @@ export default async () => (
 		compute={{
 			Type: "EC2",
 			Fleet: "Linux.Arm64.XLarge",
-			SharedInstance: true,
 		}}
 		triggers={[
 			{
@@ -103,9 +98,16 @@ export default async () => (
 								caching={FileCaching({
 									docker: true,
 									pulumi: true,
-									pnpm: true,
 								})}
-								timeout={5}
+								outputs={{
+									Artifacts: [
+										{
+											Name: "node_modules",
+											Files: ["node_modules/**/*", "**/node_modules/**/*"],
+										},
+									],
+								}}
+								timeout={9}
 								steps={
 									<>
 										<CodeCatalystStepX
@@ -165,6 +167,16 @@ export default async () => (
 								architecture={"arm64"}
 								dependsOn={["Install"]}
 								caching={FileCaching()}
+								inputs={{
+									Sources: ["WorkflowSource"],
+									Artifacts: ["node_modules"],
+								}}
+								outputs={{
+									AutoDiscoverReports: {
+										Enabled: true,
+										ReportNamePrefix: "junit",
+									},
+								}}
 								timeout={8}
 								steps={
 									<>
@@ -172,42 +184,30 @@ export default async () => (
 											run={"npm config set prefix=/tmp/npm-global"}
 										/>
 										<CodeCatalystStepX run="npm exec n 22" />
+										<CodeCatalystStepX run="npm exec pnpm install --prefer-offline" />
 										<CodeCatalystStepX run="npm exec pnpm compile" />
 										<CodeCatalystStepX run="npm exec pnpm lint" />
-									</>
-								}
-							/>
-						),
-						Test: (
-							<CodeCatalystTestX
-								architecture={"arm64"}
-								dependsOn={["Compile"]}
-								caching={FileCaching()}
-								timeout={10}
-								steps={
-									<>
-										<CodeCatalystStepX
-											run={"npm config set prefix=/tmp/npm-global"}
-										/>
-										<CodeCatalystStepX run="npm exec n 22" />
 										<CodeCatalystStepX run="npm exec pnpm test" />
 									</>
 								}
 							/>
 						),
-					}}
-				</CodeCatalystActionGroupX>
-			),
-			Deployment: (
-				<CodeCatalystActionGroupX dependsOn={["Integration"]}>
-					{{
+
 						Image: (
 							<CodeCatalystBuildX
+								dependsOn={["Install"]}
 								architecture={"arm64"}
 								caching={FileCaching({ docker: true })}
 								timeout={10}
 								inputs={{
+									Sources: ["WorkflowSource"],
 									Variables: [register("APPLICATION_IMAGE_NAME", "fourtwo")],
+									Artifacts: ["node_modules"],
+								}}
+								outputs={{
+									Artifacts: [
+										{ Name: "artifacts", Files: [".artifacts/**/*"] },
+									],
 								}}
 								steps={
 									<>
@@ -227,6 +227,7 @@ export default async () => (
 											run={"npm config set prefix=/tmp/npm-global"}
 										/>
 										<CodeCatalystStepX run="npm exec n 22" />
+										<CodeCatalystStepX run="npm exec pnpm install --prefer-offline" />
 										<CodeCatalystStepX
 											run={
 												"npm exec pnpm exec nx pack:build iac-images-application --verbose"
@@ -258,6 +259,7 @@ export default async () => (
 										),
 										register("PULUMI_HOME", "/tmp/pulumi"),
 									],
+									Artifacts: ["artifacts", "node_modules"],
 								}}
 								environment={{
 									Name: "current",
@@ -321,7 +323,7 @@ export default async () => (
 									</>
 								}
 							/>
-						), // Deploy_current, Preview_stable, Approve_stable, Deploy_stable
+						),
 					}}
 				</CodeCatalystActionGroupX>
 			),
