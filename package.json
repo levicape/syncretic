@@ -104,7 +104,8 @@
       },
       "nx:compile": {
         "dependsOn": [
-          "build"
+          "build",
+          "@levicape/fourtwo-pulumi:nx:compile"
         ]
       },
       "nx:test": {

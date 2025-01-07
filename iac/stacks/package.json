@@ -3,8 +3,6 @@
   "config": {
     "packagemanager": "pnpm",
     "packageexecutor": "pnpm exec",
-    "binpath": "./src/cli/bin.mts",
-    "clipath": "./module/cli/bin.mjs",
     "lintpaths": "./src ./canary ./iac"
   },
   "dependencies": {
@@ -22,13 +20,15 @@
     "targets": {
       "nx:compile": {
         "dependsOn": [
-          "@levicape/fourtwo-pulumi:nx:compile"
+          "@levicape/fourtwo-pulumi:nx:compile",
+          "iac_stacks_code:nx:compile"
         ]
       },
       "dx:precommit": {
         "dependsOn": [
           "nx:compile",
-          "iac_stacks_bootstrap:nx:precommit"
+          "iac_stacks_bootstrap:nx:precommit",
+          "iac_stacks_code:nx:precommit"
         ]
       }
     }

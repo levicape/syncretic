@@ -91,12 +91,15 @@ export const AwsOrganizationPrincipalCommand = async () => {
 							(account) => account.Name === principalName,
 						) !== undefined
 					) {
-						console.dir({
-							PrincipalCommand: {
-								message: "Account already exists",
-								principalName,
+						console.dir(
+							{
+								PrincipalCommand: {
+									message: "Account already exists",
+									principalName,
+								},
 							},
-						});
+							{ depth: null },
+						);
 
 						principal = accounts.Accounts.find(
 							(account) => account.Name === principalName,
@@ -136,20 +139,26 @@ export const AwsOrganizationPrincipalCommand = async () => {
 							Email: email,
 							RoleName: AwsOrganizationPrincipalOAARole,
 						});
-						console.dir({
-							PrincipalCommand: {
-								message: "Account created",
-								CreateAccountStatus,
+						console.dir(
+							{
+								PrincipalCommand: {
+									message: "Account created",
+									CreateAccountStatus,
+								},
 							},
-						});
+							{ depth: null },
+						);
 
 						await WaitForReadySequence("account", {
 							isReady: async () => {
-								console.dir({
-									PrincipalCommand: {
-										message: "Checking account status",
+								console.dir(
+									{
+										PrincipalCommand: {
+											message: "Checking account status",
+										},
 									},
-								});
+									{ depth: null },
+								);
 								const account =
 									await organizations.DescribeAccountCreationStatus({
 										CreateAccountRequestId: CreateAccountStatus.Id,
@@ -223,6 +232,18 @@ export const AwsOrganizationPrincipalCommand = async () => {
 									],
 								},
 							},
+							{
+								Effect: "Allow" as const,
+								Action: "sts:AssumeRole",
+								Principal: {
+									AWS: [`*`],
+								},
+								Condition: {
+									StringEquals: {
+										"aws:PrincipalOrgID": org.Organization.MasterAccountId,
+									},
+								},
+							},
 						],
 					};
 
@@ -253,12 +274,15 @@ export const AwsOrganizationPrincipalCommand = async () => {
 							PolicyDocument: farPolicy,
 						});
 
-						console.dir({
-							PrincipalCommand: {
-								message: "Updated assume policy",
-								farRole,
+						console.dir(
+							{
+								PrincipalCommand: {
+									message: "Updated assume policy",
+									farRole,
+								},
 							},
-						});
+							{ depth: null },
+						);
 					}
 
 					await new Promise((resolve) =>

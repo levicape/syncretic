@@ -323,6 +323,7 @@ export default async () => {
 											/>
 											<CodeCatalystStepX run="npm exec n 22" />
 											<CodeCatalystStepX run="npm exec pnpm install --prefer-offline" />
+											<CodeCatalystStepX run="npm exec pnpm compile" />
 											<CodeCatalystStepX
 												run={`ls -la $CATALYST_SOURCE_DIR${OUTPUT_IMAGE_PATH}/${OUTPUT_IMAGE_PATH}`}
 											/>
@@ -360,13 +361,22 @@ export default async () => {
 											{...PULUMI_STACKS.flatMap((stack) => (
 												<>
 													<CodeCatalystStepX
-														run={`${PULUMI_CACHE}/bin/pulumi stack init $APPLICATION_IMAGE_NAME.$CI_ENVIRONMENT.${stack} -C $(pwd)/iac/stacks/${stack} || true`}
+														run={`${PULUMI_CACHE}/bin/pulumi stack init "$APPLICATION_IMAGE_NAME-${stack}.$CI_ENVIRONMENT" -C $(pwd)/iac/stacks/${stack} || true`}
 													/>
 													<CodeCatalystStepX
-														run={`${PULUMI_CACHE}/bin/pulumi stack select $APPLICATION_IMAGE_NAME.$CI_ENVIRONMENT.${stack} -C $(pwd)/iac/stacks/${stack} || true`}
+														run={`${PULUMI_CACHE}/bin/pulumi stack select "$APPLICATION_IMAGE_NAME-${stack}.$CI_ENVIRONMENT" -C $(pwd)/iac/stacks/${stack} || true`}
 													/>
 													<CodeCatalystStepX
 														run={`${PULUMI_CACHE}/bin/pulumi config set aws:skipMetadataApiCheck false -C $(pwd)/iac/stacks/${stack}`}
+													/>
+													<CodeCatalystStepX
+														run={`${PULUMI_CACHE}/bin/pulumi config set --path context:stack.environment.isProd false -C $(pwd)/iac/stacks/${stack}`}
+													/>
+													<CodeCatalystStepX
+														run={`${PULUMI_CACHE}/bin/pulumi config set --path context:stack.environment.features aws -C $(pwd)/iac/stacks/${stack}`}
+													/>
+													<CodeCatalystStepX
+														run={`${PULUMI_CACHE}/bin/pulumi config set --path 'frontend:stack.dns.hostnames[0]' "$CI_ENVIRONMENT.$APPLICATION_IMAGE_NAME.cloud.$HOSTNAME" -C $(pwd)/iac/stacks/${stack}`}
 													/>
 													<CodeCatalystStepX
 														run={`${PULUMI_CACHE}/bin/pulumi stack change-secrets-provider $AWS_PROVIDER_KEY -C $(pwd)/iac/stacks/${stack}`}

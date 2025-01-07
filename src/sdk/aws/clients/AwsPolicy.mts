@@ -28,7 +28,10 @@ export type RolePolicy = {
 			  };
 		Action: string | string[];
 		Condition?: {
-			StringLike: {
+			StringLike?: {
+				[key: string]: string;
+			};
+			StringEquals?: {
 				[key: string]: string;
 			};
 		};

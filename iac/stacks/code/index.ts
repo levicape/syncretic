@@ -1,15 +1,13 @@
-/** @jsxImportSource @levicape/fourtwo */
-/** @jsxRuntime automatic */
-
 import { Repository as ECRRepository } from "@pulumi/aws/ecr";
+import { Context } from "../../../packages/pulumi/commonjs/context/Context.js";
 
 // Configures account with ECR, S3, and CodePipeline
 export = async () => {
-	// ECR
+	const context = await Context.fromConfig();
+	const _ = (name: string) => `${context.prefix}-${name}`;
+
 	const ecr = (() => {
-		const repository = new ECRRepository("ecrRepository", {
-			name: "artifact",
-		});
+		const repository = new ECRRepository(_("binaries"));
 
 		return {
 			repository,

@@ -1,18 +1,19 @@
 {
 	"compilerOptions": {
 		"strict": true,
-		"target": "es2020",
+		"target": "es2022",
 		"module": "preserve",
-		"moduleResolution": "bundler",
 		"jsx": "react-jsx",
 		"jsxImportSource": "@levicape/fourtwo",
+		"lib": ["es2022"],
 		"inlineSources": true,
 		"inlineSourceMap": true,
 		"experimentalDecorators": true,
 		"pretty": true,
 		"noFallthroughCasesInSwitch": true,
 		"noImplicitReturns": true,
-		"forceConsistentCasingInFileNames": true
+		"forceConsistentCasingInFileNames": true,
+		"outDir": "commonjs"
 	},
 	"include": ["**/*"],
 	"exclude": ["node_modules", "module", "commonjs"]

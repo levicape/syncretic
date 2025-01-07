@@ -237,6 +237,7 @@ Actions:
             - Run: npm exec pnpm config set store-dir /tmp/pnpm-store
             - Run: npm exec n 22
             - Run: npm exec pnpm install --prefer-offline
+            - Run: npm exec pnpm compile
             - Run: ls -la $CATALYST_SOURCE_DIR_images/_images
             - Run: docker load --input $CATALYST_SOURCE_DIR_images/_images/application.tar.gz
             - Run: docker images
@@ -246,9 +247,12 @@ Actions:
             - Run: cat .pulumi-ci | grep "export" >> .export-cd
             - Run: cat .export-cd
             - Run: source .export-cd
-            - Run: /tmp/pulumi/bin/pulumi stack init $APPLICATION_IMAGE_NAME.$CI_ENVIRONMENT.code -C $(pwd)/iac/stacks/code || true
-            - Run: /tmp/pulumi/bin/pulumi stack select $APPLICATION_IMAGE_NAME.$CI_ENVIRONMENT.code -C $(pwd)/iac/stacks/code || true
+            - Run: /tmp/pulumi/bin/pulumi stack init "$APPLICATION_IMAGE_NAME-code.$CI_ENVIRONMENT" -C $(pwd)/iac/stacks/code || true
+            - Run: /tmp/pulumi/bin/pulumi stack select "$APPLICATION_IMAGE_NAME-code.$CI_ENVIRONMENT" -C $(pwd)/iac/stacks/code || true
             - Run: /tmp/pulumi/bin/pulumi config set aws:skipMetadataApiCheck false -C $(pwd)/iac/stacks/code
+            - Run: /tmp/pulumi/bin/pulumi config set --path context:stack.environment.isProd false -C $(pwd)/iac/stacks/code
+            - Run: /tmp/pulumi/bin/pulumi config set --path context:stack.environment.features aws -C $(pwd)/iac/stacks/code
+            - Run: /tmp/pulumi/bin/pulumi config set --path 'frontend:stack.dns.hostnames[0]' "$CI_ENVIRONMENT.$APPLICATION_IMAGE_NAME.cloud.$HOSTNAME" -C $(pwd)/iac/stacks/code
             - Run: /tmp/pulumi/bin/pulumi stack change-secrets-provider $AWS_PROVIDER_KEY -C $(pwd)/iac/stacks/code
             - Run: /tmp/pulumi/bin/pulumi preview -C $(pwd)/iac/stacks/code  --show-replacement-steps --json --suppress-progress --non-interactive --diff --message "$BRANCH_NAME-$COMMIT_ID"
             - Run: /tmp/pulumi/bin/pulumi up -C $(pwd)/iac/stacks/code --yes --suppress-progress --non-interactive --diff --message "$BRANCH_NAME-$COMMIT_ID"
@@ -257,7 +261,7 @@ Actions:
 ########################################
 #**:_$~- {"$$":"head","filename":"[push(b:main)]CI.yml","source":"iac/workflows/codecatalyst/push/CI.js"}
 #**:_$~- {"$$":"script","generator":"codegen/codecatalyst/GenerateCodeCatalystWorkflow.mts"}
-#**:_$~- {"$$":"body","hashed":"2e0f852485afaae7f4823392c0b2ca4ff349de0562224ca989e6e258a97098d9"}
-#**:_$~- {"$$":"footer","started":"2025-01-07T08:46:36.524Z","now":"2025-01-07T08:46:36.530Z","elapsed":"6ms"}
+#**:_$~- {"$$":"body","hashed":"ce6ccff92a9c046c3bd00755f88fc2e5c7b0d1e3327d85074c5fdd9ec23ca92c"}
+#**:_$~- {"$$":"footer","started":"2025-01-07T22:47:36.825Z","now":"2025-01-07T22:47:36.831Z","elapsed":"6ms"}
 # END OF GENERATED FILE
 
