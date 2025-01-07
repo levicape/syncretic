@@ -169,6 +169,7 @@ export default async () => {
 														<CodeCatalystStepX
 															run={`docker load --input ${DOCKER_CACHE}/images/${file} || true`}
 														/>
+														{/* TODO: Check if zip is same, if it is then don't copy*/}
 														<CodeCatalystStepX run={`docker pull ${image}`} />
 														<CodeCatalystStepX
 															run={`docker save ${image} | gzip > ${DOCKER_CACHE}/images/${file}`}
