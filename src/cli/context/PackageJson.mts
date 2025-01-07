@@ -24,12 +24,15 @@ export const PackageJsonRepositoryName = async () => {
 		}
 	}
 
-	console.dir({
-		PrincipalCommand: {
-			message: "Repository not found in package.json",
-			repository,
+	console.dir(
+		{
+			PrincipalCommand: {
+				message: "Repository not found in package.json",
+				repository,
+			},
 		},
-	});
+		{ depth: null },
+	);
 
 	return undefined;
 };

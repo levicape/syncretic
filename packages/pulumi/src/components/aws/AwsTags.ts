@@ -1,12 +1,12 @@
 /**
  * isTaggable returns true if the given resource type is an AWS resource that supports tags.
  */
-function isAwsTaggable(t: string): boolean {
+export function isAwsTaggable(t: string): boolean {
 	return taggableResourceTypes.indexOf(t) !== -1;
 }
 
 // taggableResourceTypes is a list of known AWS type tokens that are taggable.
-const taggableResourceTypes = [
+export const taggableResourceTypes = [
 	"aws:accessanalyzer/analyzer:Analyzer",
 	"aws:acm/certificate:Certificate",
 	"aws:acmpca/certificateAuthority:CertificateAuthority",
@@ -235,8 +235,3 @@ const taggableResourceTypes = [
 	"aws:workspaces/directory:Directory",
 	"aws:workspaces/ipGroup:IpGroup",
 ];
-
-module.exports = {
-	isAwsTaggable,
-	taggableResourceTypes,
-};

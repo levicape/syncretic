@@ -246,8 +246,8 @@ Actions:
             - Run: cat .pulumi-ci | grep "export" >> .export-cd
             - Run: cat .export-cd
             - Run: source .export-cd
-            - Run: /tmp/pulumi/bin/pulumi stack init $APPLICATION_IMAGE_NAME.$CI_ENVIRONMENT.code -C $(pwd)/iac/stacks/code || true
-            - Run: /tmp/pulumi/bin/pulumi stack select $APPLICATION_IMAGE_NAME.$CI_ENVIRONMENT.code -C $(pwd)/iac/stacks/code || true
+            - Run: /tmp/pulumi/bin/pulumi stack init "$APPLICATION_IMAGE_NAME-code.$CI_ENVIRONMENT" -C $(pwd)/iac/stacks/code || true
+            - Run: /tmp/pulumi/bin/pulumi stack select "$APPLICATION_IMAGE_NAME-code.$CI_ENVIRONMENT" -C $(pwd)/iac/stacks/code || true
             - Run: /tmp/pulumi/bin/pulumi config set aws:skipMetadataApiCheck false -C $(pwd)/iac/stacks/code
             - Run: /tmp/pulumi/bin/pulumi stack change-secrets-provider $AWS_PROVIDER_KEY -C $(pwd)/iac/stacks/code
             - Run: /tmp/pulumi/bin/pulumi preview -C $(pwd)/iac/stacks/code  --show-replacement-steps --json --suppress-progress --non-interactive --diff --message "$BRANCH_NAME-$COMMIT_ID"
@@ -257,7 +257,7 @@ Actions:
 ########################################
 #**:_$~- {"$$":"head","filename":"[push(b:main)]CI.yml","source":"iac/workflows/codecatalyst/push/CI.js"}
 #**:_$~- {"$$":"script","generator":"codegen/codecatalyst/GenerateCodeCatalystWorkflow.mts"}
-#**:_$~- {"$$":"body","hashed":"2e0f852485afaae7f4823392c0b2ca4ff349de0562224ca989e6e258a97098d9"}
-#**:_$~- {"$$":"footer","started":"2025-01-07T08:46:36.524Z","now":"2025-01-07T08:46:36.530Z","elapsed":"6ms"}
+#**:_$~- {"$$":"body","hashed":"1fb8a8fb060a18789c35f1c3a95042b530485411dcb19c54929e5d4a5941a2c7"}
+#**:_$~- {"$$":"footer","started":"2025-01-07T21:39:31.201Z","now":"2025-01-07T21:39:31.208Z","elapsed":"7ms"}
 # END OF GENERATED FILE
 

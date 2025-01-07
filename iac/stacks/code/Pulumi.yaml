@@ -1,4 +1,4 @@
-name: bootstrap
+name: fourtwo-code
 description: State bucket and associated SSM parameters
 runtime:
   name: nodejs

@@ -5,6 +5,7 @@
 		"target": "es2020",
 		"module": "commonjs",
 		"moduleResolution": "node",
+		"lib": ["ES2023"],
 		"experimentalDecorators": true,
 		"pretty": true,
 		"noFallthroughCasesInSwitch": true,

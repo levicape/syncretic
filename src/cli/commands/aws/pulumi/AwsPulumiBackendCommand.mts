@@ -422,6 +422,13 @@ export const AwsPulumiBackendCommand = async () => {
 																Federated: [
 																	"sts.amazonaws.com",
 																	`arn:aws:iam::${account}:oidc-provider/tokens.action.githubusercontent.com`,
+																	"codebuild.amazonaws.com",
+																	"codepipeline.amazonaws.com",
+																	"codedeploy.amazonaws.com",
+																	"codecommit.amazonaws.com",
+																	"codeartifact.amazonaws.com",
+																	"codecatalyst.amazonaws.com",
+																	"codecatalyst-runner.amazonaws.com",
 																],
 															},
 														},
@@ -577,7 +584,6 @@ export const AwsPulumiBackendCommand = async () => {
 								}
 							}
 
-							// TODO: FT Builder Assume Policy
 							let key = await kms.CreateKey({
 								Description: `Pulumi backend key for ${principal}`,
 								Policy: JSON.stringify({
@@ -596,10 +602,31 @@ export const AwsPulumiBackendCommand = async () => {
 												Federated: [
 													"sts.amazonaws.com",
 													`arn:aws:iam::${account}:oidc-provider/tokens.action.githubusercontent.com`,
+													"codebuild.amazonaws.com",
+													"codepipeline.amazonaws.com",
+													"codedeploy.amazonaws.com",
+													"codecommit.amazonaws.com",
+													"codeartifact.amazonaws.com",
+													"codecatalyst.amazonaws.com",
+													"codecatalyst-runner.amazonaws.com",
 												],
 											},
 											Action: ["kms:*"],
 											Resource: "*",
+										},
+										{
+											Effect: "Allow",
+											Principal: {
+												AWS: "*",
+											},
+											Action: ["kms:*"],
+											Resource: "*",
+											Condition: {
+												StringEquals: {
+													"aws:PrincipalOrgID":
+														org.Organization.MasterAccountId,
+												},
+											},
 										},
 										{
 											Effect: "Allow",

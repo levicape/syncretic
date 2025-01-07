@@ -360,10 +360,10 @@ export default async () => {
 											{...PULUMI_STACKS.flatMap((stack) => (
 												<>
 													<CodeCatalystStepX
-														run={`${PULUMI_CACHE}/bin/pulumi stack init $APPLICATION_IMAGE_NAME.$CI_ENVIRONMENT.${stack} -C $(pwd)/iac/stacks/${stack} || true`}
+														run={`${PULUMI_CACHE}/bin/pulumi stack init "$APPLICATION_IMAGE_NAME-${stack}.$CI_ENVIRONMENT" -C $(pwd)/iac/stacks/${stack} || true`}
 													/>
 													<CodeCatalystStepX
-														run={`${PULUMI_CACHE}/bin/pulumi stack select $APPLICATION_IMAGE_NAME.$CI_ENVIRONMENT.${stack} -C $(pwd)/iac/stacks/${stack} || true`}
+														run={`${PULUMI_CACHE}/bin/pulumi stack select "$APPLICATION_IMAGE_NAME-${stack}.$CI_ENVIRONMENT" -C $(pwd)/iac/stacks/${stack} || true`}
 													/>
 													<CodeCatalystStepX
 														run={`${PULUMI_CACHE}/bin/pulumi config set aws:skipMetadataApiCheck false -C $(pwd)/iac/stacks/${stack}`}
