@@ -1,4 +1,4 @@
-// export * from "./aws/index.cjs";
+export * from "./aws/index.js";
 // export * from "./cdn/index.cjs";
 // export * from "./compute/index.cjs";
 // export * from "./database/index.cjs";

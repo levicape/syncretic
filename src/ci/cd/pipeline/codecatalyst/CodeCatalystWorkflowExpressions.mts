@@ -46,6 +46,7 @@ export const CodeCatalystWorkflowExpressions = (() => {
 				throw new Error("Invalid state");
 			},
 			context: (val: string) => `\${${val}}`,
+			input: (name: `_${string}`) => `$CATALYST_SOURCE_DIR${name}`,
 		},
 		reset: () => {
 			current = PipelineStateGeneratorBuilder(
