@@ -40,21 +40,21 @@ export class AwsOrganizations {
 			.object({
 				Organization: z.object({
 					Arn: z.string(),
-					FeatureSet: z.string(),
+					FeatureSet: z.string().optional(),
 					MasterAccountArn: z.string(),
-					MasterAccountEmail: z.string(),
+					MasterAccountEmail: z.string().optional(),
 					MasterAccountId: z.string(),
 					AvaliablePolicyTypes: z
 						.array(
 							z.object({
-								Type: z.string(),
-								Status: z.string(),
+								Type: z.string().optional(),
+								Status: z.string().optional(),
 							}),
 						)
 						.optional(),
 				}),
 			})
-			.parse(await response.json());
+			.parse(await response.json()).Organization;
 	}
 
 	async DescribeOrganization() {
@@ -88,27 +88,26 @@ export class AwsOrganizations {
 				`Failed to describe organization: ${response.statusText}`,
 			);
 		}
-		const { data, error } = z
+
+		return z
 			.object({
 				Organization: z.object({
 					Arn: z.string(),
-					FeatureSet: z.string(),
+					FeatureSet: z.string().optional(),
 					MasterAccountArn: z.string(),
-					MasterAccountEmail: z.string(),
+					MasterAccountEmail: z.string().optional(),
 					MasterAccountId: z.string(),
 					AvaliablePolicyTypes: z
 						.array(
 							z.object({
-								Type: z.string(),
-								Status: z.string(),
+								Type: z.string().optional(),
+								Status: z.string().optional(),
 							}),
 						)
 						.optional(),
 				}),
 			})
-			.safeParse(await response.json());
-
-		return data;
+			.parse(await response.json()).Organization;
 	}
 
 	async CreateAccount({

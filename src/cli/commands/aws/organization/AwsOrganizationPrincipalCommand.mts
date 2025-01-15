@@ -60,8 +60,8 @@ export const AwsOrganizationPrincipalCommand = async () => {
 						| { Id: string; Name: string; Email: string }
 						| undefined;
 
-					const org = await organizations.DescribeOrganization();
-					if (!org) {
+					const organization = await organizations.DescribeOrganization();
+					if (!organization) {
 						throw new VError(
 							{
 								name: "PrincipalCommand",
@@ -73,9 +73,9 @@ export const AwsOrganizationPrincipalCommand = async () => {
 					const accounts = await organizations.ListAccounts();
 					console.dir(
 						{
-							PrincipalCommand: {
-								message: "Organization:",
-								org,
+							AwsOrganizationPrincipalCommand: {
+								message: `Organization accounts`,
+								organization,
 								principalName,
 								accounts: accounts.Accounts.map((account) => ({
 									Name: account.Name,
@@ -93,7 +93,7 @@ export const AwsOrganizationPrincipalCommand = async () => {
 					) {
 						console.dir(
 							{
-								PrincipalCommand: {
+								AwsOrganizationPrincipalCommand: {
 									message: "Account already exists",
 									principalName,
 								},
@@ -141,7 +141,7 @@ export const AwsOrganizationPrincipalCommand = async () => {
 						});
 						console.dir(
 							{
-								PrincipalCommand: {
+								AwsOrganizationPrincipalCommand: {
 									message: "Account created",
 									CreateAccountStatus,
 								},
@@ -153,7 +153,7 @@ export const AwsOrganizationPrincipalCommand = async () => {
 							isReady: async () => {
 								console.dir(
 									{
-										PrincipalCommand: {
+										AwsOrganizationPrincipalCommand: {
 											message: "Checking account status",
 										},
 									},
@@ -192,7 +192,7 @@ export const AwsOrganizationPrincipalCommand = async () => {
 
 					console.dir(
 						{
-							PrincipalCommand: {
+							AwsOrganizationPrincipalCommand: {
 								message: "Assumed role",
 								AssumedRoleUser,
 							},
@@ -218,9 +218,7 @@ export const AwsOrganizationPrincipalCommand = async () => {
 								Effect: "Allow" as const,
 								Action: "sts:AssumeRole",
 								Principal: {
-									AWS: [
-										`arn:aws:iam::${org.Organization.MasterAccountId}:root`,
-									],
+									AWS: [`arn:aws:iam::${organization.MasterAccountId}:root`],
 									Service: [
 										"codebuild.amazonaws.com",
 										"codepipeline.amazonaws.com",
@@ -229,6 +227,7 @@ export const AwsOrganizationPrincipalCommand = async () => {
 										"codeartifact.amazonaws.com",
 										"codecatalyst.amazonaws.com",
 										"codecatalyst-runner.amazonaws.com",
+										"events.amazonaws.com",
 									],
 								},
 							},
@@ -240,7 +239,7 @@ export const AwsOrganizationPrincipalCommand = async () => {
 								},
 								Condition: {
 									StringEquals: {
-										"aws:PrincipalOrgID": org.Organization.MasterAccountId,
+										"aws:PrincipalOrgID": organization.MasterAccountId,
 									},
 								},
 							},
@@ -257,7 +256,7 @@ export const AwsOrganizationPrincipalCommand = async () => {
 
 					console.dir(
 						{
-							PrincipalCommand: {
+							AwsOrganizationPrincipalCommand: {
 								message:
 									farRole.$kind === "new"
 										? "Created Role"
@@ -276,7 +275,7 @@ export const AwsOrganizationPrincipalCommand = async () => {
 
 						console.dir(
 							{
-								PrincipalCommand: {
+								AwsOrganizationPrincipalCommand: {
 									message: "Updated assume policy",
 									farRole,
 								},
@@ -310,7 +309,7 @@ export const AwsOrganizationPrincipalCommand = async () => {
 
 					console.dir(
 						{
-							PrincipalCommand: {
+							AwsOrganizationPrincipalCommand: {
 								message: "Updated role policy FourtwoFARRolePolicy",
 								policy,
 							},
@@ -352,7 +351,7 @@ export const AwsOrganizationPrincipalCommand = async () => {
 
 					console.dir(
 						{
-							PrincipalCommand: {
+							AwsOrganizationPrincipalCommand: {
 								message: "Updated Fourtwo Access Role parameter",
 								farParameter,
 							},
@@ -380,7 +379,7 @@ export const AwsOrganizationPrincipalCommand = async () => {
 
 					console.dir(
 						{
-							PrincipalCommand: {
+							AwsOrganizationPrincipalCommand: {
 								message: "Updated Organization Access role parameters",
 								oaa,
 							},

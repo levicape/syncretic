@@ -112,7 +112,7 @@ export const AwsCodebuildOidcCommand = async () => {
 
 						console.dir(
 							{
-								PrincipalCommand: {
+								AwsCodebuildGithubOidcCommand: {
 									message: "Created OIDC Provider",
 									provider,
 								},
@@ -152,7 +152,7 @@ export const AwsCodebuildOidcCommand = async () => {
 
 						console.dir(
 							{
-								PrincipalCommand: {
+								AwsCodebuildGithubOidcCommand: {
 									message:
 										service.$kind === "new"
 											? "Created Role"
@@ -184,7 +184,7 @@ export const AwsCodebuildOidcCommand = async () => {
 
 						console.dir(
 							{
-								PrincipalCommand: {
+								AwsCodebuildGithubOidcCommand: {
 									message: "Updated role policy FourtwoOIDCRolePolicy",
 									policy,
 								},
@@ -213,7 +213,7 @@ export const AwsCodebuildOidcCommand = async () => {
 
 						console.dir(
 							{
-								PrincipalCommand: {
+								AwsCodebuildGithubOidcCommand: {
 									message: "Updated OIDC role parameter",
 									oidc,
 								},

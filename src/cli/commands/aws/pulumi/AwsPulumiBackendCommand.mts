@@ -153,8 +153,8 @@ export const AwsPulumiBackendCommand = async () => {
 						}),
 					);
 
-					const org = await organizations.DescribeOrganization();
-					if (!org) {
+					const organization = await organizations.DescribeOrganization();
+					if (!organization) {
 						throw new VError(
 							{
 								name: "PrincipalCommand",
@@ -416,7 +416,7 @@ export const AwsPulumiBackendCommand = async () => {
 															Action: "sts:AssumeRole",
 															Principal: {
 																AWS: [
-																	`arn:aws:iam::${org.Organization.MasterAccountId}:root`,
+																	`arn:aws:iam::${organization.MasterAccountId}:root`,
 																	`arn:aws:iam::${account}:root`,
 																],
 																Federated: [
@@ -593,7 +593,7 @@ export const AwsPulumiBackendCommand = async () => {
 											Effect: "Allow",
 											Principal: {
 												AWS: [
-													`arn:aws:iam::${org.Organization.MasterAccountId}:root`,
+													`arn:aws:iam::${organization.MasterAccountId}:root`,
 													`arn:aws:iam::${account}:root`,
 													...(oaaRole ? [arnForRole(oaaRole)] : []),
 													...(farRole ? [arnForRole(farRole)] : []),
@@ -623,8 +623,7 @@ export const AwsPulumiBackendCommand = async () => {
 											Resource: "*",
 											Condition: {
 												StringEquals: {
-													"aws:PrincipalOrgID":
-														org.Organization.MasterAccountId,
+													"aws:PrincipalOrgID": organization.MasterAccountId,
 												},
 											},
 										},

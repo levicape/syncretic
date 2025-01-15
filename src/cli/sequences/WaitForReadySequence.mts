@@ -5,12 +5,15 @@ export const WaitForReadySequence = async (
 	props: { timeout?: number; isReady: () => Promise<boolean> },
 ) => {
 	const start = Date.now();
-	console.dir({
-		waitForReady: {
-			message: `Waiting for ${label}`,
-			timeout: `${props.timeout ?? 60000}ms`,
+	console.dir(
+		{
+			waitForReady: {
+				message: `Waiting for ${label}`,
+				timeout: `${props.timeout ?? 60000}ms`,
+			},
 		},
-	});
+		{ depth: null },
+	);
 
 	while (Date.now() - start < (props.timeout ?? 60000)) {
 		if (await props.isReady()) {

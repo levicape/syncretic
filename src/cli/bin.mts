@@ -17,24 +17,30 @@ const cleanargs = args.map((a, i) => {
 	return a;
 });
 !supress &&
-	console.dir({
-		Cli: {
-			message: "Command execution started",
-			args: cleanargs,
+	console.dir(
+		{
+			Cli: {
+				message: "Command execution started",
+				args: cleanargs,
+			},
 		},
-	});
+		{ depth: null },
+	);
 await run(app, process.argv.slice(2), {
 	process: {
 		...process,
 		exit: (code: number) => {
 			!supress &&
-				console.dir({
-					Cli: {
-						message: "Command execution complete",
-						args: cleanargs,
-						code,
+				console.dir(
+					{
+						Cli: {
+							message: "Command execution complete",
+							args: cleanargs,
+							code,
+						},
 					},
-				});
+					{ depth: null },
+				);
 
 			if (code === 0) {
 				let current: (() => void) | undefined;

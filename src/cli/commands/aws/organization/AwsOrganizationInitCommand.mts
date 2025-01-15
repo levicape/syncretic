@@ -17,13 +17,13 @@ export const AwsOrganizationInitCommand = async () => {
 						}),
 					);
 
-					let org = await organizations.DescribeOrganization();
-					if (org) {
+					let organization = await organizations.DescribeOrganization();
+					if (organization) {
 						console.dir(
 							{
 								OrganizationCommand: {
 									message: "Organization exists:",
-									org,
+									organization,
 								},
 							},
 							{ depth: null },
@@ -41,12 +41,12 @@ export const AwsOrganizationInitCommand = async () => {
 						{ depth: null },
 					);
 
-					org = await organizations.CreateOrganization();
+					organization = await organizations.CreateOrganization();
 					console.dir(
 						{
 							OrganizationCommand: {
 								message: "Organization created:",
-								org,
+								organization,
 							},
 						},
 						{ depth: null },
