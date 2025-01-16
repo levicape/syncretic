@@ -58,6 +58,8 @@
     "./ci": "./module/ci/index.mjs",
     "./ci/cd": "./module/ci/cd/index.mjs",
     "./ci/cd/pipeline": "./module/ci/cd/pipeline/index.mjs",
+    "./ci/cd/pipeline/codebuild": "./module/ci/cd/pipeline/codebuild/index.mjs",
+    "./ci/cd/pipeline/codedeploy": "./module/ci/cd/pipeline/codedeploy/index.mjs",
     "./ci/cd/pipeline/codecatalyst": "./module/ci/cd/pipeline/codecatalyst/index.mjs",
     "./ci/cd/pipeline/codepipeline": "./module/ci/cd/pipeline/codepipeline/index.mjs",
     "./ci/cd/pipeline/devfile": "./module/ci/cd/pipeline/devfile/index.mjs",
