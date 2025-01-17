@@ -5,7 +5,7 @@
 		"target": "es2020",
 		"module": "commonjs",
 		"moduleResolution": "node",
-		"lib": ["ES2023"],
+		"lib": ["ES2023", "DOM"],
 		"experimentalDecorators": true,
 		"pretty": true,
 		"noFallthroughCasesInSwitch": true,
@@ -21,7 +21,7 @@
 		"inlineSourceMap": true /* Include sourcemap files inside the emitted JavaScript. */,
 		"inlineSources": true /* Include source code in the sourcemaps inside the emitted JavaScript. */,
 		"esModuleInterop": true,
-		"strictPropertyInitialization": false,             /* Check for class properties that are declared but not set in the constructor. */     
+		"strictPropertyInitialization": false
 	},
 	"include": ["src/**/*"]
 }

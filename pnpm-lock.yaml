@@ -253,6 +253,46 @@ importers:
         specifier: 'workspace:'
         version: link:../..
 
+  packages/builders:
+    dependencies:
+      '@levicape/fourtwo':
+        specifier: 'workspace:'
+        version: link:../..
+    devDependencies:
+      '@biomejs/biome':
+        specifier: catalog:lint
+        version: 1.9.4
+      '@types/folder-hash':
+        specifier: catalog:types
+        version: 4.0.4
+      '@types/ini':
+        specifier: catalog:types
+        version: 4.1.1
+      '@types/js-yaml':
+        specifier: catalog:types
+        version: 4.0.9
+      '@types/node':
+        specifier: catalog:types
+        version: 22.10.3
+      '@types/verror':
+        specifier: catalog:types
+        version: 1.10.10
+      depcheck:
+        specifier: catalog:package
+        version: 1.4.7
+      nx:
+        specifier: catalog:package
+        version: 20.3.0
+      publint:
+        specifier: catalog:package
+        version: 0.2.12
+      syncpack:
+        specifier: catalog:package
+        version: 13.0.0(typescript@5.7.2)
+      typescript:
+        specifier: catalog:dev
+        version: 5.7.2
+
   packages/pulumi:
     dependencies:
       '@kubernetes-models/postgres-operator':
