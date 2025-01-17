@@ -74,13 +74,8 @@ export type CodeBuildBuildspecLambda = {
 export type CodeBuildBuildspec = CodeBuildBuildspecLambda;
 
 export class CodebuildBuildSpecProxyBuilder {
-	private _uploadArtifacts: CodeBuildBuildSpecStringBoolean;
-	private _logs: CodeBuildBuildSpecStringBoolean;
-
-	constructor() {
-		this._uploadArtifacts = "no";
-		this._logs = "no";
-	}
+	private _uploadArtifacts: CodeBuildBuildSpecStringBoolean = "no";
+	private _logs: CodeBuildBuildSpecStringBoolean = "no";
 
 	setUploadArtifacts(uploadArtifacts: CodeBuildBuildSpecStringBoolean) {
 		this._uploadArtifacts = uploadArtifacts;
@@ -103,11 +98,7 @@ export class CodebuildBuildSpecProxyBuilder {
 export type CodeBuildBuildspecBatch = CodeBuildBuildspec["batch"];
 
 export class CodeBuildBuildspecBatchBuilder {
-	private _fastFail: CodeBuildBuildSpecStringBoolean;
-
-	constructor() {
-		this._fastFail = "no";
-	}
+	private _fastFail: CodeBuildBuildSpecStringBoolean = "no";
 
 	setFastFail(fastFail: CodeBuildBuildSpecStringBoolean) {
 		this._fastFail = fastFail;
@@ -124,11 +115,7 @@ export class CodeBuildBuildspecBatchBuilder {
 export type CodeBuildBuildspecCache = CodeBuildBuildspec["cache"];
 
 export class CodeBuildBuildspecCacheBuilder {
-	private _paths: Array<string>;
-
-	constructor() {
-		this._paths = [];
-	}
+	private _paths: Array<string> = [];
 
 	addPath(path: string) {
 		this._paths.push(path);
@@ -207,7 +194,7 @@ export class CodeBuildBuildspecReportsBuilder {
 export type CodeBuildBuildspecArtifacts = CodeBuildBuildspec["artifacts"];
 
 export class CodeBuildBuildspecArtifactsBuilder {
-	private _files: Array<string>;
+	private _files: Array<string> = [];
 	private _name: string;
 	private _baseDirectory?: string;
 	private _excludePaths?: Array<string>;
@@ -264,7 +251,7 @@ export class CodeBuildBuildspecArtifactsBuilder {
 
 		return {
 			files,
-			...(name ? { name } : {}),
+			name,
 			...(baseDirectory ? { "base-directory": baseDirectory } : {}),
 			...(excludePaths ? { "exclude-paths": excludePaths } : {}),
 			...(enableSymlinks ? { "enable-symlinks": enableSymlinks } : {}),
@@ -276,20 +263,15 @@ export class CodeBuildBuildspecArtifactsBuilder {
 export type CodeBuildBuildspecEnv = CodeBuildBuildspec["env"];
 
 export class CodeBuildBuildspecEnvBuilder {
-	private _shell: NonNullable<CodeBuildBuildspecEnv>["shell"];
-	private _variables: Record<string, string>;
-	private _parameterStore: Record<string, string>;
+	private _shell: NonNullable<CodeBuildBuildspecEnv>["shell"] = "bash";
+	private _variables: Record<string, string> = {};
+	private _parameterStore: Record<string, string> = {};
 	private _secretsManager: Record<
 		string,
 		CodebuildBuildSpecSecretmanagerTemplateString
-	>;
-	private _exportedVariables: Array<string>;
-	private _gitCredentialHelper: CodeBuildBuildSpecStringBoolean;
-
-	constructor() {
-		this._shell = "bash";
-		this._variables = {};
-	}
+	> = {};
+	private _exportedVariables: Array<string> = [];
+	private _gitCredentialHelper: CodeBuildBuildSpecStringBoolean = "no";
 
 	setShell(shell: NonNullable<CodeBuildBuildspecEnv>["shell"]) {
 		this._shell = shell;
@@ -361,14 +343,9 @@ export type CodeBuildBuildspecResourceLambdaPhase =
 	CodeBuildBuildspecResourceLambdaPhaseSpec;
 
 export class CodeBuildBuildspecResourceLambdaPhaseBuilder {
-	private _onFailure: CodeBuildBuildspecResourceLambdaPhase["on-failure"];
-	private _commands: Array<string>;
-	private _finally: Array<string>;
-
-	constructor() {
-		this._commands = [];
-		this._finally = [];
-	}
+	private _onFailure?: CodeBuildBuildspecResourceLambdaPhase["on-failure"];
+	private _commands: Array<string> = [];
+	private _finally: Array<string> = [];
 
 	setOnFailure(onFailure: CodeBuildBuildspecResourceLambdaPhase["on-failure"]) {
 		this._onFailure = onFailure;
