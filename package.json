@@ -43,7 +43,7 @@
     "typescript": "catalog:dev"
   },
   "engines": {
-    "node": ">=23.3.0"
+    "node": ">=23.5.0"
   },
   "exports": {
     ".": {
@@ -95,14 +95,13 @@
         "dependsOn": [
           "@levicape/fourtwo-pulumi:dx:precommit",
           "dx:prepublish",
+          "@levicape/fourtwo-builders:dx:precommit",
           "nx:test",
           "iac_stacks:dx:precommit"
         ]
       },
       "dx:prepublish": {
-        "dependsOn": [
-          "clean:tsc"
-        ]
+        "dependsOn": []
       },
       "nx:compile": {
         "dependsOn": [
@@ -132,7 +131,6 @@
     "build": "$npm_package_config_packageexecutor tsc",
     "clean": "rm -rf $npm_package_config_outpaths || true",
     "clean:packages": "rm -rf **/node_modules && $npm_package_config_packageexecutor nx reset",
-    "clean:tsc": "rm -rf ./.tsc",
     "commit": "$npm_package_config_packageexecutor nx dx:precommit --no-cloud --verbose",
     "compile": "$npm_package_config_packageexecutor nx nx:compile",
     "dx:cli:bin": "NODE_NO_WARNINGS=1 $npm_package_config_packageexecutor tsx $npm_package_config_binpath",

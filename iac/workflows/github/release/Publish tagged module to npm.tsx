@@ -137,5 +137,9 @@ export default (
 			packageName: "@levicape/fourtwo-pulumi",
 			cwd: "packages/pulumi",
 		},
+		{
+			packageName: "@levicape/fourtwo-builders",
+			cwd: "packages/builders",
+		},
 	],
 });

@@ -1,5 +1,5 @@
 {
-  "name": "@levicape/fourtwo-pulumi",
+  "name": "@levicape/fourtwo-builders",
   "version": "0.0.0-local.0",
   "author": "Pedro Cardona",
   "config": {
@@ -9,31 +9,23 @@
     "outpaths": "./commonjs"
   },
   "dependencies": {
-    "@kubernetes-models/postgres-operator": "catalog:kubernetes",
-    "@pulumi/aws": "catalog:pulumi",
-    "@pulumi/awsx": "catalog:pulumi",
-    "@pulumi/command": "catalog:pulumi",
-    "@pulumi/docker": "catalog:pulumi",
-    "@pulumi/docker-build": "catalog:pulumi",
-    "@pulumi/kubernetes": "catalog:pulumi",
-    "@pulumi/pulumi": "catalog:pulumi",
-    "@pulumi/random": "catalog:pulumi",
-    "@pulumi/synced-folder": "catalog:pulumi",
-    "@pulumiverse/time": "catalog:pulumi"
+    "@levicape/fourtwo": "workspace:"
   },
   "devDependencies": {
     "@biomejs/biome": "catalog:lint",
     "@types/folder-hash": "catalog:types",
+    "@types/ini": "catalog:types",
+    "@types/js-yaml": "catalog:types",
+    "@types/node": "catalog:types",
+    "@types/verror": "catalog:types",
     "depcheck": "catalog:package",
-    "expect": "catalog:test",
     "nx": "catalog:package",
     "publint": "catalog:package",
     "syncpack": "catalog:package",
-    "tsx": "catalog:dev",
     "typescript": "catalog:dev"
   },
   "engines": {
-    "node": ">=22.0.0"
+    "node": ">=23.5.0"
   },
   "exports": "./commonjs/index.js",
   "files": [
@@ -42,15 +34,9 @@
   "license": "AGPL-3.0-only",
   "nx": {
     "targets": {
-      "nx:compile": {
+      "build": {
         "dependsOn": [
-          "build"
-        ]
-      },
-      "nx:test": {
-        "dependsOn": [
-          "^test",
-          "test:module"
+          "@levicape/fourtwo:nx:compile"
         ]
       },
       "dx:test": {
@@ -67,6 +53,16 @@
       },
       "dx:prepublish": {
         "dependsOn": []
+      },
+      "nx:compile": {
+        "dependsOn": [
+          "build"
+        ]
+      },
+      "nx:test": {
+        "dependsOn": [
+          "dx:noop"
+        ]
       }
     }
   },
@@ -80,6 +76,7 @@
     "commit": "$npm_package_config_packageexecutor nx dx:precommit --no-cloud --verbose",
     "compile": "$npm_package_config_packageexecutor nx nx:compile",
     "dx:lint": "$npm_package_config_packageexecutor nx compile && $npm_package_config_packageexecutor nx lint:format && $npm_package_config_packageexecutor nx package:format",
+    "dx:noop": "echo 'noop'",
     "dx:precommit": "$npm_package_config_packageexecutor nx dx:precommit:pre && $npm_package_config_packageexecutor nx package:deps",
     "dx:precommit:pre": "echo \"Starting precommit dx. This will check package.json dependencies.\"",
     "dx:prepublish": "$npm_package_config_packageexecutor nx dx:prepublish:pre && $npm_package_config_packageexecutor nx dx:lint && $npm_package_config_packageexecutor nx prepublish",
@@ -95,8 +92,7 @@
     "precommit": "$npm_package_config_packageexecutor nx dx:prepublish --no-cloud --verbose",
     "prelint": "$npm_package_config_packageexecutor biome format $npm_package_config_lintpaths",
     "prepublish": "$npm_package_config_packageexecutor publint --strict",
-    "test": "$npm_package_config_packageexecutor nx nx:test",
-    "test:module": "echo 'node --test --test-reporter junit \"module/**/*.test.js\"'"
+    "test": "$npm_package_config_packageexecutor nx nx:test"
   },
   "type": "commonjs",
   "types": "./commonjs/index.d.ts"
