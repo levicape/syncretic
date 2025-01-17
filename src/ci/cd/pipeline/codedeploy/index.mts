@@ -66,7 +66,7 @@ export type CodeDeployAppspec<
 > = {
 	version: CodeDeployAppspecVersion;
 	Resources: Array<Record<Resource, CodeDeployAppspecResource>>;
-	Hooks: Array<Record<Hook, CodeDeployAppspecHook>>;
+	Hooks?: Array<Record<Hook, CodeDeployAppspecHook>>;
 };
 
 export class CodeDeployAppspecBuilder<
@@ -111,21 +111,29 @@ export class CodeDeployAppspecBuilder<
 	}
 
 	build(): CodeDeployAppspec<Resource, Hook> {
+		const Resources = this.resources.map((resource) => {
+			const keys = Object.keys(resource) as Array<Resource>;
+
+			if (keys.length !== 1) {
+				throw new VError("Resource must have exactly one key");
+			}
+
+			const key = keys[0];
+			return {
+				[key]: resource[key].build(),
+			} as const;
+		}) as CodeDeployAppspec<Resource, Hook>["Resources"];
+
+		if (Resources.length === 0) {
+			throw new VError("Resources must not be empty");
+		}
+
+		const Hooks = this.hooks;
+
 		return {
 			version: this.version,
-			Resources: this.resources.map((resource) => {
-				const keys = Object.keys(resource) as Array<Resource>;
-
-				if (keys.length !== 1) {
-					throw new VError("Resource must have exactly one key");
-				}
-
-				const key = keys[0];
-				return {
-					[key]: resource[key].build(),
-				} as const;
-			}) as CodeDeployAppspec<Resource, Hook>["Resources"],
-			Hooks: this.hooks,
+			Resources,
+			...(Hooks.length > 0 ? { Hooks } : {}),
 		};
 	}
 }
