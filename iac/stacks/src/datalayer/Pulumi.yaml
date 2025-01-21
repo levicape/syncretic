@@ -1,5 +1,6 @@
-name: bootstrap
-description: State bucket and associated SSM parameters
+name: fourtwo-datalayer
+description: | 
+  Data layer: DynamoDB, SQS and EFS
 runtime:
   name: nodejs
   options:

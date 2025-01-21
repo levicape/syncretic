@@ -8,7 +8,7 @@ import {
 	DevfileMetadataX,
 	DevfileSourceComponentX,
 	DevfileX,
-} from "../../src/ci/cd/pipeline/devfile/index-x.mjs";
+} from "@levicape/fourtwo/x/devfile";
 
 let data = (
 	<DevfileX
@@ -16,7 +16,13 @@ let data = (
 		components={[<DevfileSourceComponentX name={"source"} />]}
 		events={
 			<DevfileEventX
-				postStart={["update-node", "install-pnpm", "start-docker"]}
+				postStart={[
+					"update-node",
+					"install-corepack",
+					"install-pnpm",
+					"start-docker",
+					"install-codecatalyst-workflow-cli",
+				]}
 			/>
 		}
 	>
@@ -25,14 +31,21 @@ let data = (
 				id={"update-node"}
 				exec={{
 					component: "source",
-					commandLine: "sudo npx -y n 22",
+					commandLine: "sudo npx -y n 23",
+				}}
+			/>,
+			<DevfileCommandX
+				id={"install-corepack"}
+				exec={{
+					component: "source",
+					commandLine: "sudo corepack enable",
 				}}
 			/>,
 			<DevfileCommandX
 				id={"install-pnpm"}
 				exec={{
 					component: "source",
-					commandLine: "npx -y corepack use pnpm@latest",
+					commandLine: "sudo corepack use pnpm@latest",
 				}}
 			/>,
 			<DevfileCommandX
@@ -42,9 +55,31 @@ let data = (
 					commandLine: "./entrypoint.sh",
 				}}
 			/>,
+			<DevfileCommandX
+				id={"install-codecatalyst-workflow-cli"}
+				exec={{
+					component: "source",
+					commandLine: [
+						[
+							"sudo curl -sL https://github.com/aws/codecatalyst-runner-cli/releases/latest/download/ccr_Linux_x86_64.tar.gz -o -",
+							"sudo tar -zx ccr",
+						].join(" | "),
+						"sudo mv ccr /usr/local/bin/ccr",
+					].join(" && "),
+				}}
+			/>,
 		]}
 	</DevfileX>
 );
 
-import { dump } from "js-yaml";
-console.log(dump(data.build()));
+import { stringify } from "yaml";
+
+console.log(
+	stringify(data.build(), {
+		collectionStyle: "block",
+		aliasDuplicateObjects: false,
+		doubleQuotedAsJSON: true,
+		minContentWidth: 0,
+		lineWidth: 0,
+	}),
+);

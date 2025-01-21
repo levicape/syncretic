@@ -1,19 +1,27 @@
 {
-  "name": "iac_stacks",
+  "name": "@levicape/fourtwo-iac-stacks",
+  "version": "0.0.0-local.0",
   "config": {
     "packagemanager": "pnpm",
-    "packageexecutor": "pnpm exec",
-    "lintpaths": "./src ./canary ./iac"
+    "packageexecutor": "corepack pnpm exec",
+    "lintpaths": "./src"
   },
   "dependencies": {
     "@levicape/fourtwo": "workspace:",
+    "@levicape/fourtwo-builders": "workspace:",
     "@levicape/fourtwo-pulumi": "workspace:",
     "@pulumi/aws": "catalog:pulumi",
+    "@pulumi/aws-native": "catalog:pulumi",
     "@pulumi/awsx": "catalog:pulumi",
-    "@pulumi/pulumi": "catalog:pulumi"
+    "@pulumi/docker-build": "catalog:pulumi",
+    "@pulumi/pulumi": "catalog:pulumi",
+    "zod": "catalog:core"
   },
   "devDependencies": {
+    "@biomejs/biome": "catalog:lint",
     "@types/node": "catalog:types",
+    "depcheck": "catalog:package",
+    "publint": "catalog:package",
     "typescript": "catalog:dev"
   },
   "nx": {
@@ -21,19 +29,32 @@
       "nx:compile": {
         "dependsOn": [
           "@levicape/fourtwo-pulumi:nx:compile",
-          "iac_stacks_code:nx:compile"
+          "@levicape/fourtwo-builders:nx:compile"
         ]
       },
       "dx:precommit": {
         "dependsOn": [
-          "nx:compile",
-          "iac_stacks_bootstrap:nx:precommit",
-          "iac_stacks_code:nx:precommit"
+          "dx:prepublish"
         ]
       }
     }
   },
   "scripts": {
-    "compile": "$npm_package_config_packageexecutor nx nx:compile"
-  }
+    "dx:lint": "$npm_package_config_packageexecutor nx lint:format && $npm_package_config_packageexecutor nx package:format",
+    "dx:precommit": "$npm_package_config_packageexecutor nx dx:precommit:pre && $npm_package_config_packageexecutor nx package:deps",
+    "dx:precommit:pre": "echo \"Starting precommit dx. This will check package.json dependencies.\"",
+    "dx:prepublish": "$npm_package_config_packageexecutor nx dx:prepublish:pre && $npm_package_config_packageexecutor nx dx:lint && $npm_package_config_packageexecutor nx prepublish",
+    "dx:prepublish:pre": "echo \"Starting prepublish dx. This will compile the package, lint it, format package.json and verify all exports are valid. \"",
+    "lint": "$npm_package_config_packageexecutor nx exec -- biome check $npm_package_config_lintpaths",
+    "lint:format": "$npm_package_config_packageexecutor nx exec -- biome check --write $npm_package_config_lintpaths",
+    "lint:unsafe": "$npm_package_config_packageexecutor nx exec -- biome check --write --unsafe $npm_package_config_lintpaths",
+    "package:deps": "$npm_package_config_packageexecutor nx exec -- depcheck",
+    "package:fix": "$npm_package_config_packageexecutor nx exec -- syncpack fix-mismatches",
+    "package:format": "$npm_package_config_packageexecutor nx exec -- syncpack format",
+    "package:update": "$npm_package_config_packageexecutor nx exec -- syncpack update",
+    "precommit": "$npm_package_config_packageexecutor nx dx:prepublish --no-cloud --verbose",
+    "prelint": "$npm_package_config_packageexecutor nx exec -- biome format $npm_package_config_lintpaths",
+    "prepublish": "$npm_package_config_packageexecutor nx exec -- publint --strict"
+  },
+  "type": "commonjs"
 }

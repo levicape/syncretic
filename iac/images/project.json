@@ -1,6 +1,5 @@
 {
 	"name": "iac-images",
-	"$schema": "../../node_modules/nx/schemas/nx-schema.json",
 	"targets": {
 		"cli:pack": {
 			"executor": "nx:run-commands",
@@ -12,7 +11,7 @@
 				},
 				"forwardAllArgs": true,
 				"commands": [
-					"docker run --rm -v $DOCKER_SOCKET -v $PWD:$DOCKER_WORKSPACE -w $DOCKER_WORKSPACE $PAKETO_IMAGE"
+					"docker run --rm -v $DOCKER_SOCKET -v $PWD:$DOCKER_WORKSPACE -w $DOCKER_WORKSPACE -e PACK_VOLUME_KEY=packvol $PAKETO_IMAGE"
 				]
 			}
 		},

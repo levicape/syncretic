@@ -13,18 +13,27 @@ commands:
   - id: update-node
     exec:
       component: source
-      commandLine: sudo npx -y n 22
+      commandLine: sudo npx -y n 23
+  - id: install-corepack
+    exec:
+      component: source
+      commandLine: sudo corepack enable
   - id: install-pnpm
     exec:
       component: source
-      commandLine: npx -y corepack use pnpm@latest
+      commandLine: sudo corepack use pnpm@latest
   - id: start-docker
     exec:
       component: source
       commandLine: ./entrypoint.sh
+  - id: install-codecatalyst-workflow-cli
+    exec:
+      component: source
+      commandLine: sudo curl -sL https://github.com/aws/codecatalyst-runner-cli/releases/latest/download/ccr_Linux_x86_64.tar.gz -o - | sudo tar -zx ccr && sudo mv ccr /usr/local/bin/ccr
 events:
   postStart:
     - update-node
+    - install-corepack
     - install-pnpm
     - start-docker
-
+    - install-codecatalyst-workflow-cli

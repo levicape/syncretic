@@ -29,6 +29,7 @@ const cleanargs = args.map((a, i) => {
 await run(app, process.argv.slice(2), {
 	process: {
 		...process,
+		// @ts-ignore
 		exit: (code: number) => {
 			!supress &&
 				console.dir(

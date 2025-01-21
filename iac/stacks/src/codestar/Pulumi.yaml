@@ -1,4 +1,4 @@
-name: fourtwo-code
+name: fourtwo-codestar
 description: State bucket and associated SSM parameters
 runtime:
   name: nodejs

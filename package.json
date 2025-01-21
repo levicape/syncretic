@@ -17,11 +17,14 @@
   "dependencies": {
     "@aws/codecatalyst-workflows-sdk": "catalog:aws",
     "@stricli/core": "catalog:cli",
+    "aws-lambda-ric": "catalog:aws",
     "aws4fetch": "catalog:aws",
+    "better-sqlite3": "catalog:database",
     "enquirer": "catalog:cli",
     "fast-xml-parser": "catalog:core",
     "ini": "catalog:core",
     "js-yaml": "catalog:core",
+    "knex": "catalog:database",
     "pretty-ms": "catalog:core",
     "verror": "catalog:core",
     "yaml": "catalog:core",
@@ -47,7 +50,10 @@
   },
   "exports": {
     ".": {
-      "types": "./module/index.d.mts",
+      "types": {
+        "import": "./module/index.d.mts",
+        "require": "./module/index.d.cts"
+      },
       "node": "./module/index.mjs",
       "import": "./module/index.mjs",
       "require": "./module/_exports.js",
@@ -97,7 +103,7 @@
           "dx:prepublish",
           "@levicape/fourtwo-builders:dx:precommit",
           "nx:test",
-          "iac_stacks:dx:precommit"
+          "@levicape/fourtwo-iac-stacks:dx:precommit"
         ]
       },
       "dx:prepublish": {
@@ -105,7 +111,7 @@
       },
       "nx:compile": {
         "dependsOn": [
-          "build",
+          "build:tsc",
           "@levicape/fourtwo-pulumi:nx:compile"
         ]
       },
@@ -122,17 +128,16 @@
       }
     }
   },
-  "packageManager": "pnpm@9.15.2+sha512.93e57b0126f0df74ce6bff29680394c0ba54ec47246b9cf321f0121d8d9bb03f750a705f24edc3c1180853afd7c2c3b94196d0a3d53d3e069d9e2793ef11f321",
+  "packageManager": "pnpm@9.15.4+sha512.b2dc20e2fc72b3e18848459b37359a32064663e5627a51e4c74b2c29dd8e8e0491483c3abb40789cfd578bf362fb6ba8261b05f0387d76792ed6e23ea3b1b6a0",
   "publishConfig": {
     "registry": "https://npm.pkg.github.com/"
   },
   "repository": "github:levicape/fourtwo",
   "scripts": {
-    "build": "$npm_package_config_packageexecutor tsc",
+    "build": "$npm_package_config_packageexecutor nx nx:compile",
+    "build:tsc": "$npm_package_config_packageexecutor tsc",
     "clean": "rm -rf $npm_package_config_outpaths || true",
     "clean:packages": "rm -rf **/node_modules && $npm_package_config_packageexecutor nx reset",
-    "commit": "$npm_package_config_packageexecutor nx dx:precommit --no-cloud --verbose",
-    "compile": "$npm_package_config_packageexecutor nx nx:compile",
     "dx:cli:bin": "NODE_NO_WARNINGS=1 $npm_package_config_packageexecutor tsx $npm_package_config_binpath",
     "dx:cli:dev": "node --inspect-brk --import tsx $npm_package_config_binpath",
     "dx:cli:mjs": "NODE_NO_WARNINGS=1 node $npm_package_config_clipath",
@@ -159,7 +164,7 @@
     "test": "$npm_package_config_packageexecutor nx nx:test",
     "test:module": "echo 'node --test --test-reporter junit \"module/**/*.test.js\"'",
     "up:integration": "echo 'node --test  \"module/**/*.test.js\"'",
-    "xx:workflow": "$npm_package_config_packageexecutor nx run-many -t generate,compile,lint,test --parallel=1 --verbose --no-cloud"
+    "xx:workflow": "$npm_package_config_packageexecutor nx run-many -t generate,build,lint,test --parallel=1 --verbose --no-cloud"
   },
   "type": "module",
   "types": "./module/index.d.mts"

@@ -1,27 +1,17 @@
 {
 	"name": "iac-images-application",
-	"$schema": "../../../node_modules/nx/schemas/nx-schema.json",
 	"targets": {
 		"pack:build": {
 			"executor": "nx:run-commands",
 			"options": {
 				"env": {
 					"DEFAULT_IMAGE_NAME": "fourtwo",
+					"PAKETO_BUILDPACK": "heroku/python,heroku/nodejs,heroku/procfile",
 					"PAKETO_BUILDER": "heroku/builder:24"
 				},
 				"commands": [
-					"pnpm exec nx run iac-images:cli:pack build $DEFAULT_IMAGE_NAME --builder $PAKETO_BUILDER --default-process cli  --cache 'type=build;format=bind;source=/tmp/docker-cache;type=launch;format=volume;'"
+					"npx nx run iac-images:cli:pack build $DEFAULT_IMAGE_NAME --buildpack $PAKETO_BUILDPACK --builder $PAKETO_BUILDER --default-process cli  --cache 'type=build;format=bind;source=/tmp/docker-cache;type=launch;format=volume;'"
 				]
-			}
-		},
-		"dive:lint": {
-			"executor": "nx:run-commands",
-			"dependsOn": ["pack:build"],
-			"options": {
-				"env": {
-					"DEFAULT_IMAGE_NAME": "fourtwo"
-				},
-				"commands": ["pnpm exec nx run iac-images:cli:dive $DEFAULT_IMAGE_NAME"]
 			}
 		}
 	}

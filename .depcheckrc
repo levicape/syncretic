@@ -5,3 +5,6 @@ ignores:
 - "ts-proto"
 - "expect"
 - "jsonc-parser"
+- "aws-lambda-ric"
+- "knex"
+- "better-sqlite3"

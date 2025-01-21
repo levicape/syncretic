@@ -7,7 +7,7 @@ packages:
   - 'protocols/*'
 
 catalog:
-  "@levicape/paloma": "0.0.7-nx-main.2"
+  "@levicape/paloma": "0.1.0-main.2"
 
 
 
@@ -47,11 +47,11 @@ catalogs:
     "slugid": "^5.0.1"
     "nanoid": "^5.0.9"
   protobuf:
-    "@bufbuild/protobuf": "^2.2.2"
+    "@bufbuild/protobuf": "^2.2.3"
     "@bufbuild/buf": "^1.44.0"
-    "ts-proto": "^2.5.0"
+    "ts-proto": "^2.6.1"
   server:
-    "consola": "^3.2.3"
+    "consola": "^3.4.0"
     "hookable": "^5.5.3"
     "@stricjs/cluster": "^2.0.0"
     "@stricjs/utils": "^2.0.7"
@@ -59,30 +59,31 @@ catalogs:
     "lru-cache": "^11.0.2"
     "unzipper": "^0.12.3"
   aws:
-    "@aws-sdk/client-dynamodb": "^3.705.0"
-    "@aws-sdk/client-secrets-manager": "^3.699.0"
-    "@aws-sdk/client-sqs": "^3.699.0"
-    "@aws-sdk/lib-dynamodb": "^3.705.0"
-    "@aws-sdk/util-dynamodb": "^3.705.0"
+    "@aws-sdk/client-dynamodb": "^3.731.0"
+    "@aws-sdk/client-secrets-manager": "^3.731.0"
+    "@aws-sdk/client-sqs": "^3.731.0"
+    "@aws-sdk/lib-dynamodb": "^3.731.0"
+    "@aws-sdk/util-dynamodb": "^3.731.0"
     "aws4fetch": "^1.0.20"
     "pino-lambda": "^4.4.1"
     "@aws/codecatalyst-workflows-sdk": "0.1.5-preview.6"
+    "aws-lambda-ric": "^3.2.1"
   database:
     "better-sqlite3": "^11.6.0"
-    "slonik": "^46.2.0"
+    "slonik": "^46.4.0"
     "knex": "^3.1.0"
     "pg": "^8.13.1"
   cli:
-    "@stricli/core": "^1.1.0"
+    "@stricli/core": "^1.1.1"
     "enquirer": "^2.4.1"
   hono:
     "hono": "^4.6.16"
     "@hono/node-server": "^1.13.7"
-    "@hono/zod-validator": "^0.4.1"
+    "@hono/zod-validator": "^0.4.2"
     "compressible": "^2.0.18"
     "hono-rate-limiter": "^0.4.2"
   dev:
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.3"
     "tsx": "^4.19.2"
   types:
     "@total-typescript/ts-reset": "^0.6.1"
@@ -108,10 +109,10 @@ catalogs:
     "@biomejs/biome": "^1.9.4"
   package:
     "depcheck": "^1.4.7"
-    "publint": "^0.2.12"
+    "publint": "^0.3.2"
     "syncpack": "^13.0.0"
     "ci": "^2.3.0"
-    "nx": "20.3.0"
+    "nx": "20.3.2"
   crypto:
     # TODO: ???
     "crypto-js": "^4.2.0"
@@ -187,6 +188,7 @@ catalogs:
     "@pulumi/synced-folder": "^0.11.1"
     "@pulumi/aws": "^6.64.0"
     "@pulumi/awsx": "^2.19.0"
+    "@pulumi/aws-native": "1.24.0"
     "@pulumi/command": "^1.0.1"
     "@pulumi/docker": "^4.5.7"
     "@pulumi/kubernetes": "^4.18.4"
