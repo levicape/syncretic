@@ -4,7 +4,7 @@ import { userInfo } from "node:os";
 import { dirname, join, relative } from "node:path";
 import { tmpdir } from "../../machine/context/Filesystem.mjs";
 import { isWindows } from "../../machine/context/System.mjs";
-import { type RunnerOptions, getRunnerOptions } from "./RunnerOptions.mjs";
+import type { RunnerOptions } from "./RunnerOptions.mjs";
 import { Test, type TestResult } from "./Test.mjs";
 import { parseTestStdout } from "./output.mjs";
 import { getWindowsExitReason, parseDuration } from "./parse.mjs";
@@ -40,15 +40,15 @@ export interface SpawnOptions {
 }
 
 export class Spawn {
-	static spawnBun = async (
+	static spawnNode = async (
 		execPath: string,
 		{ args, cwd, timeout, env, stdout, stderr }: SpawnOptions,
 	): Promise<SpawnResult> => {
 		// @ts-ignore
 		const path = addPath(dirname(execPath), process.env.PATH);
-		const tmpdirPath = mkdtempSync(join(tmpdir(), "buntmp-"));
+		const tmpdirPath = mkdtempSync(join(tmpdir(), "nodetmp-"));
 		const { username, homedir } = userInfo();
-		const bunEnv = {
+		const nodeEnv = {
 			...process.env,
 			PATH: path as string | undefined,
 			Path: undefined as string | undefined,
@@ -57,28 +57,21 @@ export class Spawn {
 			USER: username,
 			HOME: homedir,
 			FORCE_COLOR: "1",
-			BUN_FEATURE_FLAG_INTERNAL_FOR_TESTING: "1",
-			BUN_DEBUG_QUIET_LOGS: "1",
-			BUN_GARBAGE_COLLECTOR_LEVEL: "1",
-			BUN_JSC_randomIntegrityAuditRate: "1.0",
-			BUN_ENABLE_CRASH_REPORTING: "0", // change this to '1' if https://github.com/oven-sh/bun/issues/13012 is implemented
-			BUN_RUNTIME_TRANSPILER_CACHE_PATH: "0",
-			BUN_INSTALL_CACHE_DIR: tmpdirPath,
 			SHELLOPTS: isWindows ? "igncr" : undefined, // ignore "\r" on Windows
 			// Used in Node.js tests.
 			TEST_TMPDIR: tmpdirPath,
 		};
 		if (env) {
-			Object.assign(bunEnv, env);
+			Object.assign(nodeEnv, env);
 		}
 		if (isWindows) {
-			bunEnv.PATH = undefined;
-			bunEnv.Path = path;
+			nodeEnv.PATH = undefined;
+			nodeEnv.Path = path;
 			for (const tmpdir of ["TMPDIR", "TEMP", "TEMPDIR", "TMP"]) {
 				// @ts-ignore
-				delete bunEnv[tmpdir];
+				delete nodeEnv[tmpdir];
 			}
-			bunEnv.TEMP = tmpdirPath;
+			nodeEnv.TEMP = tmpdirPath;
 		}
 		try {
 			return await Spawn.spawnSafe({
@@ -86,7 +79,7 @@ export class Spawn {
 				args,
 				cwd,
 				timeout,
-				env: bunEnv,
+				env: nodeEnv,
 				stdout,
 				stderr,
 			});
@@ -98,7 +91,7 @@ export class Spawn {
 			}
 		}
 	};
-	static spawnBunInstall = async (
+	static spawnNodeInstall = async (
 		execPath: string,
 		options: Pick<RunnerOptions, "cwd" | "timeouts">,
 	): Promise<TestResult> => {
@@ -106,7 +99,7 @@ export class Spawn {
 			timeouts: { testTimeout },
 			cwd,
 		} = options;
-		const { ok, error, stdout, duration } = await Spawn.spawnBun(execPath, {
+		const { ok, error, stdout, duration } = await Spawn.spawnNode(execPath, {
 			args: ["install"],
 			timeout: testTimeout,
 			cwd,
@@ -122,7 +115,7 @@ export class Spawn {
 			tests: [
 				{
 					file: testPath,
-					test: "bun install",
+					test: "node install",
 					status,
 					duration: parseDuration(duration),
 				},
@@ -131,7 +124,7 @@ export class Spawn {
 			stdoutPreview: stdout,
 		};
 	};
-	static spawnBunTest = async (
+	static spawnNodeTest = async (
 		execPath: string,
 		testPath: string,
 		options: Pick<RunnerOptions, "cwd"> & { args?: string[] },
@@ -142,7 +135,7 @@ export class Spawn {
 		const isReallyTest =
 			Test.isTestStrict(testPath) || absPath.includes("vendor");
 		const args = options.args ?? [];
-		const { ok, error, stdout } = await Spawn.spawnBun(execPath, {
+		const { ok, error, stdout } = await Spawn.spawnNode(execPath, {
 			args: isReallyTest
 				? ["test", ...args, `--timeout=${perTestTimeout}`, absPath]
 				: [...args, absPath],
@@ -152,10 +145,10 @@ export class Spawn {
 				GITHUB_ACTIONS: "true", // always true so annotations are parsed
 			},
 			stdout: (data) => {
-				appendFile(`/tmp/spork-runner.stdout.log`, data as string, () => {});
+				appendFile(`/tmp/fourtwo-runner.stdout.log`, data as string, () => {});
 			},
 			stderr: (data) => {
-				appendFile(`/tmp/spork-runner.stderr.log`, data as string, () => {});
+				appendFile(`/tmp/fourtwo-runner.stderr.log`, data as string, () => {});
 			},
 		});
 		const {
@@ -177,8 +170,14 @@ export class Spawn {
 
 	static cleanLogs = async () => {
 		try {
-			rmSync(`/tmp/spork-runner.stdout.log`, { recursive: true, force: true });
-			rmSync(`/tmp/spork-runner.stderr.log`, { recursive: true, force: true });
+			rmSync(`/tmp/fourtwo-runner.stdout.log`, {
+				recursive: true,
+				force: true,
+			});
+			rmSync(`/tmp/fourtwo-runner.stderr.log`, {
+				recursive: true,
+				force: true,
+			});
 		} finally {
 		}
 	};
@@ -201,10 +200,10 @@ export class Spawn {
 			env,
 			timeout = spawnTimeout,
 			stdout = (data: string) => {
-				appendFile(`/tmp/spork-runner.stdout.log`, data, () => {});
+				appendFile(`/tmp/fourtwo-runner.stdout.log`, data, () => {});
 			},
 			stderr = (data: string) => {
-				appendFile(`/tmp/spork-runner.stderr.log`, data, () => {});
+				appendFile(`/tmp/fourtwo-runner.stderr.log`, data, () => {});
 			},
 			retries = 0,
 		} = options;

@@ -1,0 +1,11 @@
+name: fourtwo-panel-web
+description: | 
+  Public S3 bucket and deployment pipeline
+runtime:
+  name: nodejs
+  options:
+    packagemanager: pnpm
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: aws-typescript

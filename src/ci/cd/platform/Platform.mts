@@ -103,7 +103,6 @@ export class Platform {
 		const { buildImages, publishImages } = options;
 		if (version === "v1") {
 			return {
-				robobun: true,
 				os,
 				arch,
 				distro,
@@ -123,8 +122,6 @@ export class Platform {
 		}
 
 		return {
-			robobun: true,
-			robobun2: true,
 			os,
 			arch,
 			abi,

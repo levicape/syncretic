@@ -165,7 +165,7 @@ export function parseTestStdout(
 }
 
 export function getTestLabel() {
-	return Test.getBuildLabel()?.replace(" - test-bun", "");
+	return Test.getBuildLabel()?.replace(" - test-node", "");
 }
 
 /**

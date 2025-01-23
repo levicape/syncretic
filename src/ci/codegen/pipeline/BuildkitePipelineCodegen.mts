@@ -10,7 +10,7 @@ import { TargetBuilder } from "../../cd/target/TargetBuilder.mjs";
 import { isFork, isMainBranch } from "../../machine/code/Git.mjs";
 
 /**
- * Build and test Bun on macOS, Linux, and Windows.
+ * Build and test Node on macOS, Linux, and Windows.
  * @link https://buildkite.com/docs/pipelines/defining-steps
  */
 export function BuildkitePipelineCodegen(options: PipelineOptions) {
@@ -46,7 +46,7 @@ export function BuildkitePipelineCodegen(options: PipelineOptions) {
 			getBuildVendorStep,
 			getBuildCppStep,
 			getBuildZigStep,
-			getBuildBunStep,
+			getBuildNodeStep,
 		} = new BuildkitePipelineTargetSteps(platform, options);
 
 		if (buildImages || !buildId) {
@@ -54,7 +54,7 @@ export function BuildkitePipelineCodegen(options: PipelineOptions) {
 				getBuildVendorStep(),
 				getBuildCppStep(),
 				getBuildZigStep(),
-				getBuildBunStep(),
+				getBuildNodeStep(),
 			);
 		}
 
@@ -72,7 +72,7 @@ export function BuildkitePipelineCodegen(options: PipelineOptions) {
 						new BuildkitePipelineTargetSteps(
 							testPlatform,
 							options,
-						).getTestBunStep(),
+						).getTestNodeStep(),
 					),
 			);
 		}
@@ -106,7 +106,7 @@ export function BuildkitePipelineCodegen(options: PipelineOptions) {
 									.setAbi(platform.abi)
 									.setBaseline(platform.baseline)
 									.build();
-								return `${target.getTargetKey()}-build-bun`;
+								return `${target.getTargetKey()}-build-node`;
 							},
 						),
 					)

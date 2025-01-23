@@ -311,7 +311,7 @@ export const getCanaryRevision: () => Promise<number> = async () => {
 	if (__canaryRevision === undefined) {
 		__canaryRevision = await (async () => {
 			{
-				const repository = getRepository() || "oven-sh/bun";
+				const repository = getRepository() || "nodejs/node";
 				const { error: releaseError, body: release } = await curl(
 					new URL(`repos/${repository}/releases/latest`, getGithubApiUrl()),
 					{ json: true },

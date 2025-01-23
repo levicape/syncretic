@@ -6,11 +6,9 @@
     "build": {
       "cache": true,
       "outputs": [
-        "{projectRoot}/module",
+        "{projectRoot}/output",
         "{projectRoot}/commonjs",
-        "{projectRoot}/.vinxi",
-        "{projectRoot}/.build",
-        "{projectRoot}/public",
+        "{projectRoot}/module",
         "{projectRoot}/gen"
       ]
     }

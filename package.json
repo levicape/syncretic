@@ -19,12 +19,12 @@
     "@stricli/core": "catalog:cli",
     "aws-lambda-ric": "catalog:aws",
     "aws4fetch": "catalog:aws",
-    "better-sqlite3": "catalog:database",
+    "better-sqlite3": "catalog:database-sqlite",
     "enquirer": "catalog:cli",
     "fast-xml-parser": "catalog:core",
     "ini": "catalog:core",
     "js-yaml": "catalog:core",
-    "knex": "catalog:database",
+    "knex": "catalog:database-sql",
     "pretty-ms": "catalog:core",
     "verror": "catalog:core",
     "yaml": "catalog:core",
@@ -37,6 +37,7 @@
     "@types/node": "catalog:types",
     "@types/verror": "catalog:types",
     "depcheck": "catalog:package",
+    "esbuild": "catalog:build",
     "expect": "catalog:test",
     "jsonc-parser": "catalog:core",
     "nx": "catalog:package",
@@ -99,20 +100,27 @@
       },
       "dx:precommit": {
         "dependsOn": [
-          "@levicape/fourtwo-pulumi:dx:precommit",
           "dx:prepublish",
-          "@levicape/fourtwo-builders:dx:precommit",
-          "nx:test",
-          "@levicape/fourtwo-iac-stacks:dx:precommit"
+          "nx:test"
         ]
       },
       "dx:prepublish": {
-        "dependsOn": []
+        "dependsOn": [
+          "@levicape/fourtwo-builders:dx:precommit",
+          "@levicape/fourtwo-pulumi:dx:precommit",
+          "@levicape/fourtwo-panel-ui:dx:precommit",
+          "@levicape/fourtwo-panel-io:dx:precommit",
+          "@levicape/fourtwo-iac-stacks:dx:precommit"
+        ]
       },
       "nx:compile": {
         "dependsOn": [
           "build:tsc",
-          "@levicape/fourtwo-pulumi:nx:compile"
+          "@levicape/fourtwo-canary:nx:compile",
+          "@levicape/fourtwo-pulumi:nx:compile",
+          "@levicape/fourtwo-panel-ui:nx:compile",
+          "@levicape/fourtwo-panel-io:nx:compile",
+          "@levicape/fourtwo-builders:nx:compile"
         ]
       },
       "nx:test": {
@@ -149,6 +157,7 @@
     "dx:prepublish:pre": "echo \"Starting prepublish dx. This will compile the package, lint it, format package.json and verify all exports are valid. \"",
     "dx:sync": "$npm_package_config_packageexecutor nx dx:sync:pre && $npm_package_config_packageexecutor nx nx:sync --verbose",
     "dx:sync:pre": "echo \"Starting sync dx. This will generate all the workflows and sync them with the repository.\"",
+    "heroku-prebuild": "npm rebuild esbuild",
     "lint": "$npm_package_config_packageexecutor nx exec -- biome check $npm_package_config_lintpaths",
     "lint:format": "$npm_package_config_packageexecutor nx exec -- biome check --write $npm_package_config_lintpaths",
     "lint:unsafe": "$npm_package_config_packageexecutor nx exec -- biome check --write --unsafe $npm_package_config_lintpaths",
@@ -156,7 +165,7 @@
     "package:fix": "$npm_package_config_packageexecutor nx exec -- syncpack fix-mismatches",
     "package:format": "$npm_package_config_packageexecutor nx exec -- syncpack format",
     "package:update": "$npm_package_config_packageexecutor nx exec -- syncpack update",
-    "postclean:packages": "$npm_package_config_packagemanager install",
+    "postclean:packages": "$npm_package_config_packagemanager install --ignore-scripts",
     "prebuild": "$npm_package_config_packageexecutor nx clean",
     "precommit": "$npm_package_config_packageexecutor nx dx:prepublish --no-cloud --verbose",
     "prelint": "$npm_package_config_packageexecutor nx exec -- biome format $npm_package_config_lintpaths",
@@ -164,7 +173,7 @@
     "test": "$npm_package_config_packageexecutor nx nx:test",
     "test:module": "echo 'node --test --test-reporter junit \"module/**/*.test.js\"'",
     "up:integration": "echo 'node --test  \"module/**/*.test.js\"'",
-    "xx:workflow": "$npm_package_config_packageexecutor nx run-many -t generate,build,lint,test --parallel=1 --verbose --no-cloud"
+    "xx:workflow": "$npm_package_config_packageexecutor nx run-many -t build,lint,test --parallel=1 --verbose --no-cloud"
   },
   "type": "module",
   "types": "./module/index.d.mts"

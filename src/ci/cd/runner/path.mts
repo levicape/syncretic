@@ -14,7 +14,7 @@ class PError extends Error {
 }
 
 let __execPath: string | undefined;
-export function getExecPath(bunExe: string) {
+export function getExecPath(nodeExe: string) {
 	if (__execPath) {
 		return __execPath;
 	}
@@ -27,7 +27,7 @@ export function getExecPath(bunExe: string) {
 	let error: unknown;
 	try {
 		const { error, stdout } = spawnSync(
-			bunExe,
+			nodeExe,
 			["--print", "process.argv[0]"],
 			{
 				encoding: "utf-8",
@@ -35,7 +35,7 @@ export function getExecPath(bunExe: string) {
 				env: {
 					// @ts-ignore
 					PATH: process.env.PATH,
-					BUN_DEBUG_QUIET_LOGS: "1",
+					NODE_DEBUG_QUIET_LOGS: "1",
 				},
 			},
 		);
@@ -55,7 +55,7 @@ export function getExecPath(bunExe: string) {
 		error = new Error(`File is not an executable: ${execPath}`);
 	}
 
-	throw new PError(`Could not find executable: ${bunExe}`, { cause: error });
+	throw new PError(`Could not find executable: ${nodeExe}`, { cause: error });
 }
 
 export function addPath(...paths: string[]): string {

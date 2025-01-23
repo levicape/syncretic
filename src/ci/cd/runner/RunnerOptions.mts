@@ -54,7 +54,7 @@ export const getRunnerOptions = (): RunnerOptions => {
 		options: {
 			"exec-path": {
 				type: "string",
-				default: "bun",
+				default: "node",
 			},
 			step: {
 				type: "string",

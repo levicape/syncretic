@@ -1,0 +1,113 @@
+{
+  "name": "@levicape/fourtwo-panel-ui",
+  "description": "Dashboard UI for Fourtwo",
+  "version": "0.0.0-local.0",
+  "author": "Pedro Cardona",
+  "config": {
+    "packagemanager": "pnpm",
+    "packagebin": "corepack pnpm",
+    "packageexecutor": "corepack pnpm exec",
+    "outpaths": "./output",
+    "lintpaths": "./app ./server",
+    "protocols": "./src/_protocols",
+    "server": "./output/http/server/index.js"
+  },
+  "dependencies": {
+    "@react-router/node": "catalog:web-react-router",
+    "@react-router/serve": "catalog:web-react-router",
+    "isbot": "catalog:http",
+    "react": "catalog:web-react",
+    "react-dom": "catalog:web-react",
+    "react-router": "catalog:web-react-router"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "catalog:lint",
+    "@react-router/dev": "catalog:web-react-router",
+    "@tailwindcss/vite": "catalog:web-style",
+    "@types/node": "catalog:types",
+    "@types/react": "catalog:types",
+    "@types/react-dom": "catalog:types",
+    "tailwindcss": "catalog:web-style",
+    "typescript": "catalog:dev",
+    "vite": "catalog:web-vite",
+    "vite-tsconfig-paths": "catalog:web-vite"
+  },
+  "files": [
+    "output"
+  ],
+  "nx": {
+    "targets": {
+      "build:staticwww": {
+        "dependsOn": [
+          "build:tsc"
+        ]
+      },
+      "build:http": {
+        "dependsOn": [
+          "build:staticwww"
+        ]
+      },
+      "dx:test": {
+        "dependsOn": [
+          "dx:lint",
+          "nx:test"
+        ]
+      },
+      "dx:precommit": {
+        "dependsOn": [
+          "dx:prepublish",
+          "nx:test"
+        ]
+      },
+      "nx:clean": {
+        "dependsOn": [
+          "clean:module"
+        ]
+      },
+      "nx:compile": {
+        "dependsOn": [
+          "build:tsc",
+          "build:http",
+          "build:staticwww",
+          "@levicape/fourtwo-panel-ui-server:nx:compile"
+        ]
+      },
+      "nx:test": {
+        "dependsOn": [
+          "test:module"
+        ]
+      }
+    }
+  },
+  "scripts": {
+    "build": "$npm_package_config_packageexecutor nx nx:compile --verbose",
+    "build:http": "ROUTER_BUILD_DIRECTORY=output/http ROUTER_SSR=1 $npm_package_config_packageexecutor react-router build --sourcemapClient inline --sourcemapServer inline",
+    "build:staticwww": "ROUTER_BUILD_DIRECTORY=output/staticwww ROUTER_SSR=0 $npm_package_config_packageexecutor react-router build",
+    "build:tsc": "$npm_package_config_packageexecutor react-router typegen && $npm_package_config_packageexecutor tsc",
+    "clean": "$npm_package_config_packageexecutor nx nx:clean --verbose",
+    "clean:module": "rm -rf $npm_package_config_outpaths || true",
+    "dev": "$npm_package_config_packageexecutor react-router dev",
+    "dx:lint": "$npm_package_config_packageexecutor nx build && $npm_package_config_packageexecutor nx lint:format && $npm_package_config_packageexecutor nx package:format",
+    "dx:precommit": "$npm_package_config_packageexecutor nx dx:precommit:pre && $npm_package_config_packageexecutor nx package:deps",
+    "dx:precommit:pre": "echo \"Starting precommit dx. This will check package.json dependencies.\"",
+    "dx:prepublish": "$npm_package_config_packageexecutor nx dx:prepublish:pre && $npm_package_config_packageexecutor nx dx:lint && $npm_package_config_packageexecutor nx prepublish",
+    "dx:prepublish:pre": "echo \"Starting prepublish dx. This will compile the package, lint it, format package.json and verify all exports are valid. \"",
+    "dx:test": "$npm_package_config_packagebin run clean && $npm_package_config_packagebin run build && $npm_package_config_packagebin run test",
+    "lint": "$npm_package_config_packageexecutor nx exec -- biome check $npm_package_config_lintpaths",
+    "lint:format": "$npm_package_config_packageexecutor nx exec -- biome check --write $npm_package_config_lintpaths",
+    "lint:unsafe": "$npm_package_config_packageexecutor nx exec -- biome check --write --unsafe $npm_package_config_lintpaths",
+    "package:deps": "$npm_package_config_packageexecutor nx exec -- depcheck",
+    "package:fix": "$npm_package_config_packageexecutor nx exec -- syncpack fix-mismatches",
+    "package:format": "$npm_package_config_packageexecutor nx exec -- syncpack format",
+    "package:update": "$npm_package_config_packageexecutor nx exec -- syncpack update",
+    "precommit": "$npm_package_config_packageexecutor nx dx:prepublish --no-cloud --verbose",
+    "predx:lint": "$npm_package_config_packageexecutor nx clean",
+    "prelint": "$npm_package_config_packageexecutor nx exec -- biome format $npm_package_config_lintpaths",
+    "prepublish": "$npm_package_config_packageexecutor nx exec -- publint --strict",
+    "routes": "$npm_package_config_packageexecutor react-router routes",
+    "start": "$npm_package_config_packageexecutor react-router-serve $npm_package_config_server",
+    "test": "$npm_package_config_packageexecutor nx nx:test --verbose",
+    "test:module": "true"
+  },
+  "type": "module"
+}

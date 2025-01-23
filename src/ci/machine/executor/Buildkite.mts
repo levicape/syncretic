@@ -51,7 +51,7 @@ export const getLastSuccessfulBuild: () => Promise<BuildkiteBuild | undefined> =
 								state === "canceled"
 							) {
 								const buildSteps = steps.filter(({ label }) =>
-									label.endsWith("build-bun"),
+									label.endsWith("build-node"),
 								);
 								if (buildSteps.length) {
 									if (buildSteps.every(({ outcome }) => outcome === "passed")) {
@@ -105,7 +105,7 @@ export const getExecPathFromBuildKite = async (
 		recursive: true,
 		encoding: "utf-8",
 	})) {
-		if (/^bun.*\.zip$/i.test(entry) && !entry.includes("-profile.zip")) {
+		if (/^node.*\.zip$/i.test(entry) && !entry.includes("-profile.zip")) {
 			zipPath = join(releasePath, entry);
 			break;
 		}
@@ -124,7 +124,7 @@ export const getExecPathFromBuildKite = async (
 		encoding: "utf-8",
 	})) {
 		const execPath = join(releasePath, entry);
-		if (/bun(?:\.exe)?$/i.test(entry) && Test.isExecutable(execPath)) {
+		if (/node(?:\.exe)?$/i.test(entry) && Test.isExecutable(execPath)) {
 			return execPath;
 		}
 	}
@@ -299,8 +299,8 @@ export type BuildkiteBuildArtifact = {
 export async function getBuildkiteArtifacts(
 	buildId: string,
 ): Promise<BuildkiteBuildArtifact[]> {
-	const orgId = getEnv("BUILDKITE_ORGANIZATION_SLUG", false) || "bun";
-	const pipelineId = getEnv("BUILDKITE_PIPELINE_SLUG", false) || "bun";
+	const orgId = getEnv("BUILDKITE_ORGANIZATION_SLUG", false) || "node";
+	const pipelineId = getEnv("BUILDKITE_PIPELINE_SLUG", false) || "node";
 	const { jobs } = (await curlSafe(
 		`https://buildkite.com/${orgId}/${pipelineId}/builds/${buildId}.json`,
 		{

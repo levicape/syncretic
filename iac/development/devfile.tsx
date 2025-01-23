@@ -10,6 +10,21 @@ import {
 	DevfileX,
 } from "@levicape/fourtwo/x/devfile";
 
+const NODE_VERSION = "23";
+const MAKE_DEPENDENCIES = [
+	"g++",
+	"make",
+	"cmake",
+	"unzip",
+	"libcurl-devel",
+	"automake",
+	"autoconf",
+	"libtool",
+].join(" ");
+const PNPM_VERSION = "9";
+const CCR_URL =
+	"https://github.com/aws/codecatalyst-runner-cli/releases/latest/download/ccr_Linux_x86_64.tar.gz";
+
 let data = (
 	<DevfileX
 		metadata={<DevfileMetadataX name={"fourtwo"} />}
@@ -18,6 +33,7 @@ let data = (
 			<DevfileEventX
 				postStart={[
 					"update-node",
+					"install-make",
 					"install-corepack",
 					"install-pnpm",
 					"start-docker",
@@ -31,7 +47,14 @@ let data = (
 				id={"update-node"}
 				exec={{
 					component: "source",
-					commandLine: "sudo npx -y n 23",
+					commandLine: `sudo npx -y n ${NODE_VERSION}`,
+				}}
+			/>,
+			<DevfileCommandX
+				id={"install-make"}
+				exec={{
+					component: "source",
+					commandLine: `sudo yum install -y ${MAKE_DEPENDENCIES}`,
 				}}
 			/>,
 			<DevfileCommandX
@@ -45,7 +68,7 @@ let data = (
 				id={"install-pnpm"}
 				exec={{
 					component: "source",
-					commandLine: "sudo corepack use pnpm@latest",
+					commandLine: `sudo corepack use pnpm@${PNPM_VERSION}`,
 				}}
 			/>,
 			<DevfileCommandX
@@ -60,10 +83,7 @@ let data = (
 				exec={{
 					component: "source",
 					commandLine: [
-						[
-							"sudo curl -sL https://github.com/aws/codecatalyst-runner-cli/releases/latest/download/ccr_Linux_x86_64.tar.gz -o -",
-							"sudo tar -zx ccr",
-						].join(" | "),
+						[`sudo curl -sL ${CCR_URL} -o -`, "sudo tar -zx ccr"].join(" | "),
 						"sudo mv ccr /usr/local/bin/ccr",
 					].join(" && "),
 				}}

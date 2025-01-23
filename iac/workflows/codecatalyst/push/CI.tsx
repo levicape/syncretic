@@ -96,10 +96,14 @@ export const PULUMI_STACKS: Stack[] = [
 	{
 		stack: "datalayer",
 	},
-	// {
-	// 	stack: "web/panel/www",
-	// 	name: "web-panel-www",
-	// },
+	{
+		stack: "domains/panel/http",
+		name: "panel-http",
+	},
+	{
+		stack: "domains/panel/web",
+		name: "panel-web",
+	},
 	// "wwwroot"
 ].map((stack) => ({ ...stack, output: stack.stack.replaceAll("/", "_") }));
 
@@ -151,8 +155,8 @@ export default async () => {
 											register("PAKETO_CLI_IMAGE", "buildpacksio/pack:latest"),
 											register("PAKETO_BUILDER_IMAGE", "heroku/builder:24"),
 											register("PAKETO_LAUNCHER_IMAGE", "heroku/heroku:24"),
-											register("PULUMI_VERSION", "3.144.1"),
-											register("PYTHON_VERSION", "3.11"),
+											register("PULUMI_VERSION", "3.147.0"),
+											register("PYTHON_VERSION", "3.11.6"),
 										],
 									}}
 									caching={FileCaching({
@@ -160,7 +164,7 @@ export default async () => {
 										pulumi: true,
 										python: true,
 									})}
-									timeout={12}
+									timeout={19}
 									steps={
 										<>
 											{/* Node */}
@@ -257,7 +261,7 @@ export default async () => {
 											ReportNamePrefix: "junit",
 										},
 									}}
-									timeout={8}
+									timeout={19}
 									steps={
 										<>
 											<CodeCatalystStepX
@@ -274,12 +278,16 @@ export default async () => {
 												run={`npm exec pnpm config set store-dir ${PNP_STORE}`}
 											/>
 											<CodeCatalystStepX run="npm exec pnpm install --prefer-offline --ignore-scripts" />
-											<CodeCatalystStepX run="sudo yum install -y g++ make cmake unzip libcurl-devel automake autoconf libtool" />
+											<CodeCatalystStepX run="sudo yum install -y g++ make cmake zip unzip libcurl-devel automake autoconf libtool zlib zlib-devel zlib-static" />
+											<CodeCatalystStepX run="sudo yum install -y jq || true" />
+											<CodeCatalystStepX run="sudo yum install -y protobuf protobuf-devel protobuf-compiler || true" />
+											<CodeCatalystStepX run="sudo yum install -y sqlite sqlite-devel sqlite-libs sqlite-tools || true" />
 											<CodeCatalystStepX
 												run={`python3 -c "print('ok')" || true`}
 											/>
 											<CodeCatalystStepX run="npm rebuild node-gyp" />
 											<CodeCatalystStepX run="npm rebuild knex better-sqlite3" />
+											<CodeCatalystStepX run="npm exec pnpm rebuild || true" />
 											<CodeCatalystStepX run="npm exec pnpm build" />
 											<CodeCatalystStepX run="npm exec pnpm lint" />
 											<CodeCatalystStepX run="npm exec pnpm test" />
@@ -295,7 +303,7 @@ export default async () => {
 									dependsOn={["Install"]}
 									architecture={"arm64"}
 									caching={FileCaching({ docker: true, python: true })}
-									timeout={15}
+									timeout={19}
 									inputs={{
 										Sources: ["WorkflowSource"],
 										Variables: [
@@ -345,9 +353,13 @@ export default async () => {
 												run={`npm exec pnpm config set store-dir ${PNP_STORE}`}
 											/>
 											<CodeCatalystStepX run="npm exec pnpm install --prefer-offline --ignore-scripts" />
-											<CodeCatalystStepX run="sudo yum install -y g++ make cmake unzip libcurl-devel automake autoconf libtool" />
+											<CodeCatalystStepX run="sudo yum install -y g++ make cmake zip unzip libcurl-devel automake autoconf libtool zlib zlib-devel zlib-static" />
+											<CodeCatalystStepX run="sudo yum install -y jq || true" />
+											<CodeCatalystStepX run="sudo yum install -y protobuf protobuf-devel protobuf-compiler || true" />
+											<CodeCatalystStepX run="sudo yum install -y sqlite sqlite-devel sqlite-libs sqlite-tools || true" />
 											<CodeCatalystStepX run="npm rebuild node-gyp" />
-											<CodeCatalystStepX run="npm rebuild knex better-sqlite3 aws-lambda-ric" />
+											<CodeCatalystStepX run="npm rebuild knex better-sqlite3" />
+											<CodeCatalystStepX run="npm exec pnpm rebuild || true" />
 											<CodeCatalystStepX
 												run={
 													"npm exec pnpm exec nx pack:build iac-images-application --verbose"
@@ -375,7 +387,7 @@ export default async () => {
 									dependsOn={["Image"]}
 									architecture={"arm64"}
 									caching={FileCaching({ pulumi: true })}
-									timeout={14}
+									timeout={19}
 									inputs={{
 										Sources: ["WorkflowSource"],
 										Variables: [
@@ -520,7 +532,7 @@ export default async () => {
 								<CodeCatalystBuildX
 									architecture={"arm64"}
 									caching={FileCaching()}
-									timeout={10}
+									timeout={19}
 									inputs={{
 										Sources: ["WorkflowSource"],
 										Variables: [

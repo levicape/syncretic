@@ -20,7 +20,7 @@ Actions:
     Actions:
       Install:
         Identifier: aws/build@v1.0.0
-        Timeout: 12
+        Timeout: 19
         Caching:
           FileCaching:
             a64_npm_global:
@@ -62,9 +62,9 @@ Actions:
             - Name: PAKETO_LAUNCHER_IMAGE
               Value: heroku/heroku:24
             - Name: PULUMI_VERSION
-              Value: 3.144.1
+              Value: 3.147.0
             - Name: PYTHON_VERSION
-              Value: "3.11"
+              Value: 3.11.6
         Configuration:
           Container:
             Registry: CODECATALYST
@@ -112,7 +112,7 @@ Actions:
         Identifier: aws/build@v1.0.0
         DependsOn:
           - Install
-        Timeout: 8
+        Timeout: 19
         Caching:
           FileCaching:
             a64_npm_global:
@@ -156,10 +156,14 @@ Actions:
             - Run: npm exec n $NODEJS_VERSION
             - Run: npm exec pnpm config set store-dir /tmp/pnpm-store
             - Run: npm exec pnpm install --prefer-offline --ignore-scripts
-            - Run: sudo yum install -y g++ make cmake unzip libcurl-devel automake autoconf libtool
+            - Run: sudo yum install -y g++ make cmake zip unzip libcurl-devel automake autoconf libtool zlib zlib-devel zlib-static
+            - Run: sudo yum install -y jq || true
+            - Run: sudo yum install -y protobuf protobuf-devel protobuf-compiler || true
+            - Run: sudo yum install -y sqlite sqlite-devel sqlite-libs sqlite-tools || true
             - Run: python3 -c "print('ok')" || true
             - Run: npm rebuild node-gyp
             - Run: npm rebuild knex better-sqlite3
+            - Run: npm exec pnpm rebuild || true
             - Run: npm exec pnpm build
             - Run: npm exec pnpm lint
             - Run: npm exec pnpm test
@@ -168,7 +172,7 @@ Actions:
         Identifier: aws/build@v1.0.0
         DependsOn:
           - Install
-        Timeout: 15
+        Timeout: 19
         Caching:
           FileCaching:
             a64_npm_global:
@@ -223,9 +227,13 @@ Actions:
             - Run: npm exec n $NODEJS_VERSION
             - Run: npm exec pnpm config set store-dir /tmp/pnpm-store
             - Run: npm exec pnpm install --prefer-offline --ignore-scripts
-            - Run: sudo yum install -y g++ make cmake unzip libcurl-devel automake autoconf libtool
+            - Run: sudo yum install -y g++ make cmake zip unzip libcurl-devel automake autoconf libtool zlib zlib-devel zlib-static
+            - Run: sudo yum install -y jq || true
+            - Run: sudo yum install -y protobuf protobuf-devel protobuf-compiler || true
+            - Run: sudo yum install -y sqlite sqlite-devel sqlite-libs sqlite-tools || true
             - Run: npm rebuild node-gyp
-            - Run: npm rebuild knex better-sqlite3 aws-lambda-ric
+            - Run: npm rebuild knex better-sqlite3
+            - Run: npm exec pnpm rebuild || true
             - Run: npm exec pnpm exec nx pack:build iac-images-application --verbose
             - Run: docker save $APPLICATION_IMAGE_NAME | gzip > _images/application.tar.gz
             - Run: du -sh _images/application.tar.gz
@@ -234,7 +242,7 @@ Actions:
         Identifier: aws/build@v1.0.0
         DependsOn:
           - Image
-        Timeout: 14
+        Timeout: 19
         Environment:
           Name: current
         Caching:
@@ -332,6 +340,34 @@ Actions:
             - Run: cat _pulumi/datalayer.json
             - Run: /tmp/pulumi/bin/pulumi stack output -C $(pwd)/iac/stacks/src/datalayer --shell > $(pwd)/_pulumi/datalayer.sh
             - Run: cat _pulumi/datalayer.sh
+            - Run: /tmp/pulumi/bin/pulumi stack init "$APPLICATION_IMAGE_NAME-panel-http.$CI_ENVIRONMENT" -C $(pwd)/iac/stacks/src/domains/panel/http || true
+            - Run: /tmp/pulumi/bin/pulumi stack select "$APPLICATION_IMAGE_NAME-panel-http.$CI_ENVIRONMENT" -C $(pwd)/iac/stacks/src/domains/panel/http || true
+            - Run: /tmp/pulumi/bin/pulumi config set aws:skipMetadataApiCheck false -C $(pwd)/iac/stacks/src/domains/panel/http
+            - Run: /tmp/pulumi/bin/pulumi config set --path context:stack.environment.isProd false -C $(pwd)/iac/stacks/src/domains/panel/http
+            - Run: /tmp/pulumi/bin/pulumi config set --path context:stack.environment.features aws -C $(pwd)/iac/stacks/src/domains/panel/http
+            - Run: /tmp/pulumi/bin/pulumi config set --path 'frontend:stack.dns.hostnames[0]' "$CI_ENVIRONMENT.$APPLICATION_IMAGE_NAME.cloud.$FRONTEND_HOSTNAME" -C $(pwd)/iac/stacks/src/domains/panel/http
+            - Run: /tmp/pulumi/bin/pulumi stack change-secrets-provider $AWS_PROVIDER_KEY -C $(pwd)/iac/stacks/src/domains/panel/http
+            - Run: /tmp/pulumi/bin/pulumi refresh -C $(pwd)/iac/stacks/src/domains/panel/http --yes --skip-preview --clear-pending-creates --json --suppress-progress --non-interactive --diff --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-refresh"
+            - Run: /tmp/pulumi/bin/pulumi preview -C $(pwd)/iac/stacks/src/domains/panel/http  --show-replacement-steps --json --suppress-progress --non-interactive --diff --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-preview"
+            - Run: /tmp/pulumi/bin/pulumi up -C $(pwd)/iac/stacks/src/domains/panel/http --yes --suppress-progress --non-interactive --diff --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-up"
+            - Run: /tmp/pulumi/bin/pulumi stack output -C $(pwd)/iac/stacks/src/domains/panel/http --json > $(pwd)/_pulumi/domains_panel_http.json
+            - Run: cat _pulumi/domains_panel_http.json
+            - Run: /tmp/pulumi/bin/pulumi stack output -C $(pwd)/iac/stacks/src/domains/panel/http --shell > $(pwd)/_pulumi/domains_panel_http.sh
+            - Run: cat _pulumi/domains_panel_http.sh
+            - Run: /tmp/pulumi/bin/pulumi stack init "$APPLICATION_IMAGE_NAME-panel-web.$CI_ENVIRONMENT" -C $(pwd)/iac/stacks/src/domains/panel/web || true
+            - Run: /tmp/pulumi/bin/pulumi stack select "$APPLICATION_IMAGE_NAME-panel-web.$CI_ENVIRONMENT" -C $(pwd)/iac/stacks/src/domains/panel/web || true
+            - Run: /tmp/pulumi/bin/pulumi config set aws:skipMetadataApiCheck false -C $(pwd)/iac/stacks/src/domains/panel/web
+            - Run: /tmp/pulumi/bin/pulumi config set --path context:stack.environment.isProd false -C $(pwd)/iac/stacks/src/domains/panel/web
+            - Run: /tmp/pulumi/bin/pulumi config set --path context:stack.environment.features aws -C $(pwd)/iac/stacks/src/domains/panel/web
+            - Run: /tmp/pulumi/bin/pulumi config set --path 'frontend:stack.dns.hostnames[0]' "$CI_ENVIRONMENT.$APPLICATION_IMAGE_NAME.cloud.$FRONTEND_HOSTNAME" -C $(pwd)/iac/stacks/src/domains/panel/web
+            - Run: /tmp/pulumi/bin/pulumi stack change-secrets-provider $AWS_PROVIDER_KEY -C $(pwd)/iac/stacks/src/domains/panel/web
+            - Run: /tmp/pulumi/bin/pulumi refresh -C $(pwd)/iac/stacks/src/domains/panel/web --yes --skip-preview --clear-pending-creates --json --suppress-progress --non-interactive --diff --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-refresh"
+            - Run: /tmp/pulumi/bin/pulumi preview -C $(pwd)/iac/stacks/src/domains/panel/web  --show-replacement-steps --json --suppress-progress --non-interactive --diff --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-preview"
+            - Run: /tmp/pulumi/bin/pulumi up -C $(pwd)/iac/stacks/src/domains/panel/web --yes --suppress-progress --non-interactive --diff --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-up"
+            - Run: /tmp/pulumi/bin/pulumi stack output -C $(pwd)/iac/stacks/src/domains/panel/web --json > $(pwd)/_pulumi/domains_panel_web.json
+            - Run: cat _pulumi/domains_panel_web.json
+            - Run: /tmp/pulumi/bin/pulumi stack output -C $(pwd)/iac/stacks/src/domains/panel/web --shell > $(pwd)/_pulumi/domains_panel_web.sh
+            - Run: cat _pulumi/domains_panel_web.sh
             - Run: du -sh _pulumi
   Deployment:
     DependsOn:
@@ -339,7 +375,7 @@ Actions:
     Actions:
       Push_Image:
         Identifier: aws/build@v1.0.0
-        Timeout: 10
+        Timeout: 19
         Environment:
           Name: current
         Caching:
@@ -392,6 +428,10 @@ Actions:
             - Run: source $CATALYST_SOURCE_DIR_pulumi/_pulumi/codestar.sh
             - Run: cat $CATALYST_SOURCE_DIR_pulumi/_pulumi/datalayer.sh
             - Run: source $CATALYST_SOURCE_DIR_pulumi/_pulumi/datalayer.sh
+            - Run: cat $CATALYST_SOURCE_DIR_pulumi/_pulumi/domains_panel_http.sh
+            - Run: source $CATALYST_SOURCE_DIR_pulumi/_pulumi/domains_panel_http.sh
+            - Run: cat $CATALYST_SOURCE_DIR_pulumi/_pulumi/domains_panel_web.sh
+            - Run: source $CATALYST_SOURCE_DIR_pulumi/_pulumi/domains_panel_web.sh
             - Run: env
             - Run: |-
                 NODE_NO_WARNINGS=1 node -e '(function(){let outputs=JSON.parse(process.env["fourtwo_codestar_ecr"]??"");let envs={"_FOURTWO_CODE_REPOSITORY_URL":outputs.repository.url};Object.entries(envs).forEach(([key,value])=>{process.stdout.write(`export ${key}="${value}"
@@ -415,7 +455,7 @@ Actions:
 ########################################
 #**:_$~- {"$$":"head","filename":"[push(b:main)][schedule(0_0_*_*_?_*)]CI.yml","source":"iac/workflows/codecatalyst/push/CI.js"}
 #**:_$~- {"$$":"script","generator":"codegen/codecatalyst/GenerateCodeCatalystWorkflow.mts"}
-#**:_$~- {"$$":"body","hashed":"e34d9cbad0c83a9d37312ceab7e777cb407c40d687e9324f0e03d4036635206a"}
-#**:_$~- {"$$":"footer","started":"2025-01-21T09:52:43.165Z","now":"2025-01-21T09:52:43.176Z","elapsed":"11ms"}
+#**:_$~- {"$$":"body","hashed":"96b9a74664d14f1783f86e2c9570a5c23aa0cd10817635b1b5882bc26f5b5c6f"}
+#**:_$~- {"$$":"footer","started":"2025-01-25T10:27:05.737Z","now":"2025-01-25T10:27:05.747Z","elapsed":"10ms"}
 # END OF GENERATED FILE
 

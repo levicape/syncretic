@@ -1,3 +1,6 @@
+########################################
+# THIS FILE WAS AUTOMATICALLY GENERATED, DO NOT MODIFY
+########################################
 schemaVersion: 2.0.0
 metadata:
   name: fourtwo
@@ -14,6 +17,10 @@ commands:
     exec:
       component: source
       commandLine: sudo npx -y n 23
+  - id: install-make
+    exec:
+      component: source
+      commandLine: sudo yum install -y g++ make cmake unzip libcurl-devel automake autoconf libtool
   - id: install-corepack
     exec:
       component: source
@@ -21,7 +28,7 @@ commands:
   - id: install-pnpm
     exec:
       component: source
-      commandLine: sudo corepack use pnpm@latest
+      commandLine: sudo corepack use pnpm@9
   - id: start-docker
     exec:
       component: source
@@ -33,6 +40,7 @@ commands:
 events:
   postStart:
     - update-node
+    - install-make
     - install-corepack
     - install-pnpm
     - start-docker

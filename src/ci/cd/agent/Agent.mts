@@ -11,6 +11,4 @@ export type Agent = {
 	release?: string;
 	"image-name"?: string;
 	"instance-type"?: string;
-	robobun?: boolean;
-	robobun2?: boolean;
 };

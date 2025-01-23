@@ -36,7 +36,7 @@
     "targets": {
       "build": {
         "dependsOn": [
-          "@levicape/fourtwo:nx:compile"
+          "@levicape/fourtwo:build:tsc"
         ]
       },
       "dx:test": {

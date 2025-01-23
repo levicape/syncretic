@@ -43,7 +43,7 @@ export class BuildkitePipelineTargetSteps
 	getBuildVendorStep = (): BuildkiteStep => {
 		return new BuildkiteStepBuilder(
 			`${this.platform.getPlatformKey()}-build-vendor`,
-			"bun run build:ci --target dependencies",
+			"npm run build:ci --target dependencies",
 		)
 			.setLabel(`${this.platform.getPlatformLabel()} - build-vendor`)
 			.setAgents(this.platform.getBuildAgent())
@@ -57,14 +57,14 @@ export class BuildkitePipelineTargetSteps
 	getBuildCppStep = (): BuildkiteStep => {
 		return new BuildkiteStepBuilder(
 			`${this.platform.getPlatformKey()}-build-cpp`,
-			"bun run build:ci --target bun",
+			"npm run build:ci --target node",
 		)
 			.setLabel(`${this.platform.getPlatformLabel()} - build-cpp`)
 			.setAgents(this.platform.getBuildAgent())
 			.setRetry(Pipeline.getRetry())
 			.setCancelOnBuildFailing(isMergeQueue())
 			.setEnv({
-				BUN_CPP_ONLY: "ON",
+				NODE_CPP_ONLY: "ON",
 				...BuildkiteContext.getBuildEnv(this.platform),
 			})
 			.setDependsOn(this.platform.getDependsOn())
@@ -75,7 +75,7 @@ export class BuildkitePipelineTargetSteps
 		const toolchain = this.target.getBuildToolchain();
 		return new BuildkiteStepBuilder(
 			`${this.platform.getPlatformKey()}-build-zig`,
-			`bun run build:ci --target bun-zig --toolchain ${toolchain}`,
+			`npm run build:ci --target node-zig --toolchain ${toolchain}`,
 		)
 			.setLabel(`${this.platform.getPlatformLabel()} - build-zig`)
 			.setAgents(this.target.getZigAgent())
@@ -86,12 +86,12 @@ export class BuildkitePipelineTargetSteps
 			.build();
 	};
 
-	getBuildBunStep = (): BuildkiteStep => {
+	getBuildNodeStep = (): BuildkiteStep => {
 		return new BuildkiteStepBuilder(
-			`${this.platform.getPlatformKey()}-build-bun`,
-			"bun run build:ci --target bun",
+			`${this.platform.getPlatformKey()}-build-node`,
+			"node run build:ci --target node",
 		)
-			.setLabel(`${this.platform.getPlatformLabel()} - build-bun`)
+			.setLabel(`${this.platform.getPlatformLabel()} - build-node`)
 			.setDependsOn([
 				`${this.platform.getPlatformKey()}-build-vendor`,
 				`${this.platform.getPlatformKey()}-build-cpp`,
@@ -101,21 +101,21 @@ export class BuildkitePipelineTargetSteps
 			.setRetry(Pipeline.getRetry())
 			.setCancelOnBuildFailing(isMergeQueue())
 			.setEnv({
-				BUN_LINK_ONLY: "ON",
+				NODE_LINK_ONLY: "ON",
 				...BuildkiteContext.getBuildEnv(this.platform),
 			})
 			.build();
 	};
 
-	getTestBunStep = (): BuildkiteStep => {
+	getTestNodeStep = (): BuildkiteStep => {
 		return new BuildkiteStepBuilder(
-			`${this.platform.getPlatformKey()}-test-bun`,
-			`bun ./ci/runner.node.js --step ${this.platform.getPlatformKey()}-build-bun`,
+			`${this.platform.getPlatformKey()}-test-node`,
+			`node ./ci/runner.node.js --step ${this.platform.getPlatformKey()}-build-node`,
 		)
-			.setLabel(`${this.platform.getPlatformLabel()} - test-bun`)
+			.setLabel(`${this.platform.getPlatformLabel()} - test-node`)
 			.setDependsOn([
 				...this.platform.getDependsOn(
-					`${this.platform.getPlatformKey()}-test-bun`,
+					`${this.platform.getPlatformKey()}-test-node`,
 				),
 			])
 			.setAgents(this.platform.getTestAgent())

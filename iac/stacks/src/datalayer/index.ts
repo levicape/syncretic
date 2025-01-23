@@ -118,14 +118,6 @@ export = async () => {
 		};
 	})(ec2);
 
-	const dynamodb = (() => {
-		// AwsDynamoDbTable.environmentVariables(
-		// 	"QUREAU_DATABASE",
-		// 	"us-east-1",
-		// 	accountsTable,
-		//   );
-	})();
-
 	const iam = (() => {
 		const lambda = (() => {
 			return new Role(
