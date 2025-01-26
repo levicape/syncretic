@@ -1,6 +1,5 @@
 aws-pulumi-ci: pnpm run dx:cli:mjs aws pulumi ci
 cli: pnpm run dx:cli:mjs
-deploy: pnpm --filter $DEPLOY_FILTER --prod --node-linker=hoisted deploy $DEPLOY_OUTPUT && sleep 1200s
-deploy-panel-io: pnpm --filter @levicape/fourtwo-panel-io --prod --node-linker=hoisted deploy /tmp/fourtwo-panel-io && sleep 1200s
-deploy-panel-ui: pnpm --filter @levicape/fourtwo-panel-ui --prod --node-linker=hoisted deploy /tmp/fourtwo-panel-ui && sleep 1200s
+deploy: pnpm --filter $DEPLOY_FILTER --prod --node-linker=hoisted deploy $DEPLOY_OUTPUT || true; ls -la $DEPLOY_OUTPUT || true; echo 'rebuilding $DEPLOY_FILTER' && pnpm -c $DEPLOY_OUTPUT rebuild || true; echo 'procfile deploy to $DEPLOY_OUTPUT complete'; sleep 1200s
+project: pnpm run -C $PROJECT_PATH
 test: pnpm run test

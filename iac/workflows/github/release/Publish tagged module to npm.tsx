@@ -67,7 +67,7 @@ export default (
 									return (
 										<>
 											<GithubStepNodeInstallX {...node} />
-											<GithubStepNodeScriptsX {...node} scripts={["compile"]} />
+											<GithubStepNodeScriptsX {...node} scripts={["build"]} />
 											<GithubStepNodeScriptsX {...node} scripts={["lint"]} />
 											<GithubStepNodeScriptsX {...node} scripts={["test"]} />
 										</>

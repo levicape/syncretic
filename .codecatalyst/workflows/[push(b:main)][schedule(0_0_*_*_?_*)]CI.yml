@@ -23,91 +23,136 @@ Actions:
         Timeout: 19
         Caching:
           FileCaching:
-            a64_npm_global:
-              Path: /tmp/npm-global
+            a64_nodejs:
+              Path: /cc/cache/nodejs
               RestoreKeys:
-                - npminstall
-            a64_pnpm_store:
-              Path: /tmp/pnpm-store
-              RestoreKeys:
-                - pnpminstall
+                - nodejs
             a64_docker:
-              Path: /tmp/docker-cache
+              Path: /cc/cache/docker
               RestoreKeys:
                 - docker
             a64_pulumi:
-              Path: /tmp/pulumi
+              Path: /cc/cache/pulumi
               RestoreKeys:
                 - pulumi
             a64_python:
-              Path: /root/.pyenv
+              Path: /cc/cache/pyenv
               RestoreKeys:
                 - python
         Inputs:
           Sources:
             - WorkflowSource
           Variables:
+            - Name: COREPACK_HOME
+              Value: /cc/cache/nodejs/corepack
+            - Name: PNPM_VERSION
+              Value: pnpm@9
             - Name: NODEJS_VERSION
               Value: "23"
+            - Name: NODE_AUTH_TOKEN
+              Value: ${Secrets.GITHUB_LEVICAPE_PAT}
             - Name: NPM_REGISTRY_PROTOCOL
               Value: https
             - Name: NPM_REGISTRY_HOST
               Value: npm.pkg.github.com
-            - Name: NODE_AUTH_TOKEN
-              Value: ${Secrets.GITHUB_LEVICAPE_PAT}
+            - Name: NX_CACHE_DIRECTORY
+              Value: /cc/cache/nodejs/nxcache
+            - Name: AWS_REGION
+              Value: us-west-2
+            - Name: FRONTEND_HOSTNAME
+              Value: fourtwo.levicape.cloud
+            - Name: PULUMI_CONFIG_PASSPHRASE
+              Value: ${{ Secrets.PULUMI_CONFIG_PASSPHRASE }}
+            - Name: PULUMI_HOME
+              Value: /cc/cache/pulumi
+            - Name: PULUMI_VERSION
+              Value: 3.147.0
+            - Name: PYTHON
+              Value: /cc/cache/pyenv/shims/python3
+            - Name: PYENV_ROOT
+              Value: /cc/cache/pyenv
+            - Name: PYTHON_VERSION
+              Value: 3.11.6
             - Name: PAKETO_CLI_IMAGE
               Value: buildpacksio/pack:latest
             - Name: PAKETO_BUILDER_IMAGE
               Value: heroku/builder:24
             - Name: PAKETO_LAUNCHER_IMAGE
               Value: heroku/heroku:24
-            - Name: PULUMI_VERSION
-              Value: 3.147.0
-            - Name: PYTHON_VERSION
-              Value: 3.11.6
         Configuration:
           Container:
             Registry: CODECATALYST
             Image: CodeCatalystLinux_Arm64:2024_03
           Steps:
+            - Run: mkdir -p /cc/cache/nodejs
+            - Run: mkdir -p /cc/cache/docker
+            - Run: mkdir -p /cc/cache/pulumi
+            - Run: mkdir -p /cc/cache/nodejs/corepack
+            - Run: mkdir -p /cc/cache/nodejs/npm
+            - Run: mkdir -p /cc/cache/nodejs/pnpmcache
+            - Run: mkdir -p /cc/cache/nodejs/pnpmstore
+            - Run: mkdir -p /cc/cache/nodejs/pnpmglobal
+            - Run: mkdir -p /cc/cache/nodejs/nxcache
+            - Run: mkdir -p /cc/cache/docker/images
             - Run: npm config set @levicape:registry=$NPM_REGISTRY_PROTOCOL://$NPM_REGISTRY_HOST --location project
             - Run: npm config set //$NPM_REGISTRY_HOST/:_authToken=$NODE_AUTH_TOKEN --location project
-            - Run: npm config set prefix=/tmp/npm-global
-            - Run: npm root -g
-            - Run: npm install --g pnpm
-            - Run: npm install --g n
-            - Run: npm exec n $NODEJS_VERSION
-            - Run: npm exec pnpm config set store-dir /tmp/pnpm-store
-            - Run: npm exec pnpm install --ignore-scripts
-            - Run: mkdir -p /tmp/npm-global
-            - Run: mkdir -p /tmp/pnpm-store
-            - Run: mkdir -p /tmp/docker-cache
-            - Run: mkdir -p /tmp/pulumi
-            - Run: mkdir -p /tmp/docker-cache/images
-            - Run: docker load --input /tmp/docker-cache/images/cli-pack.tar.gz || true
-            - Run: docker pull $PAKETO_CLI_IMAGE
-            - Run: docker save $PAKETO_CLI_IMAGE | gzip > /tmp/docker-cache/images/cli-pack.tar.gz
-            - Run: du -sh /tmp/docker-cache/images/cli-pack.tar.gz
-            - Run: docker load --input /tmp/docker-cache/images/builder.tar.gz || true
-            - Run: docker pull $PAKETO_BUILDER_IMAGE
-            - Run: docker save $PAKETO_BUILDER_IMAGE | gzip > /tmp/docker-cache/images/builder.tar.gz
-            - Run: du -sh /tmp/docker-cache/images/builder.tar.gz
-            - Run: docker load --input /tmp/docker-cache/images/launcher.tar.gz || true
-            - Run: docker pull $PAKETO_LAUNCHER_IMAGE
-            - Run: docker save $PAKETO_LAUNCHER_IMAGE | gzip > /tmp/docker-cache/images/launcher.tar.gz
-            - Run: du -sh /tmp/docker-cache/images/launcher.tar.gz
-            - Run: "[ -f /tmp/pulumi/bin/pulumi ] && /tmp/pulumi/bin/pulumi version | grep $PULUMI_VERSION || curl -fsSL https://get.pulumi.com | sh -s -- --version $PULUMI_VERSION --install-root /tmp/pulumi"
-            - Run: du -sh /tmp/pulumi
-            - Run: npm exec pnpm list
-            - Run: du -sh node_modules /tmp/npm-global /tmp/pnpm-store
-            - Run: which pyenv
-            - Run: eval "$(pyenv init -)"
-            - Run: git clone https://github.com/pyenv/pyenv-update.git $(pyenv root)/plugins/pyenv-update
+            - Run: sudo npm config set prefix=/cc/cache/nodejs/npm
+            - Run: sudo corepack -g install $PNPM_VERSION
+            - Run: sudo corepack enable pnpm
+            - Run: sudo pnpm config set cache-dir /cc/cache/nodejs/pnpmcache
+            - Run: sudo pnpm config set global-dir /cc/cache/nodejs/pnpmglobal
+            - Run: sudo pnpm config set store-dir /cc/cache/nodejs/pnpmstore
+            - Run: sudo pnpx n $NODEJS_VERSION
+            - Run: npm config set prefix=/cc/cache/nodejs/npm
+            - Run: corepack -g install $PNPM_VERSION
+            - Run: corepack enable pnpm
+            - Run: pnpm config set cache-dir /cc/cache/nodejs/pnpmcache
+            - Run: pnpm config set global-dir /cc/cache/nodejs/pnpmglobal
+            - Run: pnpm config set store-dir /cc/cache/nodejs/pnpmstore
+            - Run: pnpx n $NODEJS_VERSION
+            - Run: sudo npm root -g
+            - Run: pnpm install --ignore-scripts
+            - Run: echo $PNPM_HOME
+            - Run: pnpm list
+            - Run: du -sh node_modules || true
+            - Run: "ls -la node_modules || true "
+            - Run: du -sh /cc/cache/nodejs/corepack || true
+            - Run: "ls -la /cc/cache/nodejs/corepack || true "
+            - Run: du -sh /cc/cache/nodejs/npm || true
+            - Run: "ls -la /cc/cache/nodejs/npm || true "
+            - Run: du -sh /cc/cache/nodejs/pnpmcache || true
+            - Run: "ls -la /cc/cache/nodejs/pnpmcache || true "
+            - Run: du -sh /cc/cache/nodejs/pnpmstore || true
+            - Run: "ls -la /cc/cache/nodejs/pnpmstore || true "
+            - Run: du -sh /cc/cache/nodejs/pnpmglobal || true
+            - Run: "ls -la /cc/cache/nodejs/pnpmglobal || true "
+            - Run: du -sh /cc/cache/nodejs/nxcache || true
+            - Run: "ls -la /cc/cache/nodejs/nxcache || true "
+            - Run: curl -fsSL https://pyenv.run | bash || true
+            - Run: '[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"'
+            - Run: which pyenv || true
+            - Run: eval "$(pyenv init - || true)"
+            - Run: git clone https://github.com/pyenv/pyenv-update.git $(pyenv root)/plugins/pyenv-update || true
             - Run: pyenv update || true
             - Run: pyenv install $PYTHON_VERSION || true
             - Run: pyenv global $PYTHON_VERSION || true
             - Run: pyenv versions || true
+            - Run: du -sh $PYENV_ROOT
             - Run: python3 -m pip install -r requirements.txt
+            - Run: docker load --input /cc/cache/docker/images/cli-pack.tar.gz || true
+            - Run: docker pull $PAKETO_CLI_IMAGE
+            - Run: docker save $PAKETO_CLI_IMAGE | gzip > /cc/cache/docker/images/cli-pack.tar.gz
+            - Run: du -sh /cc/cache/docker/images/cli-pack.tar.gz || true
+            - Run: docker load --input /cc/cache/docker/images/builder.tar.gz || true
+            - Run: docker pull $PAKETO_BUILDER_IMAGE
+            - Run: docker save $PAKETO_BUILDER_IMAGE | gzip > /cc/cache/docker/images/builder.tar.gz
+            - Run: du -sh /cc/cache/docker/images/builder.tar.gz || true
+            - Run: docker load --input /cc/cache/docker/images/launcher.tar.gz || true
+            - Run: docker pull $PAKETO_LAUNCHER_IMAGE
+            - Run: docker save $PAKETO_LAUNCHER_IMAGE | gzip > /cc/cache/docker/images/launcher.tar.gz
+            - Run: du -sh /cc/cache/docker/images/launcher.tar.gz || true
+            - Run: "[ -f /cc/cache/pulumi/bin/pulumi ] && /cc/cache/pulumi/bin/pulumi version | grep $PULUMI_VERSION || curl -fsSL https://get.pulumi.com | sh -s -- --version $PULUMI_VERSION --install-root /cc/cache/pulumi"
+            - Run: du -sh /cc/cache/pulumi
       Compile:
         Identifier: aws/build@v1.0.0
         DependsOn:
@@ -115,32 +160,38 @@ Actions:
         Timeout: 19
         Caching:
           FileCaching:
-            a64_npm_global:
-              Path: /tmp/npm-global
+            a64_nodejs:
+              Path: /cc/cache/nodejs
               RestoreKeys:
-                - npminstall
-            a64_pnpm_store:
-              Path: /tmp/pnpm-store
-              RestoreKeys:
-                - pnpminstall
+                - nodejs
             a64_python:
-              Path: /root/.pyenv
+              Path: /cc/cache/pyenv
               RestoreKeys:
                 - python
         Inputs:
           Sources:
             - WorkflowSource
           Variables:
+            - Name: COREPACK_HOME
+              Value: /cc/cache/nodejs/corepack
+            - Name: PNPM_VERSION
+              Value: pnpm@9
             - Name: NODEJS_VERSION
               Value: "23"
+            - Name: NODE_AUTH_TOKEN
+              Value: ${Secrets.GITHUB_LEVICAPE_PAT}
             - Name: NPM_REGISTRY_PROTOCOL
               Value: https
             - Name: NPM_REGISTRY_HOST
               Value: npm.pkg.github.com
-            - Name: NODE_AUTH_TOKEN
-              Value: ${Secrets.GITHUB_LEVICAPE_PAT}
+            - Name: NX_CACHE_DIRECTORY
+              Value: /cc/cache/nodejs/nxcache
             - Name: PYTHON
-              Value: /root/.pyenv/shims/python3
+              Value: /cc/cache/pyenv/shims/python3
+            - Name: PYENV_ROOT
+              Value: /cc/cache/pyenv
+            - Name: PYTHON_VERSION
+              Value: 3.11.6
         Outputs:
           AutoDiscoverReports:
             Enabled: true
@@ -152,22 +203,30 @@ Actions:
           Steps:
             - Run: npm config set @levicape:registry=$NPM_REGISTRY_PROTOCOL://$NPM_REGISTRY_HOST --location project
             - Run: npm config set //$NPM_REGISTRY_HOST/:_authToken=$NODE_AUTH_TOKEN --location project
-            - Run: npm config set prefix=/tmp/npm-global
-            - Run: npm exec n $NODEJS_VERSION
-            - Run: npm exec pnpm config set store-dir /tmp/pnpm-store
-            - Run: npm exec pnpm install --prefer-offline --ignore-scripts
-            - Run: sudo yum install -y g++ make cmake zip unzip libcurl-devel automake autoconf libtool zlib zlib-devel zlib-static
-            - Run: sudo yum install -y jq || true
-            - Run: sudo yum install -y protobuf protobuf-devel protobuf-compiler || true
-            - Run: sudo yum install -y sqlite sqlite-devel sqlite-libs sqlite-tools || true
+            - Run: sudo npm config set prefix=/cc/cache/nodejs/npm
+            - Run: sudo corepack -g install $PNPM_VERSION
+            - Run: sudo corepack enable pnpm
+            - Run: sudo pnpm config set cache-dir /cc/cache/nodejs/pnpmcache
+            - Run: sudo pnpm config set global-dir /cc/cache/nodejs/pnpmglobal
+            - Run: sudo pnpm config set store-dir /cc/cache/nodejs/pnpmstore
+            - Run: sudo pnpx n $NODEJS_VERSION
+            - Run: npm config set prefix=/cc/cache/nodejs/npm
+            - Run: corepack -g install $PNPM_VERSION
+            - Run: corepack enable pnpm
+            - Run: pnpm config set cache-dir /cc/cache/nodejs/pnpmcache
+            - Run: pnpm config set global-dir /cc/cache/nodejs/pnpmglobal
+            - Run: pnpm config set store-dir /cc/cache/nodejs/pnpmstore
+            - Run: pnpx n $NODEJS_VERSION
+            - Run: pnpm install --prefer-offline --ignore-scripts
             - Run: python3 -c "print('ok')" || true
-            - Run: npm rebuild node-gyp
-            - Run: npm rebuild knex better-sqlite3
-            - Run: npm exec pnpm rebuild || true
-            - Run: npm exec pnpm build
-            - Run: npm exec pnpm lint
-            - Run: npm exec pnpm test
-            - Run: du -sh $(pwd)/**/module $(pwd)/**/commonjs || true
+            - Run: pnpm rebuild || true
+            - Run: pnpm build
+            - Run: pnpm lint
+            - Run: pnpm test
+            - Run: du -sh $(pwd)/**/module || true
+            - Run: du -sh $(pwd)/**/commonjs || true
+            - Run: du -sh $(pwd)/**/gen || true
+            - Run: du -sh $(pwd)/**/output || true
       Image:
         Identifier: aws/build@v1.0.0
         DependsOn:
@@ -175,38 +234,44 @@ Actions:
         Timeout: 19
         Caching:
           FileCaching:
-            a64_npm_global:
-              Path: /tmp/npm-global
+            a64_nodejs:
+              Path: /cc/cache/nodejs
               RestoreKeys:
-                - npminstall
-            a64_pnpm_store:
-              Path: /tmp/pnpm-store
-              RestoreKeys:
-                - pnpminstall
+                - nodejs
             a64_docker:
-              Path: /tmp/docker-cache
+              Path: /cc/cache/docker
               RestoreKeys:
                 - docker
             a64_python:
-              Path: /root/.pyenv
+              Path: /cc/cache/pyenv
               RestoreKeys:
                 - python
         Inputs:
           Sources:
             - WorkflowSource
           Variables:
+            - Name: COREPACK_HOME
+              Value: /cc/cache/nodejs/corepack
+            - Name: PNPM_VERSION
+              Value: pnpm@9
             - Name: NODEJS_VERSION
               Value: "23"
+            - Name: NODE_AUTH_TOKEN
+              Value: ${Secrets.GITHUB_LEVICAPE_PAT}
             - Name: NPM_REGISTRY_PROTOCOL
               Value: https
             - Name: NPM_REGISTRY_HOST
               Value: npm.pkg.github.com
-            - Name: NODE_AUTH_TOKEN
-              Value: ${Secrets.GITHUB_LEVICAPE_PAT}
+            - Name: NX_CACHE_DIRECTORY
+              Value: /cc/cache/nodejs/nxcache
+            - Name: PYTHON
+              Value: /cc/cache/pyenv/shims/python3
+            - Name: PYENV_ROOT
+              Value: /cc/cache/pyenv
+            - Name: PYTHON_VERSION
+              Value: 3.11.6
             - Name: APPLICATION_IMAGE_NAME
               Value: fourtwo
-            - Name: PYTHON
-              Value: /root/.pyenv/shims/python3
         Outputs:
           Artifacts:
             - Name: images
@@ -217,24 +282,35 @@ Actions:
             Registry: CODECATALYST
             Image: CodeCatalystLinux_Arm64:2024_03
           Steps:
-            - Run: docker load --input /tmp/docker-cache/images/cli-pack.tar.gz || true
-            - Run: docker load --input /tmp/docker-cache/images/builder.tar.gz || true
-            - Run: docker load --input /tmp/docker-cache/images/launcher.tar.gz || true
-            - Run: mkdir -p _images
+            - Run: docker load --input /cc/cache/docker/images/cli-pack.tar.gz || true
+            - Run: docker load --input /cc/cache/docker/images/builder.tar.gz || true
+            - Run: docker load --input /cc/cache/docker/images/launcher.tar.gz || true
             - Run: npm config set @levicape:registry=$NPM_REGISTRY_PROTOCOL://$NPM_REGISTRY_HOST --location project
             - Run: npm config set //$NPM_REGISTRY_HOST/:_authToken=$NODE_AUTH_TOKEN --location project
-            - Run: npm config set prefix=/tmp/npm-global
-            - Run: npm exec n $NODEJS_VERSION
-            - Run: npm exec pnpm config set store-dir /tmp/pnpm-store
-            - Run: npm exec pnpm install --prefer-offline --ignore-scripts
-            - Run: sudo yum install -y g++ make cmake zip unzip libcurl-devel automake autoconf libtool zlib zlib-devel zlib-static
-            - Run: sudo yum install -y jq || true
+            - Run: sudo npm config set prefix=/cc/cache/nodejs/npm
+            - Run: sudo corepack -g install $PNPM_VERSION
+            - Run: sudo corepack enable pnpm
+            - Run: sudo pnpm config set cache-dir /cc/cache/nodejs/pnpmcache
+            - Run: sudo pnpm config set global-dir /cc/cache/nodejs/pnpmglobal
+            - Run: sudo pnpm config set store-dir /cc/cache/nodejs/pnpmstore
+            - Run: sudo pnpx n $NODEJS_VERSION
+            - Run: npm config set prefix=/cc/cache/nodejs/npm
+            - Run: corepack -g install $PNPM_VERSION
+            - Run: corepack enable pnpm
+            - Run: pnpm config set cache-dir /cc/cache/nodejs/pnpmcache
+            - Run: pnpm config set global-dir /cc/cache/nodejs/pnpmglobal
+            - Run: pnpm config set store-dir /cc/cache/nodejs/pnpmstore
+            - Run: pnpx n $NODEJS_VERSION
+            - Run: pnpm install --prefer-offline --ignore-scripts
+            - Run: sudo yum install -y make cmake zip unzip automake autoconf || true
+            - Run: sudo yum install -y zlib bzip2 || true
+            - Run: sudo yum install -y g++ libcurl-devel libtool || true
             - Run: sudo yum install -y protobuf protobuf-devel protobuf-compiler || true
             - Run: sudo yum install -y sqlite sqlite-devel sqlite-libs sqlite-tools || true
-            - Run: npm rebuild node-gyp
-            - Run: npm rebuild knex better-sqlite3
-            - Run: npm exec pnpm rebuild || true
-            - Run: npm exec pnpm exec nx pack:build iac-images-application --verbose
+            - Run: sudo yum install -y jq || true
+            - Run: pnpm rebuild || true
+            - Run: pnpm exec nx pack:build iac-images-application --verbose
+            - Run: mkdir -p _images
             - Run: docker save $APPLICATION_IMAGE_NAME | gzip > _images/application.tar.gz
             - Run: du -sh _images/application.tar.gz
             - Run: ls -la _images
@@ -247,42 +323,46 @@ Actions:
           Name: current
         Caching:
           FileCaching:
-            a64_npm_global:
-              Path: /tmp/npm-global
+            a64_nodejs:
+              Path: /cc/cache/nodejs
               RestoreKeys:
-                - npminstall
-            a64_pnpm_store:
-              Path: /tmp/pnpm-store
-              RestoreKeys:
-                - pnpminstall
+                - nodejs
             a64_pulumi:
-              Path: /tmp/pulumi
+              Path: /cc/cache/pulumi
               RestoreKeys:
                 - pulumi
         Inputs:
           Sources:
             - WorkflowSource
           Variables:
+            - Name: COREPACK_HOME
+              Value: /cc/cache/nodejs/corepack
+            - Name: PNPM_VERSION
+              Value: pnpm@9
             - Name: NODEJS_VERSION
               Value: "23"
+            - Name: NODE_AUTH_TOKEN
+              Value: ${Secrets.GITHUB_LEVICAPE_PAT}
             - Name: NPM_REGISTRY_PROTOCOL
               Value: https
             - Name: NPM_REGISTRY_HOST
               Value: npm.pkg.github.com
-            - Name: NODE_AUTH_TOKEN
-              Value: ${Secrets.GITHUB_LEVICAPE_PAT}
-            - Name: APPLICATION_IMAGE_NAME
-              Value: fourtwo
-            - Name: CI_ENVIRONMENT
-              Value: current
+            - Name: NX_CACHE_DIRECTORY
+              Value: /cc/cache/nodejs/nxcache
             - Name: AWS_REGION
               Value: us-west-2
             - Name: FRONTEND_HOSTNAME
               Value: fourtwo.levicape.cloud
-            - Name: PULUMI_HOME
-              Value: /tmp/pulumi
             - Name: PULUMI_CONFIG_PASSPHRASE
               Value: ${{ Secrets.PULUMI_CONFIG_PASSPHRASE }}
+            - Name: PULUMI_HOME
+              Value: /cc/cache/pulumi
+            - Name: PULUMI_VERSION
+              Value: 3.147.0
+            - Name: APPLICATION_IMAGE_NAME
+              Value: fourtwo
+            - Name: CI_ENVIRONMENT
+              Value: current
           Artifacts:
             - images
         Outputs:
@@ -297,11 +377,22 @@ Actions:
           Steps:
             - Run: npm config set @levicape:registry=$NPM_REGISTRY_PROTOCOL://$NPM_REGISTRY_HOST --location project
             - Run: npm config set //$NPM_REGISTRY_HOST/:_authToken=$NODE_AUTH_TOKEN --location project
-            - Run: npm config set prefix=/tmp/npm-global
-            - Run: npm exec pnpm config set store-dir /tmp/pnpm-store
-            - Run: npm exec n $NODEJS_VERSION
-            - Run: npm exec pnpm install --prefer-offline --ignore-scripts
-            - Run: npm exec pnpm build
+            - Run: sudo npm config set prefix=/cc/cache/nodejs/npm
+            - Run: sudo corepack -g install $PNPM_VERSION
+            - Run: sudo corepack enable pnpm
+            - Run: sudo pnpm config set cache-dir /cc/cache/nodejs/pnpmcache
+            - Run: sudo pnpm config set global-dir /cc/cache/nodejs/pnpmglobal
+            - Run: sudo pnpm config set store-dir /cc/cache/nodejs/pnpmstore
+            - Run: sudo pnpx n $NODEJS_VERSION
+            - Run: npm config set prefix=/cc/cache/nodejs/npm
+            - Run: corepack -g install $PNPM_VERSION
+            - Run: corepack enable pnpm
+            - Run: pnpm config set cache-dir /cc/cache/nodejs/pnpmcache
+            - Run: pnpm config set global-dir /cc/cache/nodejs/pnpmglobal
+            - Run: pnpm config set store-dir /cc/cache/nodejs/pnpmstore
+            - Run: pnpx n $NODEJS_VERSION
+            - Run: pnpm install --prefer-offline --ignore-scripts
+            - Run: pnpm build
             - Run: ls -la $CATALYST_SOURCE_DIR_images/_images
             - Run: docker load --input $CATALYST_SOURCE_DIR_images/_images/application.tar.gz
             - Run: docker images
@@ -312,61 +403,61 @@ Actions:
             - Run: cat .export-cd
             - Run: source .export-cd
             - Run: mkdir _pulumi
-            - Run: /tmp/pulumi/bin/pulumi stack init "$APPLICATION_IMAGE_NAME-codestar.$CI_ENVIRONMENT" -C $(pwd)/iac/stacks/src/codestar || true
-            - Run: /tmp/pulumi/bin/pulumi stack select "$APPLICATION_IMAGE_NAME-codestar.$CI_ENVIRONMENT" -C $(pwd)/iac/stacks/src/codestar || true
-            - Run: /tmp/pulumi/bin/pulumi config set aws:skipMetadataApiCheck false -C $(pwd)/iac/stacks/src/codestar
-            - Run: /tmp/pulumi/bin/pulumi config set --path context:stack.environment.isProd false -C $(pwd)/iac/stacks/src/codestar
-            - Run: /tmp/pulumi/bin/pulumi config set --path context:stack.environment.features aws -C $(pwd)/iac/stacks/src/codestar
-            - Run: /tmp/pulumi/bin/pulumi config set --path 'frontend:stack.dns.hostnames[0]' "$CI_ENVIRONMENT.$APPLICATION_IMAGE_NAME.cloud.$FRONTEND_HOSTNAME" -C $(pwd)/iac/stacks/src/codestar
-            - Run: /tmp/pulumi/bin/pulumi stack change-secrets-provider $AWS_PROVIDER_KEY -C $(pwd)/iac/stacks/src/codestar
-            - Run: /tmp/pulumi/bin/pulumi refresh -C $(pwd)/iac/stacks/src/codestar --yes --skip-preview --clear-pending-creates --json --suppress-progress --non-interactive --diff --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-refresh"
-            - Run: /tmp/pulumi/bin/pulumi preview -C $(pwd)/iac/stacks/src/codestar  --show-replacement-steps --json --suppress-progress --non-interactive --diff --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-preview"
-            - Run: /tmp/pulumi/bin/pulumi up -C $(pwd)/iac/stacks/src/codestar --yes --suppress-progress --non-interactive --diff --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-up"
-            - Run: /tmp/pulumi/bin/pulumi stack output -C $(pwd)/iac/stacks/src/codestar --json > $(pwd)/_pulumi/codestar.json
+            - Run: /cc/cache/pulumi/bin/pulumi stack init "$APPLICATION_IMAGE_NAME-codestar.$CI_ENVIRONMENT" -C $(pwd)/iac/stacks/src/codestar || true
+            - Run: /cc/cache/pulumi/bin/pulumi stack select "$APPLICATION_IMAGE_NAME-codestar.$CI_ENVIRONMENT" -C $(pwd)/iac/stacks/src/codestar || true
+            - Run: /cc/cache/pulumi/bin/pulumi config set aws:skipMetadataApiCheck false -C $(pwd)/iac/stacks/src/codestar
+            - Run: /cc/cache/pulumi/bin/pulumi config set --path context:stack.environment.isProd false -C $(pwd)/iac/stacks/src/codestar
+            - Run: /cc/cache/pulumi/bin/pulumi config set --path context:stack.environment.features aws -C $(pwd)/iac/stacks/src/codestar
+            - Run: /cc/cache/pulumi/bin/pulumi config set --path 'frontend:stack.dns.hostnames[0]' "$CI_ENVIRONMENT.$APPLICATION_IMAGE_NAME.cloud.$FRONTEND_HOSTNAME" -C $(pwd)/iac/stacks/src/codestar
+            - Run: /cc/cache/pulumi/bin/pulumi stack change-secrets-provider $AWS_PROVIDER_KEY -C $(pwd)/iac/stacks/src/codestar
+            - Run: /cc/cache/pulumi/bin/pulumi refresh -C $(pwd)/iac/stacks/src/codestar --yes --skip-preview --clear-pending-creates --json --suppress-progress --non-interactive --diff --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-refresh"
+            - Run: /cc/cache/pulumi/bin/pulumi preview -C $(pwd)/iac/stacks/src/codestar  --show-replacement-steps --json --suppress-progress --non-interactive --diff --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-preview"
+            - Run: /cc/cache/pulumi/bin/pulumi up -C $(pwd)/iac/stacks/src/codestar --yes --suppress-progress --non-interactive --diff --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-up"
+            - Run: /cc/cache/pulumi/bin/pulumi stack output -C $(pwd)/iac/stacks/src/codestar --json > $(pwd)/_pulumi/codestar.json
             - Run: cat _pulumi/codestar.json
-            - Run: /tmp/pulumi/bin/pulumi stack output -C $(pwd)/iac/stacks/src/codestar --shell > $(pwd)/_pulumi/codestar.sh
+            - Run: /cc/cache/pulumi/bin/pulumi stack output -C $(pwd)/iac/stacks/src/codestar --shell > $(pwd)/_pulumi/codestar.sh
             - Run: cat _pulumi/codestar.sh
-            - Run: /tmp/pulumi/bin/pulumi stack init "$APPLICATION_IMAGE_NAME-datalayer.$CI_ENVIRONMENT" -C $(pwd)/iac/stacks/src/datalayer || true
-            - Run: /tmp/pulumi/bin/pulumi stack select "$APPLICATION_IMAGE_NAME-datalayer.$CI_ENVIRONMENT" -C $(pwd)/iac/stacks/src/datalayer || true
-            - Run: /tmp/pulumi/bin/pulumi config set aws:skipMetadataApiCheck false -C $(pwd)/iac/stacks/src/datalayer
-            - Run: /tmp/pulumi/bin/pulumi config set --path context:stack.environment.isProd false -C $(pwd)/iac/stacks/src/datalayer
-            - Run: /tmp/pulumi/bin/pulumi config set --path context:stack.environment.features aws -C $(pwd)/iac/stacks/src/datalayer
-            - Run: /tmp/pulumi/bin/pulumi config set --path 'frontend:stack.dns.hostnames[0]' "$CI_ENVIRONMENT.$APPLICATION_IMAGE_NAME.cloud.$FRONTEND_HOSTNAME" -C $(pwd)/iac/stacks/src/datalayer
-            - Run: /tmp/pulumi/bin/pulumi stack change-secrets-provider $AWS_PROVIDER_KEY -C $(pwd)/iac/stacks/src/datalayer
-            - Run: /tmp/pulumi/bin/pulumi refresh -C $(pwd)/iac/stacks/src/datalayer --yes --skip-preview --clear-pending-creates --json --suppress-progress --non-interactive --diff --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-refresh"
-            - Run: /tmp/pulumi/bin/pulumi preview -C $(pwd)/iac/stacks/src/datalayer  --show-replacement-steps --json --suppress-progress --non-interactive --diff --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-preview"
-            - Run: /tmp/pulumi/bin/pulumi up -C $(pwd)/iac/stacks/src/datalayer --yes --suppress-progress --non-interactive --diff --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-up"
-            - Run: /tmp/pulumi/bin/pulumi stack output -C $(pwd)/iac/stacks/src/datalayer --json > $(pwd)/_pulumi/datalayer.json
+            - Run: /cc/cache/pulumi/bin/pulumi stack init "$APPLICATION_IMAGE_NAME-datalayer.$CI_ENVIRONMENT" -C $(pwd)/iac/stacks/src/datalayer || true
+            - Run: /cc/cache/pulumi/bin/pulumi stack select "$APPLICATION_IMAGE_NAME-datalayer.$CI_ENVIRONMENT" -C $(pwd)/iac/stacks/src/datalayer || true
+            - Run: /cc/cache/pulumi/bin/pulumi config set aws:skipMetadataApiCheck false -C $(pwd)/iac/stacks/src/datalayer
+            - Run: /cc/cache/pulumi/bin/pulumi config set --path context:stack.environment.isProd false -C $(pwd)/iac/stacks/src/datalayer
+            - Run: /cc/cache/pulumi/bin/pulumi config set --path context:stack.environment.features aws -C $(pwd)/iac/stacks/src/datalayer
+            - Run: /cc/cache/pulumi/bin/pulumi config set --path 'frontend:stack.dns.hostnames[0]' "$CI_ENVIRONMENT.$APPLICATION_IMAGE_NAME.cloud.$FRONTEND_HOSTNAME" -C $(pwd)/iac/stacks/src/datalayer
+            - Run: /cc/cache/pulumi/bin/pulumi stack change-secrets-provider $AWS_PROVIDER_KEY -C $(pwd)/iac/stacks/src/datalayer
+            - Run: /cc/cache/pulumi/bin/pulumi refresh -C $(pwd)/iac/stacks/src/datalayer --yes --skip-preview --clear-pending-creates --json --suppress-progress --non-interactive --diff --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-refresh"
+            - Run: /cc/cache/pulumi/bin/pulumi preview -C $(pwd)/iac/stacks/src/datalayer  --show-replacement-steps --json --suppress-progress --non-interactive --diff --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-preview"
+            - Run: /cc/cache/pulumi/bin/pulumi up -C $(pwd)/iac/stacks/src/datalayer --yes --suppress-progress --non-interactive --diff --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-up"
+            - Run: /cc/cache/pulumi/bin/pulumi stack output -C $(pwd)/iac/stacks/src/datalayer --json > $(pwd)/_pulumi/datalayer.json
             - Run: cat _pulumi/datalayer.json
-            - Run: /tmp/pulumi/bin/pulumi stack output -C $(pwd)/iac/stacks/src/datalayer --shell > $(pwd)/_pulumi/datalayer.sh
+            - Run: /cc/cache/pulumi/bin/pulumi stack output -C $(pwd)/iac/stacks/src/datalayer --shell > $(pwd)/_pulumi/datalayer.sh
             - Run: cat _pulumi/datalayer.sh
-            - Run: /tmp/pulumi/bin/pulumi stack init "$APPLICATION_IMAGE_NAME-panel-http.$CI_ENVIRONMENT" -C $(pwd)/iac/stacks/src/domains/panel/http || true
-            - Run: /tmp/pulumi/bin/pulumi stack select "$APPLICATION_IMAGE_NAME-panel-http.$CI_ENVIRONMENT" -C $(pwd)/iac/stacks/src/domains/panel/http || true
-            - Run: /tmp/pulumi/bin/pulumi config set aws:skipMetadataApiCheck false -C $(pwd)/iac/stacks/src/domains/panel/http
-            - Run: /tmp/pulumi/bin/pulumi config set --path context:stack.environment.isProd false -C $(pwd)/iac/stacks/src/domains/panel/http
-            - Run: /tmp/pulumi/bin/pulumi config set --path context:stack.environment.features aws -C $(pwd)/iac/stacks/src/domains/panel/http
-            - Run: /tmp/pulumi/bin/pulumi config set --path 'frontend:stack.dns.hostnames[0]' "$CI_ENVIRONMENT.$APPLICATION_IMAGE_NAME.cloud.$FRONTEND_HOSTNAME" -C $(pwd)/iac/stacks/src/domains/panel/http
-            - Run: /tmp/pulumi/bin/pulumi stack change-secrets-provider $AWS_PROVIDER_KEY -C $(pwd)/iac/stacks/src/domains/panel/http
-            - Run: /tmp/pulumi/bin/pulumi refresh -C $(pwd)/iac/stacks/src/domains/panel/http --yes --skip-preview --clear-pending-creates --json --suppress-progress --non-interactive --diff --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-refresh"
-            - Run: /tmp/pulumi/bin/pulumi preview -C $(pwd)/iac/stacks/src/domains/panel/http  --show-replacement-steps --json --suppress-progress --non-interactive --diff --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-preview"
-            - Run: /tmp/pulumi/bin/pulumi up -C $(pwd)/iac/stacks/src/domains/panel/http --yes --suppress-progress --non-interactive --diff --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-up"
-            - Run: /tmp/pulumi/bin/pulumi stack output -C $(pwd)/iac/stacks/src/domains/panel/http --json > $(pwd)/_pulumi/domains_panel_http.json
+            - Run: /cc/cache/pulumi/bin/pulumi stack init "$APPLICATION_IMAGE_NAME-panel-http.$CI_ENVIRONMENT" -C $(pwd)/iac/stacks/src/domains/panel/http || true
+            - Run: /cc/cache/pulumi/bin/pulumi stack select "$APPLICATION_IMAGE_NAME-panel-http.$CI_ENVIRONMENT" -C $(pwd)/iac/stacks/src/domains/panel/http || true
+            - Run: /cc/cache/pulumi/bin/pulumi config set aws:skipMetadataApiCheck false -C $(pwd)/iac/stacks/src/domains/panel/http
+            - Run: /cc/cache/pulumi/bin/pulumi config set --path context:stack.environment.isProd false -C $(pwd)/iac/stacks/src/domains/panel/http
+            - Run: /cc/cache/pulumi/bin/pulumi config set --path context:stack.environment.features aws -C $(pwd)/iac/stacks/src/domains/panel/http
+            - Run: /cc/cache/pulumi/bin/pulumi config set --path 'frontend:stack.dns.hostnames[0]' "$CI_ENVIRONMENT.$APPLICATION_IMAGE_NAME.cloud.$FRONTEND_HOSTNAME" -C $(pwd)/iac/stacks/src/domains/panel/http
+            - Run: /cc/cache/pulumi/bin/pulumi stack change-secrets-provider $AWS_PROVIDER_KEY -C $(pwd)/iac/stacks/src/domains/panel/http
+            - Run: /cc/cache/pulumi/bin/pulumi refresh -C $(pwd)/iac/stacks/src/domains/panel/http --yes --skip-preview --clear-pending-creates --json --suppress-progress --non-interactive --diff --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-refresh"
+            - Run: /cc/cache/pulumi/bin/pulumi preview -C $(pwd)/iac/stacks/src/domains/panel/http  --show-replacement-steps --json --suppress-progress --non-interactive --diff --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-preview"
+            - Run: /cc/cache/pulumi/bin/pulumi up -C $(pwd)/iac/stacks/src/domains/panel/http --yes --suppress-progress --non-interactive --diff --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-up"
+            - Run: /cc/cache/pulumi/bin/pulumi stack output -C $(pwd)/iac/stacks/src/domains/panel/http --json > $(pwd)/_pulumi/domains_panel_http.json
             - Run: cat _pulumi/domains_panel_http.json
-            - Run: /tmp/pulumi/bin/pulumi stack output -C $(pwd)/iac/stacks/src/domains/panel/http --shell > $(pwd)/_pulumi/domains_panel_http.sh
+            - Run: /cc/cache/pulumi/bin/pulumi stack output -C $(pwd)/iac/stacks/src/domains/panel/http --shell > $(pwd)/_pulumi/domains_panel_http.sh
             - Run: cat _pulumi/domains_panel_http.sh
-            - Run: /tmp/pulumi/bin/pulumi stack init "$APPLICATION_IMAGE_NAME-panel-web.$CI_ENVIRONMENT" -C $(pwd)/iac/stacks/src/domains/panel/web || true
-            - Run: /tmp/pulumi/bin/pulumi stack select "$APPLICATION_IMAGE_NAME-panel-web.$CI_ENVIRONMENT" -C $(pwd)/iac/stacks/src/domains/panel/web || true
-            - Run: /tmp/pulumi/bin/pulumi config set aws:skipMetadataApiCheck false -C $(pwd)/iac/stacks/src/domains/panel/web
-            - Run: /tmp/pulumi/bin/pulumi config set --path context:stack.environment.isProd false -C $(pwd)/iac/stacks/src/domains/panel/web
-            - Run: /tmp/pulumi/bin/pulumi config set --path context:stack.environment.features aws -C $(pwd)/iac/stacks/src/domains/panel/web
-            - Run: /tmp/pulumi/bin/pulumi config set --path 'frontend:stack.dns.hostnames[0]' "$CI_ENVIRONMENT.$APPLICATION_IMAGE_NAME.cloud.$FRONTEND_HOSTNAME" -C $(pwd)/iac/stacks/src/domains/panel/web
-            - Run: /tmp/pulumi/bin/pulumi stack change-secrets-provider $AWS_PROVIDER_KEY -C $(pwd)/iac/stacks/src/domains/panel/web
-            - Run: /tmp/pulumi/bin/pulumi refresh -C $(pwd)/iac/stacks/src/domains/panel/web --yes --skip-preview --clear-pending-creates --json --suppress-progress --non-interactive --diff --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-refresh"
-            - Run: /tmp/pulumi/bin/pulumi preview -C $(pwd)/iac/stacks/src/domains/panel/web  --show-replacement-steps --json --suppress-progress --non-interactive --diff --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-preview"
-            - Run: /tmp/pulumi/bin/pulumi up -C $(pwd)/iac/stacks/src/domains/panel/web --yes --suppress-progress --non-interactive --diff --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-up"
-            - Run: /tmp/pulumi/bin/pulumi stack output -C $(pwd)/iac/stacks/src/domains/panel/web --json > $(pwd)/_pulumi/domains_panel_web.json
+            - Run: /cc/cache/pulumi/bin/pulumi stack init "$APPLICATION_IMAGE_NAME-panel-web.$CI_ENVIRONMENT" -C $(pwd)/iac/stacks/src/domains/panel/web || true
+            - Run: /cc/cache/pulumi/bin/pulumi stack select "$APPLICATION_IMAGE_NAME-panel-web.$CI_ENVIRONMENT" -C $(pwd)/iac/stacks/src/domains/panel/web || true
+            - Run: /cc/cache/pulumi/bin/pulumi config set aws:skipMetadataApiCheck false -C $(pwd)/iac/stacks/src/domains/panel/web
+            - Run: /cc/cache/pulumi/bin/pulumi config set --path context:stack.environment.isProd false -C $(pwd)/iac/stacks/src/domains/panel/web
+            - Run: /cc/cache/pulumi/bin/pulumi config set --path context:stack.environment.features aws -C $(pwd)/iac/stacks/src/domains/panel/web
+            - Run: /cc/cache/pulumi/bin/pulumi config set --path 'frontend:stack.dns.hostnames[0]' "$CI_ENVIRONMENT.$APPLICATION_IMAGE_NAME.cloud.$FRONTEND_HOSTNAME" -C $(pwd)/iac/stacks/src/domains/panel/web
+            - Run: /cc/cache/pulumi/bin/pulumi stack change-secrets-provider $AWS_PROVIDER_KEY -C $(pwd)/iac/stacks/src/domains/panel/web
+            - Run: /cc/cache/pulumi/bin/pulumi refresh -C $(pwd)/iac/stacks/src/domains/panel/web --yes --skip-preview --clear-pending-creates --json --suppress-progress --non-interactive --diff --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-refresh"
+            - Run: /cc/cache/pulumi/bin/pulumi preview -C $(pwd)/iac/stacks/src/domains/panel/web  --show-replacement-steps --json --suppress-progress --non-interactive --diff --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-preview"
+            - Run: /cc/cache/pulumi/bin/pulumi up -C $(pwd)/iac/stacks/src/domains/panel/web --yes --suppress-progress --non-interactive --diff --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-up"
+            - Run: /cc/cache/pulumi/bin/pulumi stack output -C $(pwd)/iac/stacks/src/domains/panel/web --json > $(pwd)/_pulumi/domains_panel_web.json
             - Run: cat _pulumi/domains_panel_web.json
-            - Run: /tmp/pulumi/bin/pulumi stack output -C $(pwd)/iac/stacks/src/domains/panel/web --shell > $(pwd)/_pulumi/domains_panel_web.sh
+            - Run: /cc/cache/pulumi/bin/pulumi stack output -C $(pwd)/iac/stacks/src/domains/panel/web --shell > $(pwd)/_pulumi/domains_panel_web.sh
             - Run: cat _pulumi/domains_panel_web.sh
             - Run: du -sh _pulumi
   Deployment:
@@ -380,26 +471,28 @@ Actions:
           Name: current
         Caching:
           FileCaching:
-            a64_npm_global:
-              Path: /tmp/npm-global
+            a64_nodejs:
+              Path: /cc/cache/nodejs
               RestoreKeys:
-                - npminstall
-            a64_pnpm_store:
-              Path: /tmp/pnpm-store
-              RestoreKeys:
-                - pnpminstall
+                - nodejs
         Inputs:
           Sources:
             - WorkflowSource
           Variables:
+            - Name: COREPACK_HOME
+              Value: /cc/cache/nodejs/corepack
+            - Name: PNPM_VERSION
+              Value: pnpm@9
             - Name: NODEJS_VERSION
               Value: "23"
+            - Name: NODE_AUTH_TOKEN
+              Value: ${Secrets.GITHUB_LEVICAPE_PAT}
             - Name: NPM_REGISTRY_PROTOCOL
               Value: https
             - Name: NPM_REGISTRY_HOST
               Value: npm.pkg.github.com
-            - Name: NODE_AUTH_TOKEN
-              Value: ${Secrets.GITHUB_LEVICAPE_PAT}
+            - Name: NX_CACHE_DIRECTORY
+              Value: /cc/cache/nodejs/nxcache
             - Name: APPLICATION_IMAGE_NAME
               Value: fourtwo
             - Name: AWS_REGION
@@ -416,10 +509,21 @@ Actions:
           Steps:
             - Run: npm config set @levicape:registry=$NPM_REGISTRY_PROTOCOL://$NPM_REGISTRY_HOST --location project
             - Run: npm config set //$NPM_REGISTRY_HOST/:_authToken=$NODE_AUTH_TOKEN --location project
-            - Run: npm config set prefix=/tmp/npm-global
-            - Run: npm exec pnpm config set store-dir /tmp/pnpm-store
-            - Run: npm exec n $NODEJS_VERSION
-            - Run: npm exec pnpm install --prefer-offline --ignore-scripts
+            - Run: sudo npm config set prefix=/cc/cache/nodejs/npm
+            - Run: sudo corepack -g install $PNPM_VERSION
+            - Run: sudo corepack enable pnpm
+            - Run: sudo pnpm config set cache-dir /cc/cache/nodejs/pnpmcache
+            - Run: sudo pnpm config set global-dir /cc/cache/nodejs/pnpmglobal
+            - Run: sudo pnpm config set store-dir /cc/cache/nodejs/pnpmstore
+            - Run: sudo pnpx n $NODEJS_VERSION
+            - Run: npm config set prefix=/cc/cache/nodejs/npm
+            - Run: corepack -g install $PNPM_VERSION
+            - Run: corepack enable pnpm
+            - Run: pnpm config set cache-dir /cc/cache/nodejs/pnpmcache
+            - Run: pnpm config set global-dir /cc/cache/nodejs/pnpmglobal
+            - Run: pnpm config set store-dir /cc/cache/nodejs/pnpmstore
+            - Run: pnpx n $NODEJS_VERSION
+            - Run: pnpm install --prefer-offline --ignore-scripts
             - Run: ls -la $CATALYST_SOURCE_DIR_images/_images
             - Run: docker load --input $CATALYST_SOURCE_DIR_images/_images/application.tar.gz
             - Run: docker images
@@ -449,13 +553,14 @@ Actions:
             - Run: echo "Tagging $_FOURTWO_CODE_REPOSITORY_URL:$CI_ENVIRONMENT"
             - Run: docker tag $APPLICATION_IMAGE_NAME:latest $_FOURTWO_CODE_REPOSITORY_URL:$CI_ENVIRONMENT
             - Run: docker push $_FOURTWO_CODE_REPOSITORY_URL:$CI_ENVIRONMENT
-            - Run: npm exec pnpm store prune
+            - Run: pnpm store prune
+            - Run: corepack cache clean
 
 ########################################
 ########################################
 #**:_$~- {"$$":"head","filename":"[push(b:main)][schedule(0_0_*_*_?_*)]CI.yml","source":"iac/workflows/codecatalyst/push/CI.js"}
 #**:_$~- {"$$":"script","generator":"codegen/codecatalyst/GenerateCodeCatalystWorkflow.mts"}
-#**:_$~- {"$$":"body","hashed":"96b9a74664d14f1783f86e2c9570a5c23aa0cd10817635b1b5882bc26f5b5c6f"}
-#**:_$~- {"$$":"footer","started":"2025-01-25T10:27:05.737Z","now":"2025-01-25T10:27:05.747Z","elapsed":"10ms"}
+#**:_$~- {"$$":"body","hashed":"561ff0b1b843a8ee83b5211a55945263ed69627a8a856ef63f8b451152143581"}
+#**:_$~- {"$$":"footer","started":"2025-01-27T11:32:35.686Z","now":"2025-01-27T11:32:35.696Z","elapsed":"10ms"}
 # END OF GENERATED FILE
 

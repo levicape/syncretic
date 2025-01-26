@@ -36,53 +36,66 @@ import { $ref, $val } from "../../../Stack";
 import { FourtwoCodestarStackExportsZod } from "../../../codestar/exports";
 import { FourtwoDatalayerStackExportsZod } from "../../../datalayer/exports";
 
+const STACKREF_ROOT = process.env["STACKREF_ROOT"] ?? "fourtwo";
 const PACKAGE_NAME = "@levicape/fourtwo-panel-io" as const;
-const ARTIFACT_ROOT = "/tmp/fourtwo-panel-io" as const;
+const ARTIFACT_ROOT = "fourtwo-panel-io" as const;
 const HANDLER =
 	"fourtwo-panel-io/module/lambda/HttpHandler.HonoHttpFourtwoLambda";
 
+const CI = {
+	CI_ENVIRONMENT: process.env.CI_ENVIRONMENT ?? "unknown",
+	CI_ACCESS_ROLE: process.env.CI_ACCESS_ROLE ?? "FourtwoAccessRole",
+};
 export = async () => {
 	const context = await Context.fromConfig();
 	const _ = (name: string) => `${context.prefix}-${name}`;
-	const stage = process.env.CI_ENVIRONMENT ?? "unknown";
-	const farRole = await getRole({ name: "FourtwoAccessRole" });
+	const stage = CI.CI_ENVIRONMENT;
+	const farRole = await getRole({ name: CI.CI_ACCESS_ROLE });
 
 	// Stack references
-	const codestar = await (async () => {
-		const code = $ref("fourtwo-codestar");
+
+	// Stack references
+	const __codestar = await (async () => {
+		const code = $ref(`${STACKREF_ROOT}-codestar`);
 		return {
 			codedeploy: $val(
-				(await code.getOutputDetails("fourtwo_codestar_codedeploy")).value,
+				(await code.getOutputDetails(`${STACKREF_ROOT}_codestar_codedeploy`))
+					.value,
 				FourtwoCodestarStackExportsZod.shape.fourtwo_codestar_codedeploy,
 			),
 			ecr: $val(
-				(await code.getOutputDetails("fourtwo_codestar_ecr")).value,
+				(await code.getOutputDetails(`${STACKREF_ROOT}_codestar_ecr`)).value,
 				FourtwoCodestarStackExportsZod.shape.fourtwo_codestar_ecr,
 			),
 		};
 	})();
 
-	const datalayer = await (async () => {
-		const data = $ref("fourtwo-datalayer");
+	const __datalayer = await (async () => {
+		const data = $ref(`${STACKREF_ROOT}-datalayer`);
 		return {
 			props: $val(
-				(await data.getOutputDetails("_FOURTWO_DATALAYER_PROPS")).value,
+				(
+					await data.getOutputDetails(
+						`_${STACKREF_ROOT.toUpperCase()}_DATALAYER_PROPS`,
+					)
+				).value,
 				FourtwoDatalayerStackExportsZod.shape._FOURTWO_DATALAYER_PROPS,
 			),
 			ec2: $val(
-				(await data.getOutputDetails("fourtwo_datalayer_ec2")).value,
+				(await data.getOutputDetails(`${STACKREF_ROOT}_datalayer_ec2`)).value,
 				FourtwoDatalayerStackExportsZod.shape.fourtwo_datalayer_ec2,
 			),
 			efs: $val(
-				(await data.getOutputDetails("fourtwo_datalayer_efs")).value,
+				(await data.getOutputDetails(`${STACKREF_ROOT}_datalayer_efs`)).value,
 				FourtwoDatalayerStackExportsZod.shape.fourtwo_datalayer_efs,
 			),
 			iam: $val(
-				(await data.getOutputDetails("fourtwo_datalayer_iam")).value,
+				(await data.getOutputDetails(`${STACKREF_ROOT}_datalayer_iam`)).value,
 				FourtwoDatalayerStackExportsZod.shape.fourtwo_datalayer_iam,
 			),
 			cloudmap: $val(
-				(await data.getOutputDetails("fourtwo_datalayer_cloudmap")).value,
+				(await data.getOutputDetails(`${STACKREF_ROOT}_datalayer_cloudmap`))
+					.value,
 				FourtwoDatalayerStackExportsZod.shape.fourtwo_datalayer_cloudmap,
 			),
 		};
@@ -167,16 +180,6 @@ export = async () => {
 			return {
 				Version: "2012-10-17",
 				Statement: [
-					//   {
-					// 	Effect: "Allow",
-					// 	Action: [
-					// 	  "dynamodb:DescribeStream",
-					// 	  "dynamodb:GetRecords",
-					// 	  "dynamodb:GetShardIterator",
-					// 	  "dynamodb:ListStreams",
-					// 	],
-					// 	Resource: "*",
-					//   },
 					{
 						Effect: "Allow",
 						Action: [
@@ -276,6 +279,7 @@ export = async () => {
 		const lambda = new LambdaFn(
 			_("function"),
 			{
+				description: `(${getStack()}) Lambda function for ${PACKAGE_NAME}`,
 				role: roleArn,
 				architectures: ["arm64"],
 				memorySize: Number.parseInt(context.environment.isProd ? "512" : "256"),
@@ -321,7 +325,7 @@ export = async () => {
 
 		const version = new Version(_("version"), {
 			functionName: lambda.name,
-			description: `(${getStack()}) Version ${stage}`,
+			description: `(${getStack()}) Version ${stage} for ${PACKAGE_NAME} on ${_("")}`,
 		});
 
 		const alias = new Alias(
@@ -347,16 +351,23 @@ export = async () => {
 			},
 		});
 
-		const deploymentGroup = new DeploymentGroup(_("deployment-group"), {
-			deploymentGroupName: _("deployment-group"),
-			serviceRoleArn: farRole.arn,
-			appName: codestar.codedeploy.application.name,
-			deploymentConfigName: codestar.codedeploy.deploymentConfig.name,
-			deploymentStyle: {
-				deploymentOption: "WITH_TRAFFIC_CONTROL",
-				deploymentType: "BLUE_GREEN",
+		const deploymentGroup = new DeploymentGroup(
+			_("deployment-group"),
+			{
+				deploymentGroupName: _("deployment-group-bg"),
+				serviceRoleArn: farRole.arn,
+				appName: codestar.codedeploy.application.name,
+				deploymentConfigName: codestar.codedeploy.deploymentConfig.name,
+				deploymentStyle: {
+					deploymentOption: "WITH_TRAFFIC_CONTROL",
+					deploymentType: "BLUE_GREEN",
+				},
 			},
-		});
+			{
+				deleteBeforeReplace: true,
+				replaceOnChanges: ["*"],
+			},
+		);
 
 		return {
 			role: datalayer.props.lambda.role,
@@ -372,14 +383,14 @@ export = async () => {
 				deploymentGroup,
 			},
 		};
-	})({ codestar, datalayer }, cloudwatch);
+	})({ codestar: __codestar, datalayer: __datalayer }, cloudwatch);
 
 	// Cloudmap
 	const cloudmap = (({ datalayer: { cloudmap } }) => {
 		const { namespace } = cloudmap;
 		const cloudMapService = new Service(_("service"), {
 			name: _("service"),
-			description: `(${getStack()}) Service mesh service`,
+			description: `(${getStack()}) Service mesh service for ${PACKAGE_NAME}`,
 			dnsConfig: {
 				namespaceId: namespace.id,
 				routingPolicy: "WEIGHTED",
@@ -407,7 +418,7 @@ export = async () => {
 			service: cloudMapService,
 			instance: cloudMapInstance,
 		};
-	})({ datalayer });
+	})({ datalayer: __datalayer });
 
 	const codebuild = (() => {
 		const appspec = (props: {
@@ -517,7 +528,7 @@ export = async () => {
 								"--entrypoint",
 								"deploy",
 								`-e DEPLOY_FILTER=${PACKAGE_NAME}`,
-								`-e DEPLOY_OUTPUT=${ARTIFACT_ROOT}`,
+								`-e DEPLOY_OUTPUT=/tmp/${ARTIFACT_ROOT}`,
 								"$SOURCE_IMAGE_URI",
 								"> .container",
 							].join(" "),
@@ -525,14 +536,19 @@ export = async () => {
 							"cat .container",
 							"sleep 10s",
 							`docker container logs $(cat .container)`,
+							"cat .container",
+							"sleep 9s",
+							`docker container logs $(cat .container)`,
+							"cat .container",
+							"sleep 8s",
+							`docker container logs $(cat .container)`,
 							"mkdir -p $CODEBUILD_SRC_DIR/.extractimage || true",
-							`docker cp $(cat .container):${ARTIFACT_ROOT} $CODEBUILD_SRC_DIR/.extractimage`,
+							`docker cp $(cat .container):/tmp/${ARTIFACT_ROOT} $CODEBUILD_SRC_DIR/.extractimage`,
 							"ls -al $CODEBUILD_SRC_DIR/.extractimage || true",
-							"du -sh $CODEBUILD_SRC_DIR/.extractimage || true",
-							"sudo corepack use pnpm@9 || true",
-							"sudo pnpm -C $CODEBUILD_SRC_DIR/.extractimage install --offline --prod --ignore-scripts --node-linker=hoisted || true",
-							"ls -al $CODEBUILD_SRC_DIR/.extractimage/node_modules || true",
-							"du -al $CODEBUILD_SRC_DIR/.extractimage/node_modules || true",
+							`ls -al $CODEBUILD_SRC_DIR/.extractimage/${ARTIFACT_ROOT} || true`,
+							"corepack -g install pnpm@9 || true",
+							`pnpm -C $CODEBUILD_SRC_DIR/.extractimage/${ARTIFACT_ROOT} install --offline --prod --ignore-scripts --node-linker=hoisted || true`,
+							`ls -al $CODEBUILD_SRC_DIR/.extractimage/${ARTIFACT_ROOT}/node_modules || true`,
 							`NODE_NO_WARNINGS=1 node -e '(${(
 								// biome-ignore lint/complexity/useArrowFunction:
 								function () {
@@ -710,7 +726,7 @@ export = async () => {
 						const project = new Project(
 							_(`project-${artifact.name}`),
 							{
-								description: `(${getStack()}) CodeBuild project: ${artifact.name}`,
+								description: `(${getStack()}) CodeBuild project: ${artifact.name} on ${_("")}`,
 								buildTimeout: 12,
 								serviceRole: farRole.arn,
 								artifacts: {
@@ -760,206 +776,219 @@ export = async () => {
 	})();
 
 	const codepipeline = (() => {
-		const pipeline = new Pipeline(_("pipeline-deploy"), {
-			pipelineType: "V2",
-			roleArn: farRole.arn,
-			executionMode: "QUEUED",
-			artifactStores: [
-				{
-					location: s3.artifactStore.bucket,
-					type: "S3",
-				},
-			],
-			stages: [
-				{
-					name: "Source",
-					actions: [
-						{
-							name: "Image",
-							namespace: "SourceImage",
-							category: "Source",
-							owner: "AWS",
-							provider: "ECR",
-							version: "1",
-							outputArtifacts: ["source_image"],
-							configuration: all([codestar.ecr.repository.name]).apply(
-								([repositoryName]) => {
+		const pipeline = new Pipeline(
+			_("pipeline-deploy"),
+			{
+				pipelineType: "V2",
+				roleArn: farRole.arn,
+				executionMode: "QUEUED",
+				artifactStores: [
+					{
+						location: s3.artifactStore.bucket,
+						type: "S3",
+					},
+				],
+				stages: [
+					{
+						name: "Source",
+						actions: [
+							{
+								name: "Image",
+								namespace: "SourceImage",
+								category: "Source",
+								owner: "AWS",
+								provider: "ECR",
+								version: "1",
+								outputArtifacts: ["source_image"],
+								configuration: all([__codestar.ecr.repository.name]).apply(
+									([repositoryName]) => {
+										return {
+											RepositoryName: repositoryName,
+											ImageTag: stage,
+										};
+									},
+								),
+							},
+						],
+					},
+					{
+						name: "HttpHandler",
+						actions: [
+							{
+								runOrder: 1,
+								name: "ExtractImage",
+								namespace: "HttpHandlerExtractImage",
+								category: "Build",
+								owner: "AWS",
+								provider: "CodeBuild",
+								version: "1",
+								inputArtifacts: ["source_image"],
+								outputArtifacts: ["httphandler_extractimage"],
+								configuration: all([
+									__codestar.ecr.repository.arn,
+									__codestar.ecr.repository.name,
+									__codestar.ecr.repository.url,
+									codebuild.httphandler_extractimage.project.name,
+									s3.deploy.bucket,
+								]).apply(
+									([
+										repositoryArn,
+										repositoryName,
+										repositoryUrl,
+										projectExtractImageName,
+										deployBucketName,
+									]) => {
+										return {
+											ProjectName: projectExtractImageName,
+											EnvironmentVariables: JSON.stringify([
+												{
+													name: "STACKREF_CODESTAR_ECR_REPOSITORY_ARN",
+													value: repositoryArn,
+													type: "PLAINTEXT",
+												},
+												{
+													name: "STACKREF_CODESTAR_ECR_REPOSITORY_NAME",
+													value: repositoryName,
+													type: "PLAINTEXT",
+												},
+												{
+													name: "STACKREF_CODESTAR_ECR_REPOSITORY_URL",
+													value: repositoryUrl,
+													type: "PLAINTEXT",
+												},
+												{
+													name: "SOURCE_IMAGE_REPOSITORY",
+													value: "#{SourceImage.RepositoryName}",
+													type: "PLAINTEXT",
+												},
+												{
+													name: "SOURCE_IMAGE_URI",
+													value: "#{SourceImage.ImageURI}",
+													type: "PLAINTEXT",
+												},
+												{
+													name: "S3_DEPLOY_BUCKET",
+													value: deployBucketName,
+													type: "PLAINTEXT",
+												},
+												{
+													name: "S3_DEPLOY_KEY",
+													value: "#{SourceImage.ImageURI}",
+													type: "PLAINTEXT",
+												},
+											]),
+										};
+									},
+								),
+							},
+							{
+								runOrder: 2,
+								name: "UploadS3",
+								namespace: "HttpHandlerUploadS3",
+								category: "Deploy",
+								owner: "AWS",
+								provider: "S3",
+								version: "1",
+								inputArtifacts: ["httphandler_extractimage"],
+								configuration: all([s3.deploy.bucket]).apply(
+									([BucketName]) => ({
+										BucketName,
+										Extract: "false",
+										ObjectKey: "#{HttpHandlerExtractImage.DeployKey}",
+									}),
+								),
+							},
+							{
+								runOrder: 3,
+								name: "UpdateLambda",
+								namespace: "HttpHandlerUpdateLambda",
+								category: "Build",
+								owner: "AWS",
+								provider: "CodeBuild",
+								version: "1",
+								inputArtifacts: ["httphandler_extractimage"],
+								outputArtifacts: ["httphandler_updatelambda"],
+								configuration: all([
+									codebuild.httphandler_updatelambda.project.name,
+									handler.http.name,
+									handler.http.alias.name,
+									s3.deploy.bucket,
+								]).apply(
+									([
+										projectName,
+										functionName,
+										aliasName,
+										deployBucketName,
+									]) => {
+										return {
+											ProjectName: projectName,
+											EnvironmentVariables: JSON.stringify([
+												{
+													name: "SOURCE_IMAGE_REPOSITORY",
+													value: "#{SourceImage.RepositoryName}",
+													type: "PLAINTEXT",
+												},
+												{
+													name: "SOURCE_IMAGE_URI",
+													value: "#{SourceImage.ImageURI}",
+													type: "PLAINTEXT",
+												},
+												{
+													name: "LAMBDA_FUNCTION_NAME",
+													value: functionName,
+													type: "PLAINTEXT",
+												},
+												{
+													name: "LAMBDA_FUNCTION_ALIAS",
+													value: aliasName,
+													type: "PLAINTEXT",
+												},
+												{
+													name: "S3_DEPLOY_BUCKET",
+													value: deployBucketName,
+													type: "PLAINTEXT",
+												},
+												{
+													name: "S3_DEPLOY_KEY",
+													value: "#{SourceImage.ImageURI}",
+													type: "PLAINTEXT",
+												},
+												{
+													name: "DeployKey",
+													value: "#{HttpHandlerExtractImage.DeployKey}",
+													type: "PLAINTEXT",
+												},
+											]),
+										};
+									},
+								),
+							},
+							{
+								runOrder: 4,
+								name: "Cutover",
+								category: "Deploy",
+								owner: "AWS",
+								provider: "CodeDeploy",
+								version: "1",
+								inputArtifacts: ["httphandler_updatelambda"],
+								configuration: all([
+									__codestar.codedeploy.application.name,
+									handler.codedeploy.deploymentGroup.deploymentGroupName,
+								]).apply(([applicationName, deploymentGroupName]) => {
 									return {
-										RepositoryName: repositoryName,
-										ImageTag: stage,
+										ApplicationName: applicationName,
+										DeploymentGroupName: deploymentGroupName,
 									};
-								},
-							),
-						},
-					],
-				},
-				{
-					name: "HttpHandler",
-					actions: [
-						{
-							runOrder: 1,
-							name: "ExtractImage",
-							namespace: "HttpHandlerExtractImage",
-							category: "Build",
-							owner: "AWS",
-							provider: "CodeBuild",
-							version: "1",
-							inputArtifacts: ["source_image"],
-							outputArtifacts: ["httphandler_extractimage"],
-							configuration: all([
-								codestar.ecr.repository.arn,
-								codestar.ecr.repository.name,
-								codestar.ecr.repository.url,
-								codebuild.httphandler_extractimage.project.name,
-								s3.deploy.bucket,
-							]).apply(
-								([
-									repositoryArn,
-									repositoryName,
-									repositoryUrl,
-									projectExtractImageName,
-									deployBucketName,
-								]) => {
-									return {
-										ProjectName: projectExtractImageName,
-										EnvironmentVariables: JSON.stringify([
-											{
-												name: "STACKREF_CODESTAR_ECR_REPOSITORY_ARN",
-												value: repositoryArn,
-												type: "PLAINTEXT",
-											},
-											{
-												name: "STACKREF_CODESTAR_ECR_REPOSITORY_NAME",
-												value: repositoryName,
-												type: "PLAINTEXT",
-											},
-											{
-												name: "STACKREF_CODESTAR_ECR_REPOSITORY_URL",
-												value: repositoryUrl,
-												type: "PLAINTEXT",
-											},
-											{
-												name: "SOURCE_IMAGE_REPOSITORY",
-												value: "#{SourceImage.RepositoryName}",
-												type: "PLAINTEXT",
-											},
-											{
-												name: "SOURCE_IMAGE_URI",
-												value: "#{SourceImage.ImageURI}",
-												type: "PLAINTEXT",
-											},
-											{
-												name: "S3_DEPLOY_BUCKET",
-												value: deployBucketName,
-												type: "PLAINTEXT",
-											},
-											{
-												name: "S3_DEPLOY_KEY",
-												value: "#{SourceImage.ImageURI}",
-												type: "PLAINTEXT",
-											},
-										]),
-									};
-								},
-							),
-						},
-						{
-							runOrder: 2,
-							name: "UploadS3",
-							namespace: "HttpHandlerUploadS3",
-							category: "Deploy",
-							owner: "AWS",
-							provider: "S3",
-							version: "1",
-							inputArtifacts: ["httphandler_extractimage"],
-							configuration: all([s3.deploy.bucket]).apply(([BucketName]) => ({
-								BucketName,
-								Extract: "false",
-								ObjectKey: "#{HttpHandlerExtractImage.DeployKey}",
-							})),
-						},
-						{
-							runOrder: 3,
-							name: "UpdateLambda",
-							namespace: "HttpHandlerUpdateLambda",
-							category: "Build",
-							owner: "AWS",
-							provider: "CodeBuild",
-							version: "1",
-							inputArtifacts: ["httphandler_extractimage"],
-							outputArtifacts: ["httphandler_updatelambda"],
-							configuration: all([
-								codebuild.httphandler_updatelambda.project.name,
-								handler.http.name,
-								handler.http.alias.name,
-								s3.deploy.bucket,
-							]).apply(
-								([projectName, functionName, aliasName, deployBucketName]) => {
-									return {
-										ProjectName: projectName,
-										EnvironmentVariables: JSON.stringify([
-											{
-												name: "SOURCE_IMAGE_REPOSITORY",
-												value: "#{SourceImage.RepositoryName}",
-												type: "PLAINTEXT",
-											},
-											{
-												name: "SOURCE_IMAGE_URI",
-												value: "#{SourceImage.ImageURI}",
-												type: "PLAINTEXT",
-											},
-											{
-												name: "LAMBDA_FUNCTION_NAME",
-												value: functionName,
-												type: "PLAINTEXT",
-											},
-											{
-												name: "LAMBDA_FUNCTION_ALIAS",
-												value: aliasName,
-												type: "PLAINTEXT",
-											},
-											{
-												name: "S3_DEPLOY_BUCKET",
-												value: deployBucketName,
-												type: "PLAINTEXT",
-											},
-											{
-												name: "S3_DEPLOY_KEY",
-												value: "#{SourceImage.ImageURI}",
-												type: "PLAINTEXT",
-											},
-											{
-												name: "DeployKey",
-												value: "#{HttpHandlerExtractImage.DeployKey}",
-												type: "PLAINTEXT",
-											},
-										]),
-									};
-								},
-							),
-						},
-						{
-							runOrder: 4,
-							name: "Cutover",
-							category: "Deploy",
-							owner: "AWS",
-							provider: "CodeDeploy",
-							version: "1",
-							inputArtifacts: ["httphandler_updatelambda"],
-							configuration: all([
-								codestar.codedeploy.application.name,
-								handler.codedeploy.deploymentGroup.deploymentGroupName,
-							]).apply(([applicationName, deploymentGroupName]) => {
-								return {
-									ApplicationName: applicationName,
-									DeploymentGroupName: deploymentGroupName,
-								};
-							}),
-						},
-					],
-				},
-			],
-		});
+								}),
+							},
+						],
+					},
+				],
+			},
+			{
+				dependsOn: [handler.codedeploy.deploymentGroup],
+			},
+		);
 
 		new RolePolicyAttachment(_("codepipeline-rolepolicy"), {
 			policyArn: ManagedPolicy.CodePipeline_FullAccess,
@@ -971,18 +1000,18 @@ export = async () => {
 		};
 	})();
 
-	// Eventbridge will trigger on ecr push
+	// Eventbridge
 	const eventbridge = (() => {
-		const { name } = codestar.ecr.repository;
+		const { name: codestarRepositoryName } = __codestar.ecr.repository;
 
 		const rule = new EventRule(_("event-rule-ecr-push"), {
-			description: `(${getStack()}) ECR push event rule`,
+			description: `(${getStack()}) ECR push event rule for ${PACKAGE_NAME} on ${_("")}`,
 			state: "ENABLED",
 			eventPattern: JSON.stringify({
 				source: ["aws.ecr"],
 				"detail-type": ["ECR Image Action"],
 				detail: {
-					"repository-name": [name],
+					"repository-name": [codestarRepositoryName],
 					"action-type": ["PUSH"],
 					result: ["SUCCESS"],
 					"image-tag": [stage],
@@ -1035,10 +1064,10 @@ export = async () => {
 						resources.project.name,
 						resources.buildspec.upload.bucket,
 						resources.buildspec.upload.key,
-					]).apply(([projectArn, projectName, bucketName]) => ({
+					]).apply(([projectArn, projectName, bucketName, bucketKey]) => ({
 						buildspec: {
 							bucket: bucketName,
-							key,
+							key: bucketKey,
 						},
 						project: {
 							arn: projectArn,
@@ -1080,8 +1109,8 @@ export = async () => {
 
 	const cloudmapOutput = Output.create(cloudmap).apply((cloudmap) => ({
 		application: {
-			name: codestar.codedeploy.application.name,
-			arn: codestar.codedeploy.application.arn,
+			name: __codestar.codedeploy.application.name,
+			arn: __codestar.codedeploy.application.arn,
 		},
 		service: all([cloudmap.service.arn, cloudmap.service.name]).apply(
 			([arn, name]) => ({ arn, name }),
@@ -1154,13 +1183,13 @@ export = async () => {
 	);
 
 	return all([
-		s3Output.apply((s3) => JSON.stringify(s3)),
-		cloudwatchOutput.apply((cloudwatch) => JSON.stringify(cloudwatch)),
-		handlerOutput.apply((handler) => JSON.stringify(handler)),
-		cloudmapOutput.apply((cloudmap) => JSON.stringify(cloudmap)),
-		codebuildProjectsOutput.apply((resources) => JSON.stringify(resources)),
-		codepipelineOutput.apply((pipeline) => JSON.stringify(pipeline)),
-		eventbridgeRulesOutput.apply((eventbridge) => JSON.stringify(eventbridge)),
+		s3Output,
+		cloudwatchOutput,
+		handlerOutput,
+		cloudmapOutput,
+		codebuildProjectsOutput,
+		codepipelineOutput,
+		eventbridgeRulesOutput,
 	]).apply(
 		([
 			fourtwo_panel_http_s3,
@@ -1172,25 +1201,19 @@ export = async () => {
 			fourtwo_panel_http_eventbridge,
 		]) => {
 			return {
-				_FOURTWO_HTTP_IMPORTS: {
+				_FOURTWO_PANEL_HTTP_IMPORTS: {
 					fourtwo: {
-						codestar,
-						datalayer,
+						codestar: __codestar,
+						datalayer: __datalayer,
 					},
 				},
-				fourtwo_panel_http_s3: JSON.parse(fourtwo_panel_http_s3),
-				fourtwo_panel_http_cloudwatch: JSON.parse(
-					fourtwo_panel_http_cloudwatch,
-				),
-				fourtwo_panel_http_lambda: JSON.parse(fourtwo_panel_http_lambda),
-				fourtwo_panel_http_cloudmap: JSON.parse(fourtwo_panel_http_cloudmap),
-				fourtwo_panel_http_codebuild: JSON.parse(fourtwo_panel_http_codebuild),
-				fourtwo_panel_http_pipeline: JSON.parse(
-					fourtwo_panel_http_codepipeline,
-				),
-				fourtwo_panel_http_eventbridge: JSON.parse(
-					fourtwo_panel_http_eventbridge,
-				),
+				fourtwo_panel_http_s3,
+				fourtwo_panel_http_cloudwatch,
+				fourtwo_panel_http_lambda,
+				fourtwo_panel_http_cloudmap,
+				fourtwo_panel_http_codebuild,
+				fourtwo_panel_http_codepipeline,
+				fourtwo_panel_http_eventbridge,
 			};
 		},
 	);

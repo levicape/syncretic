@@ -11,7 +11,7 @@
 				},
 				"forwardAllArgs": true,
 				"commands": [
-					"docker run --rm -v $DOCKER_SOCKET -v $PWD:$DOCKER_WORKSPACE -w $DOCKER_WORKSPACE -e PACK_VOLUME_KEY=packvol $PAKETO_IMAGE"
+					"docker run --rm --network host -v $DOCKER_SOCKET -v $PWD:$DOCKER_WORKSPACE -w $DOCKER_WORKSPACE -e PACK_VOLUME_KEY=packvol --dns 8.8.8.8 $PAKETO_IMAGE"
 				]
 			}
 		},
