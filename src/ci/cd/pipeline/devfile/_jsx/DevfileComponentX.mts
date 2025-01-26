@@ -23,10 +23,15 @@ export const DevfileComponentX = <Component extends string>(
 
 export const DevfileSourceComponentX = <Component extends string>(props: {
 	name: Component;
+	image?: string;
+	volumeMounts?: { [key: string]: string };
 }): DevfileComponentBuilder<Component> => {
 	return new DevfileComponentBuilder(props.name).setContainer({
 		image: "public.ecr.aws/aws-mde/universal-image:4.0",
 		mountSources: true,
 		command: ["sleep", "infinity"],
+		...(props.volumeMounts && Object.keys(props.volumeMounts).length > 0
+			? props.volumeMounts
+			: {}),
 	});
 };

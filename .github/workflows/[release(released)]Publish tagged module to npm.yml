@@ -58,8 +58,8 @@ jobs:
         run: pnpm list;
       - name: Install Dependencies
         run: pnpm install;
-      - name: "Run package.json: compile"
-        run: pnpm run compile;
+      - name: "Run package.json: build"
+        run: pnpm run build;
       - name: "Run package.json: lint"
         run: pnpm run lint;
       - name: "Run package.json: test"
@@ -129,8 +129,8 @@ jobs:
         run: pnpm list;
       - name: Install Dependencies
         run: pnpm install;
-      - name: "Run package.json: compile"
-        run: pnpm run compile;
+      - name: "Run package.json: build"
+        run: pnpm run build;
       - name: "Run package.json: lint"
         run: pnpm run lint;
       - name: "Run package.json: test"
@@ -200,8 +200,8 @@ jobs:
         run: pnpm list;
       - name: Install Dependencies
         run: pnpm install;
-      - name: "Run package.json: compile"
-        run: pnpm run compile;
+      - name: "Run package.json: build"
+        run: pnpm run build;
       - name: "Run package.json: lint"
         run: pnpm run lint;
       - name: "Run package.json: test"
@@ -225,7 +225,7 @@ jobs:
 ########################################
 #**:_$~- {"$$":"head","filename":"[release(released)]Publish tagged module to npm.yml","source":"iac/workflows/github/release/Publish tagged module to npm.js"}
 #**:_$~- {"$$":"script","generator":"codegen/github/GenerateGithubWorkflow.mts"}
-#**:_$~- {"$$":"body","hashed":"dc92840cbf7738ceadece1832e4d05b65d0e257eaf44972805d2dcc14d64779a"}
-#**:_$~- {"$$":"footer","started":"2025-01-17T03:26:18.201Z","now":"2025-01-17T03:26:18.223Z","elapsed":"22ms"}
+#**:_$~- {"$$":"body","hashed":"c30bffe62d064b3b5f5a16f49b8576b125f6c1232984783b69120f80456b1797"}
+#**:_$~- {"$$":"footer","started":"2025-01-27T11:55:42.123Z","now":"2025-01-27T11:55:42.128Z","elapsed":"5ms"}
 # END OF GENERATED FILE
 

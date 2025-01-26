@@ -4,6 +4,7 @@ ignores:
 - "aws4fetch"
 - "aws-lambda-ric"
 - "better-sqlite3"
+- "esbuild"
 - "expect"
 - "jsonc-parser"
 - "knex"

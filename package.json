@@ -17,7 +17,6 @@
   "dependencies": {
     "@aws/codecatalyst-workflows-sdk": "catalog:aws",
     "@stricli/core": "catalog:cli",
-    "aws-lambda-ric": "catalog:aws",
     "aws4fetch": "catalog:aws",
     "better-sqlite3": "catalog:database-sqlite",
     "enquirer": "catalog:cli",
@@ -47,7 +46,7 @@
     "typescript": "catalog:dev"
   },
   "engines": {
-    "node": ">=23.5.0"
+    "node": "22"
   },
   "exports": {
     ".": {
@@ -87,17 +86,12 @@
     "./x/github/node": "./module/ci/cd/pipeline/github/steps/node/index-x.mjs"
   },
   "files": [
+    "iac",
     "module"
   ],
   "license": "AGPL-3.0-only",
   "nx": {
     "targets": {
-      "dx:test": {
-        "dependsOn": [
-          "dx:lint",
-          "nx:test"
-        ]
-      },
       "dx:precommit": {
         "dependsOn": [
           "dx:prepublish",
@@ -111,6 +105,17 @@
           "@levicape/fourtwo-panel-ui:dx:precommit",
           "@levicape/fourtwo-panel-io:dx:precommit",
           "@levicape/fourtwo-iac-stacks:dx:precommit"
+        ]
+      },
+      "dx:test": {
+        "dependsOn": [
+          "dx:lint",
+          "nx:test"
+        ]
+      },
+      "nx:clean": {
+        "dependsOn": [
+          "clean:module"
         ]
       },
       "nx:compile": {
@@ -144,7 +149,8 @@
   "scripts": {
     "build": "$npm_package_config_packageexecutor nx nx:compile",
     "build:tsc": "$npm_package_config_packageexecutor tsc",
-    "clean": "rm -rf $npm_package_config_outpaths || true",
+    "clean": "$npm_package_config_packageexecutor nx nx:clean",
+    "clean:module": "rm -rf $npm_package_config_outpaths || true",
     "clean:packages": "rm -rf **/node_modules && $npm_package_config_packageexecutor nx reset",
     "dx:cli:bin": "NODE_NO_WARNINGS=1 $npm_package_config_packageexecutor tsx $npm_package_config_binpath",
     "dx:cli:dev": "node --inspect-brk --import tsx $npm_package_config_binpath",
@@ -157,7 +163,7 @@
     "dx:prepublish:pre": "echo \"Starting prepublish dx. This will compile the package, lint it, format package.json and verify all exports are valid. \"",
     "dx:sync": "$npm_package_config_packageexecutor nx dx:sync:pre && $npm_package_config_packageexecutor nx nx:sync --verbose",
     "dx:sync:pre": "echo \"Starting sync dx. This will generate all the workflows and sync them with the repository.\"",
-    "heroku-prebuild": "npm rebuild esbuild",
+    "heroku-prebuild": "$npm_package_config_packagemanager rebuild || true",
     "lint": "$npm_package_config_packageexecutor nx exec -- biome check $npm_package_config_lintpaths",
     "lint:format": "$npm_package_config_packageexecutor nx exec -- biome check --write $npm_package_config_lintpaths",
     "lint:unsafe": "$npm_package_config_packageexecutor nx exec -- biome check --write --unsafe $npm_package_config_lintpaths",
@@ -166,13 +172,12 @@
     "package:format": "$npm_package_config_packageexecutor nx exec -- syncpack format",
     "package:update": "$npm_package_config_packageexecutor nx exec -- syncpack update",
     "postclean:packages": "$npm_package_config_packagemanager install --ignore-scripts",
-    "prebuild": "$npm_package_config_packageexecutor nx clean",
     "precommit": "$npm_package_config_packageexecutor nx dx:prepublish --no-cloud --verbose",
+    "predx:lint": "$npm_package_config_packageexecutor nx clean",
     "prelint": "$npm_package_config_packageexecutor nx exec -- biome format $npm_package_config_lintpaths",
     "prepublish": "$npm_package_config_packageexecutor publint --strict",
     "test": "$npm_package_config_packageexecutor nx nx:test",
     "test:module": "echo 'node --test --test-reporter junit \"module/**/*.test.js\"'",
-    "up:integration": "echo 'node --test  \"module/**/*.test.js\"'",
     "xx:workflow": "$npm_package_config_packageexecutor nx run-many -t build,lint,test --parallel=1 --verbose --no-cloud"
   },
   "type": "module",

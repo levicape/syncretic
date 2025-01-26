@@ -25,7 +25,7 @@
     "typescript": "catalog:dev"
   },
   "engines": {
-    "node": ">=23.5.0"
+    "node": "22"
   },
   "exports": "./commonjs/index.js",
   "files": [
@@ -34,34 +34,64 @@
   "license": "AGPL-3.0-only",
   "nx": {
     "targets": {
-      "build": {
+      "build:module": {
         "dependsOn": [
-          "@levicape/fourtwo:build:tsc"
+          "build:tsc"
         ]
       },
-      "dx:test": {
+      "build:tsc": {
         "dependsOn": [
-          "nx:test",
-          "dx:lint"
+          "@levicape/fourtwo:build:tsc"
         ]
       },
       "dx:precommit": {
         "dependsOn": [
           "dx:prepublish",
-          "nx:test"
+          "dx:test"
         ]
       },
       "dx:prepublish": {
-        "dependsOn": []
+        "dependsOn": [
+          "dx:prepublish:pre",
+          "dx:lint"
+        ]
+      },
+      "dx:lint": {
+        "dependsOn": [
+          "nx:compile",
+          "lint:format",
+          "package:format"
+        ]
+      },
+      "dx:test": {
+        "dependsOn": [
+          "dx:lint",
+          "nx:test"
+        ]
+      },
+      "nx:clean": {
+        "dependsOn": [
+          "clean:module"
+        ]
       },
       "nx:compile": {
         "dependsOn": [
-          "build"
+          "build:module"
+        ]
+      },
+      "nx:sync": {
+        "dependsOn": [
+          "iac-workflows:nx:sync"
         ]
       },
       "nx:test": {
         "dependsOn": [
           "dx:noop"
+        ]
+      },
+      "test:unit": {
+        "dependsOn": [
+          "build:module"
         ]
       }
     }
@@ -71,15 +101,13 @@
   },
   "repository": "github:levicape/fourtwo",
   "scripts": {
-    "build": "$npm_package_config_packageexecutor tsc",
+    "build": "$npm_package_config_packageexecutor nx nx:compile",
+    "build:tsc": "$npm_package_config_packageexecutor tsc",
     "clean": "rm -rf $npm_package_config_outpaths || true",
-    "commit": "$npm_package_config_packageexecutor nx dx:precommit --no-cloud --verbose",
-    "compile": "$npm_package_config_packageexecutor nx nx:compile",
-    "dx:lint": "$npm_package_config_packageexecutor nx compile && $npm_package_config_packageexecutor nx lint:format && $npm_package_config_packageexecutor nx package:format",
     "dx:noop": "echo 'noop'",
     "dx:precommit": "$npm_package_config_packageexecutor nx dx:precommit:pre && $npm_package_config_packageexecutor nx package:deps",
     "dx:precommit:pre": "echo \"Starting precommit dx. This will check package.json dependencies.\"",
-    "dx:prepublish": "$npm_package_config_packageexecutor nx dx:prepublish:pre && $npm_package_config_packageexecutor nx dx:lint && $npm_package_config_packageexecutor nx prepublish",
+    "dx:prepublish": "$npm_package_config_packageexecutor nx prepublish",
     "dx:prepublish:pre": "echo \"Starting prepublish dx. This will compile the package, lint it, format package.json and verify all exports are valid. \"",
     "lint": "$npm_package_config_packageexecutor biome check $npm_package_config_lintpaths",
     "lint:format": "$npm_package_config_packageexecutor biome check --write $npm_package_config_lintpaths",
@@ -88,9 +116,9 @@
     "package:fix": "$npm_package_config_packageexecutor syncpack fix-mismatches",
     "package:format": "$npm_package_config_packageexecutor syncpack format",
     "package:update": "$npm_package_config_packageexecutor syncpack update",
-    "prebuild": "$npm_package_config_packageexecutor nx clean",
     "precommit": "$npm_package_config_packageexecutor nx dx:prepublish --no-cloud --verbose",
-    "prelint": "$npm_package_config_packageexecutor biome format $npm_package_config_lintpaths",
+    "predx:lint": "$npm_package_config_packageexecutor nx clean",
+    "prelint": "$npm_package_config_packageexecutor nx exec -- biome format $npm_package_config_lintpaths",
     "prepublish": "$npm_package_config_packageexecutor publint --strict",
     "test": "$npm_package_config_packageexecutor nx nx:test"
   },

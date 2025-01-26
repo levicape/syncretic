@@ -9,9 +9,6 @@ catalogs:
     '@aws/codecatalyst-workflows-sdk':
       specifier: ^0.1.5-preview.6
       version: 0.1.5-preview.6
-    aws-lambda-ric:
-      specifier: ^3.2.1
-      version: 3.2.1
     aws4fetch:
       specifier: ^1.0.20
       version: 1.0.20
@@ -61,11 +58,11 @@ catalogs:
       version: 11.7.0
   default:
     '@levicape/paloma':
-      specifier: 0.1.0-main.2
-      version: 0.1.0-main.2
+      specifier: 0.1.1-main.3
+      version: 0.1.1-main.3
     '@levicape/spork':
-      specifier: 0.2.0-main.1
-      version: 0.2.0-main.1
+      specifier: 0.2.1-main.2
+      version: 0.2.1-main.2
   dev:
     tsx:
       specifier: ^4.19.2
@@ -214,9 +211,6 @@ importers:
       '@stricli/core':
         specifier: catalog:cli
         version: 1.1.1
-      aws-lambda-ric:
-        specifier: catalog:aws
-        version: 3.2.1
       aws4fetch:
         specifier: catalog:aws
         version: 1.0.20
@@ -298,7 +292,7 @@ importers:
     dependencies:
       '@levicape/paloma':
         specifier: 'catalog:'
-        version: 0.1.0-main.2
+        version: 0.1.1-main.3
     devDependencies:
       typescript:
         specifier: catalog:dev
@@ -409,7 +403,7 @@ importers:
         version: 2.2.3
       '@levicape/spork':
         specifier: 'catalog:'
-        version: 0.2.0-main.1(@bufbuild/protobuf@2.2.3)(@hono/node-server@1.13.7(hono@4.6.18))(hono@4.6.18)(jsonwebtoken@9.0.2)(zod@3.24.1)
+        version: 0.2.1-main.2(@bufbuild/protobuf@2.2.3)(@hono/node-server@1.13.7(hono@4.6.18))(hono@4.6.18)(jsonwebtoken@9.0.2)(zod@3.24.1)
       aws4fetch:
         specifier: catalog:aws
         version: 1.0.20
@@ -1395,13 +1389,13 @@ packages:
     resolution: {integrity: sha512-rsfF5t3sd5c+3ejUgcy8q0cVG2/BxT064L4Xz+CuKEe014u8T4MtFZiWjWZFpfMXSGKzFYEA6DJYm9CqjmIfZg==}
     engines: {node: '>=14'}
 
-  '@levicape/paloma@0.1.0-main.2':
-    resolution: {integrity: sha512-CxFbHBmHk/Qf333VXsjzF3FLn1c7gM86o80JxWgMnYfcJH3sdB8UIEf0nvgWFCK5ylCHDKretXd0WVg4tt/lRQ==, tarball: https://npm.pkg.github.com/download/@levicape/paloma/0.1.0-main.2/009f807159facfd4732b9c0b8a37bd0d08ad7db1}
-    engines: {node: '>=23.6.0'}
+  '@levicape/paloma@0.1.1-main.3':
+    resolution: {integrity: sha512-VikKpyh32GK5NzvLVv5D7ALteuidhRiI4IRmWJSr3e1svPQM3Jz8KXSLT3kdvnqKjrmXopcBhFddLG21HT8xrg==, tarball: https://npm.pkg.github.com/download/@levicape/paloma/0.1.1-main.3/46d266a5839641d9aeddab9f4416f12eb95b27e8}
+    engines: {node: '22'}
     hasBin: true
 
-  '@levicape/spork@0.2.0-main.1':
-    resolution: {integrity: sha512-NZLQTWtts30bLLwmWI6aJFC1gVy3Zar9yPRAbegL3HTAhhLFcNV+SXSa3JPkmDStJzaH6Nf81937nZD+ZGwc5w==, tarball: https://npm.pkg.github.com/download/@levicape/spork/0.2.0-main.1/b3fd0d2c03a3d489ae54161a9a3e4ee126fbfa00}
+  '@levicape/spork@0.2.1-main.2':
+    resolution: {integrity: sha512-cGt+MeZmfqoqdVrHNNNKO+c4LH7tmTbUUtm54kPFaLqSeH3VjsI3ZWWwb+I9csQZAOaLcca5heeNNPzZ+20ZcQ==, tarball: https://npm.pkg.github.com/download/@levicape/spork/0.2.1-main.2/5dcaea8b8049aca2d92cbcddfcfbd5a06791b37f}
     engines: {node: '>=23.6.0'}
     hasBin: true
     peerDependencies:
@@ -5488,7 +5482,7 @@ snapshots:
       '@aws-crypto/sha256-js': 5.2.0
       '@aws-crypto/supports-web-crypto': 5.2.0
       '@aws-crypto/util': 5.2.0
-      '@aws-sdk/types': 3.714.0
+      '@aws-sdk/types': 3.734.0
       '@aws-sdk/util-locate-window': 3.693.0
       '@smithy/util-utf8': 2.3.0
       tslib: 2.8.1
@@ -5496,7 +5490,7 @@ snapshots:
   '@aws-crypto/sha256-js@5.2.0':
     dependencies:
       '@aws-crypto/util': 5.2.0
-      '@aws-sdk/types': 3.714.0
+      '@aws-sdk/types': 3.734.0
       tslib: 2.8.1
 
   '@aws-crypto/supports-web-crypto@5.2.0':
@@ -5505,7 +5499,7 @@ snapshots:
 
   '@aws-crypto/util@5.2.0':
     dependencies:
-      '@aws-sdk/types': 3.714.0
+      '@aws-sdk/types': 3.734.0
       '@smithy/util-utf8': 2.3.0
       tslib: 2.8.1
 
@@ -6850,10 +6844,9 @@ snapshots:
     optionalDependencies:
       re2-wasm: 1.0.2
 
-  '@levicape/paloma@0.1.0-main.2':
+  '@levicape/paloma@0.1.1-main.3':
     dependencies:
       '@stricli/core': 1.1.1
-      aws-lambda-ric: 3.2.1
       better-sqlite3: 11.7.0
       knex: 3.1.0(better-sqlite3@11.7.0)
       ksuid: 3.0.0
@@ -6866,7 +6859,7 @@ snapshots:
       - supports-color
       - tedious
 
-  '@levicape/spork@0.2.0-main.1(@bufbuild/protobuf@2.2.3)(@hono/node-server@1.13.7(hono@4.6.18))(hono@4.6.18)(jsonwebtoken@9.0.2)(zod@3.24.1)':
+  '@levicape/spork@0.2.1-main.2(@bufbuild/protobuf@2.2.3)(@hono/node-server@1.13.7(hono@4.6.18))(hono@4.6.18)(jsonwebtoken@9.0.2)(zod@3.24.1)':
     dependencies:
       '@aws-sdk/client-dynamodb': 3.734.0
       '@aws-sdk/client-secrets-manager': 3.734.0

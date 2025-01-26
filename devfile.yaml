@@ -1,6 +1,3 @@
-########################################
-# THIS FILE WAS AUTOMATICALLY GENERATED, DO NOT MODIFY
-########################################
 schemaVersion: 2.0.0
 metadata:
   name: fourtwo
@@ -13,35 +10,46 @@ components:
         - sleep
         - infinity
 commands:
-  - id: update-node
+  - id: make
     exec:
       component: source
-      commandLine: sudo npx -y n 23
-  - id: install-make
+      commandLine: sudo yum install -y g++ make cmake zip unzip libcurl-devel automake autoconf libtool zlib zlib-devel zlib-static protobuf protobuf-devel protobuf-compiler sqlite sqlite-devel sqlite-libs sqlite-tools || true
+  - id: pyenv
     exec:
       component: source
-      commandLine: sudo yum install -y g++ make cmake unzip libcurl-devel automake autoconf libtool
-  - id: install-corepack
+      commandLine: 'export PYENV_URL="https://pyenv.run" && echo "Downloading pyenv. URL: $PYENV_URL" && $(curl -fsSL $PYENV_URL | bash) || true && export PYENV_ROOT="$HOME/.pyenv" && [[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH" && eval "$(pyenv init - bash)" && echo "pyenv configured. Root: $PYENV_ROOT"'
+  - id: corepack
     exec:
       component: source
-      commandLine: sudo corepack enable
-  - id: install-pnpm
+      commandLine: sudo corepack enable pnpm || true; corepack enable pnpm || true
+  - id: pnpm
     exec:
       component: source
-      commandLine: sudo corepack use pnpm@9
-  - id: start-docker
+      commandLine: sudo corepack install -g 9 || true; corepack install -g 9 || true
+  - id: node
     exec:
       component: source
-      commandLine: ./entrypoint.sh
-  - id: install-codecatalyst-workflow-cli
+      commandLine: sudo pnpx n 23 -y;; pnpx n 23 -y;
+  - id: codecatalyst-workflow-cli
     exec:
       component: source
       commandLine: sudo curl -sL https://github.com/aws/codecatalyst-runner-cli/releases/latest/download/ccr_Linux_x86_64.tar.gz -o - | sudo tar -zx ccr && sudo mv ccr /usr/local/bin/ccr
+  - id: docker
+    exec:
+      component: source
+      commandLine: "sudo sh -c 'echo {\"dns\": [\"8.8.8.8\"]} > /etc/docker/daemon.json' && sudo sh -c 'dockerd --storage-opt dm.basesize=60G > /var/log/docker-daemon.log 2>&1 &'"
+  - id: finch
+    exec:
+      component: source
+      commandLine: sudo dnf install runfinch-finch; sudo dnf install amazon-ecr-credential-helper
 events:
   postStart:
-    - update-node
-    - install-make
-    - install-corepack
-    - install-pnpm
-    - start-docker
-    - install-codecatalyst-workflow-cli
+    - make
+    - pyenv
+    - corepack
+    - pnpm
+    - node
+    - codecatalyst-workflow-cli
+    - docker
+    - finch
+

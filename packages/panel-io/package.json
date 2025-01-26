@@ -31,7 +31,7 @@
     "typescript": "catalog:dev"
   },
   "engines": {
-    "node": ">=23.0.0"
+    "node": "22"
   },
   "exports": {
     "./app": "./module/app/index.mjs"

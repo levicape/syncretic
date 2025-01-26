@@ -19,6 +19,7 @@ export const AwsCodecatalystWorkflowsRoutemap = async (): Promise<
 			defaultCommand: "generate",
 			aliases: {
 				gen: "generate",
+				// env: "environment",
 			},
 			routes: {
 				generate,

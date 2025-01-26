@@ -1,3 +1,4 @@
+// TODO: tseffect
 export const AfterExit = {
 	commands: [] as (() => void)[],
 	execute(fn: () => void) {

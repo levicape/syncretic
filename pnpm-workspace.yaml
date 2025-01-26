@@ -7,9 +7,8 @@ packages:
   - 'protocols/*'
 
 catalog:
-  "@levicape/paloma": "0.1.0-main.2"
-  "@levicape/spork": "0.2.0-main.1"
-
+  "@levicape/paloma": "0.1.1-main.3"
+  "@levicape/spork": "0.2.1-main.2"
 
 
 
