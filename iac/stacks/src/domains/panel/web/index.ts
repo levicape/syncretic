@@ -29,7 +29,8 @@ import { FourtwoDatalayerStackExportsZod } from "../../../datalayer/exports";
 
 const STACKREF_ROOT = process.env["STACKREF_ROOT"] ?? "fourtwo";
 const PACKAGE_NAME = "@levicape/fourtwo-panel-ui" as const;
-const ARTIFACT_ROOT = "/tmp/fourtwo-panel-ui/output/staticwww/client" as const;
+const ARTIFACT_ROOT = "fourtwo-panel-ui" as const;
+const DEPLOY_DIRECTORY = "output/staticwww/client" as const;
 
 export = async () => {
 	const context = await Context.fromConfig();
@@ -205,7 +206,7 @@ export = async () => {
 					.setArtifacts(
 						new CodeBuildBuildspecArtifactsBuilder()
 							.setFiles(["**/*"])
-							.setBaseDirectory(".extractimage")
+							.setBaseDirectory(`.extractimage/${DEPLOY_DIRECTORY}`)
 							.setName("staticwww_extractimage"),
 					)
 					.setEnv(
@@ -235,7 +236,7 @@ export = async () => {
 									"--entrypoint",
 									"deploy",
 									`-e DEPLOY_FILTER=${PACKAGE_NAME}`,
-									`-e DEPLOY_OUTPUT=${ARTIFACT_ROOT}`,
+									`-e DEPLOY_OUTPUT=/tmp/${ARTIFACT_ROOT}`,
 									"$SOURCE_IMAGE_URI",
 									"> .container",
 								].join(" "),
@@ -243,9 +244,12 @@ export = async () => {
 								"cat .container",
 								"sleep 10s",
 								`docker container logs $(cat .container)`,
-								`docker cp $(cat .container):${ARTIFACT_ROOT} $CODEBUILD_SRC_DIR/.extractimage`,
+								"sleep 10s",
+								`docker container logs $(cat .container)`,
+								`docker cp $(cat .container):/tmp/${ARTIFACT_ROOT} $CODEBUILD_SRC_DIR/.extractimage`,
 								"ls -al $CODEBUILD_SRC_DIR/.extractimage || true",
-								"du -sh $CODEBUILD_SRC_DIR/.extractimage || true",
+								`ls -al $CODEBUILD_SRC_DIR/.extractimage/${DEPLOY_DIRECTORY} || true`,
+								`du -sh $CODEBUILD_SRC_DIR/.extractimage/${DEPLOY_DIRECTORY} || true`,
 								"aws s3 ls s3://$S3_STATICWWW_BUCKET",
 							]),
 					})

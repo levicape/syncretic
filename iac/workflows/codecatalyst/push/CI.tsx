@@ -24,7 +24,7 @@ let FileCaching = ({
 	FileCaching: {
 		...{
 			a64_nodejs: {
-				Path: "/cc/cache/nodejs",
+				Path: "/layers/heroku_nodejs-pnpm-install",
 				RestoreKeys: ["nodejs"],
 			},
 		},
@@ -61,7 +61,7 @@ export const PULUMI_CACHE = FileCaching({ pulumi: true }).FileCaching.a64_pulumi
 export const COREPACK_GLOBAL_CACHE = `${FileCaching().FileCaching.a64_nodejs.Path}/corepack`;
 export const NPM_GLOBAL_CACHE = `${FileCaching().FileCaching.a64_nodejs.Path}/npm`;
 export const PNPM_DLX_CACHE = `${FileCaching().FileCaching.a64_nodejs.Path}/pnpmcache`;
-export const PNPM_STORE_CACHE = `${FileCaching().FileCaching.a64_nodejs.Path}/pnpmstore`;
+export const PNPM_STORE_CACHE = `${FileCaching().FileCaching.a64_nodejs.Path}/addressable`;
 export const PNPM_GLOBAL_CACHE = `${FileCaching().FileCaching.a64_nodejs.Path}/pnpmglobal`;
 export const NX_CACHE_DIR = `${FileCaching().FileCaching.a64_nodejs.Path}/nxcache`;
 
@@ -130,7 +130,7 @@ export default async () => {
 	const PNPM_ENVIRONMENT = [
 		register("COREPACK_HOME", COREPACK_GLOBAL_CACHE),
 		register("PNPM_VERSION", "pnpm@9"),
-		register("NODEJS_VERSION", "23"),
+		register("NODEJS_VERSION", "22"),
 		register("NODE_AUTH_TOKEN", _$_("Secrets.GITHUB_LEVICAPE_PAT")),
 		register("NPM_REGISTRY_PROTOCOL", "https"),
 		register("NPM_REGISTRY_HOST", "npm.pkg.github.com"),

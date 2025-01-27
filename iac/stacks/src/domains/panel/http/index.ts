@@ -39,8 +39,7 @@ import { FourtwoDatalayerStackExportsZod } from "../../../datalayer/exports";
 const STACKREF_ROOT = process.env["STACKREF_ROOT"] ?? "fourtwo";
 const PACKAGE_NAME = "@levicape/fourtwo-panel-io" as const;
 const ARTIFACT_ROOT = "fourtwo-panel-io" as const;
-const HANDLER =
-	"fourtwo-panel-io/module/lambda/HttpHandler.HonoHttpFourtwoLambda";
+const HANDLER = "fourtwo-panel-io/module/lambda/HttpHandler.handler";
 
 const CI = {
 	CI_ENVIRONMENT: process.env.CI_ENVIRONMENT ?? "unknown",
@@ -51,8 +50,6 @@ export = async () => {
 	const _ = (name: string) => `${context.prefix}-${name}`;
 	const stage = CI.CI_ENVIRONMENT;
 	const farRole = await getRole({ name: CI.CI_ACCESS_ROLE });
-
-	// Stack references
 
 	// Stack references
 	const __codestar = await (async () => {
