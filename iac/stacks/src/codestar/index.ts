@@ -5,6 +5,8 @@ import { Repository as ECRRepository, LifecyclePolicy } from "@pulumi/aws/ecr";
 import { getLifecyclePolicyDocument } from "@pulumi/aws/ecr/getLifecyclePolicyDocument";
 import { RepositoryPolicy } from "@pulumi/aws/ecr/repositoryPolicy";
 import { all } from "@pulumi/pulumi/output";
+import type { z } from "zod";
+import { FourtwoCodestarStackExportsZod } from "./exports";
 
 export = async () => {
 	const context = await Context.fromConfig();
@@ -114,7 +116,7 @@ export = async () => {
 			codedeployDeploymentConfigArn,
 			codedeployDeploymentConfigName,
 		]) => {
-			return {
+			const exported = {
 				fourtwo_codestar_ecr: {
 					repository: {
 						arn: ecrRepositoryArn,
@@ -132,7 +134,16 @@ export = async () => {
 						name: codedeployDeploymentConfigName,
 					},
 				},
-			};
+			} satisfies z.infer<typeof FourtwoCodestarStackExportsZod>;
+
+			const validate = FourtwoCodestarStackExportsZod.safeParse(exported);
+			if (!validate.success) {
+				process.stderr.write(
+					`Validation failed: ${JSON.stringify(validate.error, null, 2)}`,
+				);
+			}
+
+			return exported;
 		},
 	);
 };

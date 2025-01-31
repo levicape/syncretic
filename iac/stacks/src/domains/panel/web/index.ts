@@ -23,15 +23,34 @@ import { BucketVersioningV2 } from "@pulumi/aws/s3/bucketVersioningV2";
 import { BucketWebsiteConfigurationV2 } from "@pulumi/aws/s3/bucketWebsiteConfigurationV2";
 import { all, getStack } from "@pulumi/pulumi";
 import { stringify } from "yaml";
-import { $ref, $val } from "../../../Stack";
+import type { z } from "zod";
+import { deref } from "../../../Stack";
 import { FourtwoCodestarStackExportsZod } from "../../../codestar/exports";
 import { FourtwoDatalayerStackExportsZod } from "../../../datalayer/exports";
+import { FourtwoPanelWebStackExportsZod } from "./exports";
 
-const STACKREF_ROOT = process.env["STACKREF_ROOT"] ?? "fourtwo";
 const PACKAGE_NAME = "@levicape/fourtwo-panel-ui" as const;
 const ARTIFACT_ROOT = "fourtwo-panel-ui" as const;
 const DEPLOY_DIRECTORY = "output/staticwww/client" as const;
 
+const STACKREF_ROOT = process.env["STACKREF_ROOT"] ?? "fourtwo";
+const STACKREF_CONFIG = {
+	[STACKREF_ROOT]: {
+		codestar: {
+			refs: {
+				codedeploy:
+					FourtwoCodestarStackExportsZod.shape.fourtwo_codestar_codedeploy,
+				ecr: FourtwoCodestarStackExportsZod.shape.fourtwo_codestar_ecr,
+			},
+		},
+		datalayer: {
+			refs: {
+				props: FourtwoDatalayerStackExportsZod.shape.fourtwo_datalayer_props,
+				iam: FourtwoDatalayerStackExportsZod.shape.fourtwo_datalayer_iam,
+			},
+		},
+	},
+};
 export = async () => {
 	const context = await Context.fromConfig();
 	const _ = (name: string) => `${context.prefix}-${name}`;
@@ -39,34 +58,7 @@ export = async () => {
 	const farRole = await getRole({ name: "FourtwoAccessRole" });
 
 	// Stack references
-	const codestar = await (async () => {
-		const code = $ref(`${STACKREF_ROOT}-codestar`);
-		return {
-			ecr: $val(
-				(await code.getOutputDetails(`${STACKREF_ROOT}_codestar_ecr`)).value,
-				FourtwoCodestarStackExportsZod.shape.fourtwo_codestar_ecr,
-			),
-		};
-	})();
-
-	const datalayer = await (async () => {
-		const data = $ref(`${STACKREF_ROOT}-datalayer`);
-		return {
-			props: $val(
-				(
-					await data.getOutputDetails(
-						`_${STACKREF_ROOT.toUpperCase()}_DATALAYER_PROPS`,
-					)
-				).value,
-				FourtwoDatalayerStackExportsZod.shape._FOURTWO_DATALAYER_PROPS,
-			),
-			iam: $val(
-				(await data.getOutputDetails(`${STACKREF_ROOT}_datalayer_iam`)).value,
-				FourtwoDatalayerStackExportsZod.shape.fourtwo_datalayer_iam,
-			),
-		};
-	})();
-	//
+	const { codestar, datalayer } = await deref(STACKREF_CONFIG);
 
 	// Object Store
 	const s3 = (() => {
@@ -270,7 +262,7 @@ export = async () => {
 
 		const project = (() => {
 			const project = new Project(_("project"), {
-				description: `(${getStack()}) CodeBuild project`,
+				description: `(${getStack()}) CodeBuild project for @${PACKAGE_NAME}:${STACKREF_ROOT}`,
 				buildTimeout: 8,
 				serviceRole: farRole.arn,
 				artifacts: {
@@ -468,7 +460,7 @@ export = async () => {
 		const { name } = codestar.ecr.repository;
 
 		const rule = new EventRule(_("event-rule-ecr-push"), {
-			description: `(${getStack()}) ECR push event rule`,
+			description: `(${getStack()}) ECR push event rule @${PACKAGE_NAME}:${STACKREF_ROOT}`,
 			state: "ENABLED",
 			eventPattern: JSON.stringify({
 				source: ["aws.ecr"],
@@ -531,8 +523,8 @@ export = async () => {
 			eventTargetArn,
 			eventTargetId,
 		]) => {
-			return {
-				_FOURTWO_PANEL_WEB_IMPORTS: {
+			const exported = {
+				fourtwo_panel_web_imports: {
 					fourtwo: {
 						codestar,
 						datalayer,
@@ -581,7 +573,23 @@ export = async () => {
 						},
 					},
 				},
+			} satisfies z.infer<typeof FourtwoPanelWebStackExportsZod> & {
+				fourtwo_panel_web_imports: {
+					fourtwo: {
+						codestar: typeof codestar;
+						datalayer: typeof datalayer;
+					};
+				};
 			};
+
+			const validate = FourtwoPanelWebStackExportsZod.safeParse(exported);
+			if (!validate.success) {
+				process.stderr.write(
+					`Validation failed: ${JSON.stringify(validate.error, null, 2)}`,
+				);
+			}
+
+			return exported;
 		},
 	);
 };

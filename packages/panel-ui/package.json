@@ -8,29 +8,43 @@
     "packagebin": "corepack pnpm",
     "packageexecutor": "corepack pnpm exec",
     "outpaths": "./output",
-    "lintpaths": "./app ./server",
-    "protocols": "./src/_protocols",
-    "server": "./output/http/server/index.js"
+    "lintpaths": "./server ./src ./server.ts",
+    "server": "./server.ts",
+    "serverrender": "./render/server.tsx",
+    "staticwwwoutput": "./output/staticwww",
+    "webhttpoutput": "./output/webhttp",
+    "webhttpmodule": "./server.js"
   },
   "dependencies": {
-    "@react-router/node": "catalog:web-react-router",
-    "@react-router/serve": "catalog:web-react-router",
-    "isbot": "catalog:http",
+    "@aws-lambda-powertools/logger": "catalog:log-awspowertools",
+    "@loglayer/transport-aws-lambda-powertools": "catalog:log-loglayer",
+    "@loglayer/transport-consola": "catalog:log-loglayer",
+    "consola": "catalog:log-consola",
+    "effect": "catalog:effect",
+    "express": "catalog:http-express",
+    "loglayer": "catalog:log-loglayer",
     "react": "catalog:web-react",
     "react-dom": "catalog:web-react",
-    "react-router": "catalog:web-react-router"
+    "serialize-error": "catalog:error",
+    "sirv": "catalog:http-express",
+    "std-env": "catalog:core",
+    "ulidx": "catalog:id",
+    "verror": "catalog:error"
   },
   "devDependencies": {
     "@biomejs/biome": "catalog:lint",
-    "@react-router/dev": "catalog:web-react-router",
     "@tailwindcss/vite": "catalog:web-style",
+    "@types/express": "catalog:types",
     "@types/node": "catalog:types",
     "@types/react": "catalog:types",
     "@types/react-dom": "catalog:types",
+    "@vitejs/plugin-react-swc": "catalog:web-vite",
     "tailwindcss": "catalog:web-style",
     "typescript": "catalog:dev",
-    "vite": "catalog:web-vite",
-    "vite-tsconfig-paths": "catalog:web-vite"
+    "vite": "catalog:web-vite"
+  },
+  "engines": {
+    "node": "22"
   },
   "files": [
     "output"
@@ -42,20 +56,44 @@
           "build:tsc"
         ]
       },
-      "build:http": {
+      "build:webhttp": {
         "dependsOn": [
           "build:staticwww"
         ]
       },
-      "dx:test": {
+      "build:webssr": {
         "dependsOn": [
-          "dx:lint",
-          "nx:test"
+          "build:staticwww",
+          "build:http"
+        ]
+      },
+      "dev:webhttp": {
+        "dependsOn": [
+          "build:webssr"
+        ]
+      },
+      "dx:lint": {
+        "dependsOn": [
+          "nx:compile",
+          "lint:format",
+          "package:format"
         ]
       },
       "dx:precommit": {
         "dependsOn": [
           "dx:prepublish",
+          "nx:test"
+        ]
+      },
+      "dx:prepublish": {
+        "dependsOn": [
+          "dx:prepublish:pre",
+          "dx:lint"
+        ]
+      },
+      "dx:test": {
+        "dependsOn": [
+          "dx:lint",
           "nx:test"
         ]
       },
@@ -67,30 +105,43 @@
       "nx:compile": {
         "dependsOn": [
           "build:tsc",
-          "build:http",
           "build:staticwww",
-          "@levicape/fourtwo-panel-ui-server:nx:compile"
+          "build:webhttp",
+          "build:webssr"
         ]
       },
       "nx:test": {
         "dependsOn": [
-          "test:module"
+          "dx:noop"
+        ]
+      },
+      "preview:staticwww": {
+        "dependsOn": [
+          "build:staticwww"
+        ]
+      },
+      "preview:http": {
+        "dependsOn": [
+          "build:webssr"
         ]
       }
     }
   },
+  "private": true,
   "scripts": {
     "build": "$npm_package_config_packageexecutor nx nx:compile --verbose",
-    "build:http": "ROUTER_BUILD_DIRECTORY=output/http ROUTER_SSR=1 $npm_package_config_packageexecutor react-router build --sourcemapClient inline --sourcemapServer inline",
-    "build:staticwww": "ROUTER_BUILD_DIRECTORY=output/staticwww ROUTER_SSR=0 $npm_package_config_packageexecutor react-router build",
-    "build:tsc": "$npm_package_config_packageexecutor react-router typegen && $npm_package_config_packageexecutor tsc",
+    "build:staticwww": "$npm_package_config_packageexecutor vite build --outDir $npm_package_config_staticwwwoutput --ssrManifest",
+    "build:tsc": "$npm_package_config_packageexecutor tsc",
+    "build:webhttp": "SERVER_ENTRYPOINT=$npm_package_config_webhttpoutput/$npm_package_config_webhttpoutput CLIENT_OUTPUT=$npm_package_config_staticwwwoutput $npm_package_config_packageexecutor vite build --outDir $npm_package_config_webhttpoutput --ssr ./src/$npm_package_config_serverrender",
     "clean": "$npm_package_config_packageexecutor nx nx:clean --verbose",
     "clean:module": "rm -rf $npm_package_config_outpaths || true",
-    "dev": "$npm_package_config_packageexecutor react-router dev",
-    "dx:lint": "$npm_package_config_packageexecutor nx build && $npm_package_config_packageexecutor nx lint:format && $npm_package_config_packageexecutor nx package:format",
+    "dev": "$npm_package_config_packageexecutor nx dev:webhttp",
+    "dev:staticwww": "$npm_package_config_packageexecutor vite --cors --debug --host --port $PORT",
+    "dev:webhttp": "SERVER_ENTRYPOINT=./src/$npm_package_config_serverrender $npm_package_config_server",
+    "dx:noop": "true",
     "dx:precommit": "$npm_package_config_packageexecutor nx dx:precommit:pre && $npm_package_config_packageexecutor nx package:deps",
     "dx:precommit:pre": "echo \"Starting precommit dx. This will check package.json dependencies.\"",
-    "dx:prepublish": "$npm_package_config_packageexecutor nx dx:prepublish:pre && $npm_package_config_packageexecutor nx dx:lint && $npm_package_config_packageexecutor nx prepublish",
+    "dx:prepublish": "$npm_package_config_packageexecutor nx prepublish",
     "dx:prepublish:pre": "echo \"Starting prepublish dx. This will compile the package, lint it, format package.json and verify all exports are valid. \"",
     "dx:test": "$npm_package_config_packagebin run clean && $npm_package_config_packagebin run build && $npm_package_config_packagebin run test",
     "lint": "$npm_package_config_packageexecutor nx exec -- biome check $npm_package_config_lintpaths",
@@ -104,10 +155,10 @@
     "predx:lint": "$npm_package_config_packageexecutor nx clean",
     "prelint": "$npm_package_config_packageexecutor nx exec -- biome format $npm_package_config_lintpaths",
     "prepublish": "$npm_package_config_packageexecutor nx exec -- publint --strict",
-    "routes": "$npm_package_config_packageexecutor react-router routes",
-    "start": "$npm_package_config_packageexecutor react-router-serve $npm_package_config_server",
-    "test": "$npm_package_config_packageexecutor nx nx:test --verbose",
-    "test:module": "true"
+    "preview": "$npm_package_config_packageexecutor nx preview:webhttp",
+    "preview:staticwww": "$npm_package_config_packageexecutor vite preview --outDir $npm_package_config_staticwwwoutput --cors --debug --host --port $PORT",
+    "preview:webhttp": "NODE_ENV=production CLIENT_OUTPUT=$npm_package_config_staticwwwoutput SERVER_ENTRYPOINT=$npm_package_config_webhttpoutput/$npm_package_config_webhttpmodule $npm_package_config_server",
+    "test": "$npm_package_config_packageexecutor nx nx:test --verbose"
   },
   "type": "module"
 }

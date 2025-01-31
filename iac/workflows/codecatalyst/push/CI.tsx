@@ -24,7 +24,7 @@ let FileCaching = ({
 	FileCaching: {
 		...{
 			a64_nodejs: {
-				Path: "/layers/heroku_nodejs-pnpm-install",
+				Path: "/cc/cache/nodejs",
 				RestoreKeys: ["nodejs"],
 			},
 		},

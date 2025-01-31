@@ -1,0 +1,10 @@
+ignores: 
+- "@bufbuild/protobuf"
+- "@react-router/*"
+- "@total-typescript/ts-reset"
+- "@types/*"
+- "aws4fetch"
+- "isbot"
+- "jsonc-parser"
+- "tailwindcss"
+- "ts-proto"

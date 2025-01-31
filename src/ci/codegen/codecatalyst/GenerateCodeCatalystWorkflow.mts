@@ -1,9 +1,14 @@
 import { hash } from "node:crypto";
 import { basename, extname } from "node:path";
 import { WorkflowDefinition } from "@aws/codecatalyst-workflows-sdk";
+import { Context, Effect } from "effect";
 import { load } from "js-yaml";
 import VError from "verror";
 import { stringify } from "yaml";
+import {
+	LoggingContext,
+	withStructuredLogging,
+} from "../../../server/logging/LoggingContext.mjs";
 import type { CodeCatalystWorkflowBuilder } from "../../cd/pipeline/codecatalyst/CodeCatalystWorkflowBuilder.mjs";
 import type {
 	CodeCatalystPullrequestTriggerSpec,
@@ -13,12 +18,20 @@ import type {
 import { GenerateWorkflowTemplate } from "../../codegen/pipeline/GenerateWorkflowTemplate.mjs";
 
 export const GenerateCodeCatalystWorkflow = async function* () {
+	const { logger } = await Effect.runPromise(
+		Effect.provide(
+			Effect.gen(function* () {
+				const consola = yield* LoggingContext;
+				const logger = yield* consola.logger;
+
+				return { logger };
+			}),
+			Context.empty().pipe(withStructuredLogging({ prefix: "CLI" })),
+		),
+	);
+
 	const then = Date.now();
-	console.dir({
-		GenerateCodeCatalystWorkflow: {
-			message: "Waiting for workflow",
-		},
-	});
+	logger.info("Waiting for workflow");
 	const {
 		workflow,
 		source,
@@ -51,15 +64,13 @@ export const GenerateCodeCatalystWorkflow = async function* () {
 	let rendered = workflow.build();
 
 	if (workflow === undefined || rendered === undefined) {
-		console.dir(
-			{
+		logger
+			.withMetadata({
 				GenerateCodeCatalystWorkflow: {
-					message: "Failed to generate workflow",
 					workflow,
 				},
-			},
-			{ depth: null },
-		);
+			})
+			.error("Failed to generate workflow");
 
 		throw new VError("Failed to generate workflow");
 	}
@@ -153,24 +164,25 @@ export const GenerateCodeCatalystWorkflow = async function* () {
 		then,
 		now,
 	});
-	console.dir({
-		GenerateCodeCatalystWorkflow: {
-			message: "Generated workflow",
-			size: `${(content.length / 1024).toFixed()}KB`,
-		},
-	});
+
+	logger
+		.withMetadata({
+			GenerateCodeCatalystWorkflow: {
+				size: `${(content.length / 1024).toFixed()}KB`,
+			},
+		})
+		.info("Generated workflow");
 	yield { $state: "content", content, workflow } as const;
 
 	const schema = WorkflowDefinition.validate(load(content));
-	console.dir(
-		{
+
+	logger
+		.withMetadata({
 			GenerateCodeCatalystWorkflow: {
-				message: "Validated workflow",
 				schema,
 			},
-		},
-		{ depth: null },
-	);
+		})
+		.info("Validated workflow");
 
 	let errors = schema.errors;
 	yield {

@@ -1,3 +1,4 @@
+import type { ILogLayer } from "loglayer";
 import VError from "verror";
 import type { GithubStep } from "../github/GithubStepBuilder.mjs";
 import type {
@@ -321,21 +322,9 @@ export class CodeCatalystActionBuilder<
 								matches.forEach((match) => {
 									let current = step.with![key];
 									let exec = regex.exec(current ?? "");
-
-									console.dir(
-										{
-											CodeCatalystActionBuilder: {
-												message: "Copying with to inputs",
-												step: step,
-												inputs: inputs,
-												exec: exec,
-											},
-										},
-										{ depth: null },
-									);
 									inputs.Variables!.push({
 										Name: normalizeenvname(exec![1]),
-										Value: replacer(["", "betty"])!,
+										Value: replacer(["", "string"])!,
 									});
 								});
 							}

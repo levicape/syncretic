@@ -1,7 +1,12 @@
 import { hash } from "node:crypto";
 import { basename, extname } from "node:path";
+import { Context, Effect } from "effect";
 import VError from "verror";
 import { stringify } from "yaml";
+import {
+	LoggingContext,
+	withStructuredLogging,
+} from "../../../server/logging/LoggingContext.mjs";
 import type {
 	GithubOnPushSpec,
 	GithubPullRequestSpec,
@@ -14,11 +19,22 @@ const pathToWorkflows = (named: string) => `/.github/workflows/${named}.yml`;
 
 export const GenerateGithubWorkflow = async function* () {
 	const then = Date.now();
-	console.dir({
-		GenerateGithubWorkflow: {
-			message: "Waiting for workflow",
-		},
-	});
+
+	const { logger } = await Effect.runPromise(
+		Effect.provide(
+			Effect.gen(function* () {
+				const consola = yield* LoggingContext;
+				const logger = yield* consola.logger;
+
+				return { logger };
+			}),
+			Context.empty().pipe(
+				withStructuredLogging({ prefix: "GenerateGithubWorkflow" }),
+			),
+		),
+	);
+
+	logger.info("Waiting for workflow");
 	const {
 		workflow,
 		source,
@@ -32,15 +48,13 @@ export const GenerateGithubWorkflow = async function* () {
 	let rendered = workflow.build();
 
 	if (workflow === undefined || rendered === undefined) {
-		console.dir(
-			{
+		logger
+			.withMetadata({
 				GenerateGithubWorkflow: {
-					message: "Failed to generate workflow",
 					workflow,
 				},
-			},
-			{ depth: null },
-		);
+			})
+			.error("Failed to generate workflow");
 
 		throw new VError("Failed to generate workflow");
 	}
@@ -208,24 +222,24 @@ export const GenerateGithubWorkflow = async function* () {
 		now,
 	});
 
-	console.dir({
-		GenerateGithubWorkflow: {
-			message: "Generated workflow",
-			size: `${(content.length / 1024).toFixed()}KB`,
-		},
-	});
+	logger
+		.withMetadata({
+			GenerateGithubWorkflow: {
+				size: `${(content.length / 1024).toFixed()}KB`,
+			},
+		})
+		.info("Generated workflow");
 	yield { $state: "content", content, workflow } as const;
 
 	const state = GithubWorkflowExpressions.getState();
-	console.dir(
-		{
+
+	logger
+		.withMetadata({
 			CurrentState: {
-				message: "Current state",
 				state,
 			},
-		},
-		{ depth: null },
-	);
+		})
+		.info("Current generation state");
 	yield { $state: "validate", state } as const;
 
 	return { $state: "done", filename, content, hashed } as const;

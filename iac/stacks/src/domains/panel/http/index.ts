@@ -32,72 +32,53 @@ import { Service } from "@pulumi/aws/servicediscovery/service";
 import { Output, all, getStack } from "@pulumi/pulumi";
 import { AssetArchive, StringAsset } from "@pulumi/pulumi/asset";
 import { stringify } from "yaml";
-import { $ref, $val } from "../../../Stack";
+import type { z } from "zod";
+import { deref } from "../../../Stack";
 import { FourtwoCodestarStackExportsZod } from "../../../codestar/exports";
 import { FourtwoDatalayerStackExportsZod } from "../../../datalayer/exports";
+import { FourtwoPanelHttpStackExportsZod } from "./exports";
 
-const STACKREF_ROOT = process.env["STACKREF_ROOT"] ?? "fourtwo";
-const PACKAGE_NAME = "@levicape/fourtwo-panel-io" as const;
-const ARTIFACT_ROOT = "fourtwo-panel-io" as const;
-const HANDLER = "fourtwo-panel-io/module/lambda/HttpHandler.handler";
+const PACKAGE_NAME = "@levicape/fourtwo-panel-http" as const;
+const ARTIFACT_ROOT = "fourtwo-panel-http" as const;
+const HANDLER = "fourtwo-panel-http/module/lambda/HttpHandler.handler";
+// TODO: CI.tsx stacks include environment
+const LLRT_ARCH: string | undefined = process.env["LLRT_ARCH"]; //"lambda-arm64-full-sdk";
 
 const CI = {
 	CI_ENVIRONMENT: process.env.CI_ENVIRONMENT ?? "unknown",
 	CI_ACCESS_ROLE: process.env.CI_ACCESS_ROLE ?? "FourtwoAccessRole",
 };
+const STACKREF_ROOT = process.env["STACKREF_ROOT"] ?? "fourtwo";
+const STACKREF_CONFIG = {
+	[STACKREF_ROOT]: {
+		codestar: {
+			refs: {
+				codedeploy:
+					FourtwoCodestarStackExportsZod.shape.fourtwo_codestar_codedeploy,
+				ecr: FourtwoCodestarStackExportsZod.shape.fourtwo_codestar_ecr,
+			},
+		},
+		datalayer: {
+			refs: {
+				props: FourtwoDatalayerStackExportsZod.shape.fourtwo_datalayer_props,
+				ec2: FourtwoDatalayerStackExportsZod.shape.fourtwo_datalayer_ec2,
+				efs: FourtwoDatalayerStackExportsZod.shape.fourtwo_datalayer_efs,
+				iam: FourtwoDatalayerStackExportsZod.shape.fourtwo_datalayer_iam,
+				cloudmap:
+					FourtwoDatalayerStackExportsZod.shape.fourtwo_datalayer_cloudmap,
+			},
+		},
+	},
+};
+
 export = async () => {
 	const context = await Context.fromConfig();
 	const _ = (name: string) => `${context.prefix}-${name}`;
 	const stage = CI.CI_ENVIRONMENT;
 	const farRole = await getRole({ name: CI.CI_ACCESS_ROLE });
-
 	// Stack references
-	const __codestar = await (async () => {
-		const code = $ref(`${STACKREF_ROOT}-codestar`);
-		return {
-			codedeploy: $val(
-				(await code.getOutputDetails(`${STACKREF_ROOT}_codestar_codedeploy`))
-					.value,
-				FourtwoCodestarStackExportsZod.shape.fourtwo_codestar_codedeploy,
-			),
-			ecr: $val(
-				(await code.getOutputDetails(`${STACKREF_ROOT}_codestar_ecr`)).value,
-				FourtwoCodestarStackExportsZod.shape.fourtwo_codestar_ecr,
-			),
-		};
-	})();
-
-	const __datalayer = await (async () => {
-		const data = $ref(`${STACKREF_ROOT}-datalayer`);
-		return {
-			props: $val(
-				(
-					await data.getOutputDetails(
-						`_${STACKREF_ROOT.toUpperCase()}_DATALAYER_PROPS`,
-					)
-				).value,
-				FourtwoDatalayerStackExportsZod.shape._FOURTWO_DATALAYER_PROPS,
-			),
-			ec2: $val(
-				(await data.getOutputDetails(`${STACKREF_ROOT}_datalayer_ec2`)).value,
-				FourtwoDatalayerStackExportsZod.shape.fourtwo_datalayer_ec2,
-			),
-			efs: $val(
-				(await data.getOutputDetails(`${STACKREF_ROOT}_datalayer_efs`)).value,
-				FourtwoDatalayerStackExportsZod.shape.fourtwo_datalayer_efs,
-			),
-			iam: $val(
-				(await data.getOutputDetails(`${STACKREF_ROOT}_datalayer_iam`)).value,
-				FourtwoDatalayerStackExportsZod.shape.fourtwo_datalayer_iam,
-			),
-			cloudmap: $val(
-				(await data.getOutputDetails(`${STACKREF_ROOT}_datalayer_cloudmap`))
-					.value,
-				FourtwoDatalayerStackExportsZod.shape.fourtwo_datalayer_cloudmap,
-			),
-		};
-	})();
-	//
+	const { codestar: __codestar, datalayer: __datalayer } =
+		await deref(STACKREF_CONFIG);
 
 	// Object Store
 	const s3 = (() => {
@@ -147,6 +128,7 @@ export = async () => {
 					},
 				],
 			});
+
 			return bucket;
 		};
 		return {
@@ -276,13 +258,13 @@ export = async () => {
 		const lambda = new LambdaFn(
 			_("function"),
 			{
-				description: `(${getStack()}) Lambda function for ${PACKAGE_NAME}`,
+				description: `(${getStack()}) Lambda function for @${PACKAGE_NAME}:${STACKREF_ROOT}}`,
 				role: roleArn,
 				architectures: ["arm64"],
 				memorySize: Number.parseInt(context.environment.isProd ? "512" : "256"),
 				timeout: 18,
 				packageType: "Zip",
-				runtime: Runtime.NodeJS22dX,
+				runtime: LLRT_ARCH ? Runtime.CustomAL2023 : Runtime.NodeJS22dX,
 				handler: "index.handler",
 				s3Bucket: s3.deploy.bucket,
 				s3Key: zip.key,
@@ -305,12 +287,14 @@ export = async () => {
 					return {
 						variables: {
 							...cloudmapEnv,
+							NODE_ENV: "production",
+							LOG_LEVEL: "5",
 						},
 					};
 				}),
 			},
 			{
-				dependsOn: zip,
+				dependsOn: [zip],
 				ignoreChanges: ["handler", "s3Key", "s3ObjectVersion"],
 			},
 		);
@@ -322,7 +306,7 @@ export = async () => {
 
 		const version = new Version(_("version"), {
 			functionName: lambda.name,
-			description: `(${getStack()}) Version ${stage} for ${PACKAGE_NAME} on ${_("")}`,
+			description: `(${getStack()}) Version ${stage} for @${PACKAGE_NAME}:${STACKREF_ROOT}`,
 		});
 
 		const alias = new Alias(
@@ -351,7 +335,9 @@ export = async () => {
 		const deploymentGroup = new DeploymentGroup(
 			_("deployment-group"),
 			{
-				deploymentGroupName: _("deployment-group-bg"),
+				deploymentGroupName: lambda.arn.apply((arn) =>
+					_(`deploybg-${arn.slice(-10)}`),
+				),
 				serviceRoleArn: farRole.arn,
 				appName: codestar.codedeploy.application.name,
 				deploymentConfigName: codestar.codedeploy.deploymentConfig.name,
@@ -362,7 +348,12 @@ export = async () => {
 			},
 			{
 				deleteBeforeReplace: true,
-				replaceOnChanges: ["*"],
+				dependsOn: [alias, url],
+				replaceOnChanges: [
+					"appName",
+					"deploymentConfigName",
+					"deploymentStyle",
+				],
 			},
 		);
 
@@ -386,8 +377,8 @@ export = async () => {
 	const cloudmap = (({ datalayer: { cloudmap } }) => {
 		const { namespace } = cloudmap;
 		const cloudMapService = new Service(_("service"), {
-			name: _("service"),
-			description: `(${getStack()}) Service mesh service for ${PACKAGE_NAME}`,
+			name: handler.http.name.apply((name) => _(`service-${name.slice(-10)}`)),
+			description: `(${getStack()}) Service mesh service for ${PACKAGE_NAME}@${STACKREF_ROOT}`,
 			dnsConfig: {
 				namespaceId: namespace.id,
 				routingPolicy: "WEIGHTED",
@@ -431,6 +422,7 @@ export = async () => {
 							httphandler: new CodeDeployAppspecResourceBuilder()
 								.setName(props.name)
 								.setAlias(props.alias)
+								// .setDescription()
 								.setCurrentVersion(props.currentVersion)
 								.setTargetVersion(props.targetVersion),
 						},
@@ -519,26 +511,26 @@ export = async () => {
 							`aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $STACKREF_CODESTAR_ECR_REPOSITORY_URL`,
 							"docker pull $SOURCE_IMAGE_URI",
 							"docker images",
+							// node_module
 							[
-								"docker run",
-								"--detach",
-								"--entrypoint",
-								"deploy",
-								`-e DEPLOY_FILTER=${PACKAGE_NAME}`,
-								`-e DEPLOY_OUTPUT=/tmp/${ARTIFACT_ROOT}`,
-								"$SOURCE_IMAGE_URI",
+								...[
+									"docker run",
+									...[
+										"--detach",
+										"--entrypoint deploy",
+										`--env DEPLOY_FILTER=${PACKAGE_NAME}`,
+										`--env DEPLOY_OUTPUT=/tmp/${ARTIFACT_ROOT}`,
+									],
+									"$SOURCE_IMAGE_URI",
+								],
 								"> .container",
 							].join(" "),
 							"docker ps -al",
-							"cat .container",
-							"sleep 10s",
-							`docker container logs $(cat .container)`,
-							"cat .container",
-							"sleep 9s",
-							`docker container logs $(cat .container)`,
-							"cat .container",
-							"sleep 8s",
-							`docker container logs $(cat .container)`,
+							...[2, 8, 4, 2].flatMap((i) => [
+								`cat .container`,
+								`sleep ${i}s`,
+								`docker container logs $(cat .container)`,
+							]),
 							"mkdir -p $CODEBUILD_SRC_DIR/.extractimage || true",
 							`docker cp $(cat .container):/tmp/${ARTIFACT_ROOT} $CODEBUILD_SRC_DIR/.extractimage`,
 							"ls -al $CODEBUILD_SRC_DIR/.extractimage || true",
@@ -546,15 +538,41 @@ export = async () => {
 							"corepack -g install pnpm@9 || true",
 							`pnpm -C $CODEBUILD_SRC_DIR/.extractimage/${ARTIFACT_ROOT} install --offline --prod --ignore-scripts --node-linker=hoisted || true`,
 							`ls -al $CODEBUILD_SRC_DIR/.extractimage/${ARTIFACT_ROOT}/node_modules || true`,
-							`NODE_NO_WARNINGS=1 node -e '(${(
+							// bootstrap binary
+							...(LLRT_ARCH
+								? [
+										[
+											...[
+												"docker run",
+												...[
+													"--detach",
+													"--entrypoint bootstrap",
+													`--env BOOTSTRAP_ARCH=llrt/${LLRT_ARCH}`,
+												],
+												"$SOURCE_IMAGE_URI",
+											],
+											"> .container",
+										].join(" "),
+										"docker ps -al",
+										...[8, 4].flatMap((i) => [
+											`cat .container`,
+											`sleep ${i}s`,
+											`docker container logs $(cat .container)`,
+										]),
+										`docker cp $(cat .container):/tmp/bootstrap $CODEBUILD_SRC_DIR/.extractimage/bootstrap`,
+										"ls -al $CODEBUILD_SRC_DIR/.extractimage || true",
+										`ls -al $CODEBUILD_SRC_DIR/.extractimage/${ARTIFACT_ROOT} || true`,
+									]
+								: []),
+							`NODE_NO_WARNINGS=1 node -e '(${
 								// biome-ignore lint/complexity/useArrowFunction:
 								function () {
 									const deploykey = (
 										process.env.S3_DEPLOY_KEY ?? "UNKNOWN"
 									).replace(/[^a-zA-Z0-9-_.]/g, "_");
 									process.stdout.write(deploykey);
-								}
-							).toString()})()' > .deploykey`,
+								}.toString()
+							})()' > .deploykey`,
 							"cat .deploykey",
 							"aws s3 ls s3://$S3_DEPLOY_BUCKET",
 							`export DeployKey=$(cat .deploykey)`,
@@ -648,7 +666,7 @@ export = async () => {
 							"export TARGET_VERSION=$(jq -r '.Version' .version)",
 							"echo $TARGET_VERSION",
 							"echo $APPSPEC_TEMPLATE",
-							`NODE_NO_WARNINGS=1 node -e '(${(
+							`NODE_NO_WARNINGS=1 node -e '(${
 								// biome-ignore lint/complexity/useArrowFunction:
 								function () {
 									const template = process.env.APPSPEC_TEMPLATE;
@@ -672,8 +690,8 @@ export = async () => {
 										.replace("<TARGET_VERSION>", targetVersion ?? "!");
 
 									process.stdout.write(appspec);
-								}
-							).toString()})()' > appspec.yml`,
+								}.toString()
+							})()' > appspec.yml`,
 							"cat appspec.yml",
 							"zip appspec.zip appspec.yml",
 							"ls -al",
@@ -723,8 +741,10 @@ export = async () => {
 						const project = new Project(
 							_(`project-${artifact.name}`),
 							{
-								description: `(${getStack()}) CodeBuild project: ${artifact.name} on ${_("")}`,
-								buildTimeout: 12,
+								description: `(${getStack()}) CodeBuild project: ${
+									artifact.name
+								} @ ${PACKAGE_NAME}`,
+								buildTimeout: 14,
 								serviceRole: farRole.arn,
 								artifacts: {
 									type: "CODEPIPELINE",
@@ -737,7 +757,11 @@ export = async () => {
 								},
 							},
 							{
-								dependsOn: [upload],
+								dependsOn: [
+									upload,
+									cloudmap.instance,
+									handler.codedeploy.deploymentGroup,
+								],
 							},
 						);
 
@@ -1002,7 +1026,7 @@ export = async () => {
 		const { name: codestarRepositoryName } = __codestar.ecr.repository;
 
 		const rule = new EventRule(_("event-rule-ecr-push"), {
-			description: `(${getStack()}) ECR push event rule for ${PACKAGE_NAME} on ${_("")}`,
+			description: `(${getStack()}) ECR push event rule for ${PACKAGE_NAME}:${STACKREF_ROOT}`,
 			state: "ENABLED",
 			eventPattern: JSON.stringify({
 				source: ["aws.ecr"],
@@ -1037,12 +1061,15 @@ export = async () => {
 			Object.entries(s3).map(([key, bucket]) => {
 				return [
 					key,
-					all([bucket.bucket]).apply(([bucketName]) => ({
-						bucket: bucketName,
-					})),
+					all([bucket.bucket, bucket.region]).apply(
+						([bucketName, bucketRegion]) => ({
+							bucket: bucketName,
+							region: bucketRegion,
+						}),
+					),
 				];
 			}),
-		),
+		) as Record<keyof typeof s3, Output<{ bucket: string; region: string }>>,
 	);
 
 	const cloudwatchOutput = Output.create(cloudwatch).apply((cloudwatch) => ({
@@ -1073,7 +1100,13 @@ export = async () => {
 					})),
 				];
 			}),
-		),
+		) as Record<
+			keyof typeof codebuild,
+			Output<{
+				buildspec: { bucket: string; key: string };
+				project: { arn: string; name: string };
+			}>
+		>,
 	);
 
 	const handlerOutput = Output.create(handler).apply((handler) => ({
@@ -1083,25 +1116,29 @@ export = async () => {
 		})),
 		http: all([
 			handler.http.arn,
+			handler.http.name,
 			handler.http.url,
 			handler.http.version.version,
 			handler.http.alias.arn,
 			handler.http.alias.name,
 			handler.http.alias.functionVersion,
-		]).apply(([arn, url, version, aliasArn, aliasName, functionVersion]) => ({
-			arn,
-			url,
-			version,
-			alias: {
-				arn: aliasArn,
-				name: aliasName,
-				functionVersion,
-			},
-		})),
+		]).apply(
+			([arn, name, url, version, aliasArn, aliasName, functionVersion]) => ({
+				arn,
+				name,
+				url,
+				version,
+				alias: {
+					arn: aliasArn,
+					name: aliasName,
+					functionVersion,
+				},
+			}),
+		),
 		codedeploy: all([
 			handler.codedeploy.deploymentGroup.arn,
 			handler.codedeploy.deploymentGroup.deploymentGroupName,
-		]).apply(([arn, name]) => ({ arn, name })),
+		]).apply(([arn, name]) => ({ deploymentGroup: { arn, name } })),
 	}));
 
 	const cloudmapOutput = Output.create(cloudmap).apply((cloudmap) => ({
@@ -1154,18 +1191,25 @@ export = async () => {
 						all([
 							value.rule.arn,
 							value.rule.name,
-							Output.create(value.targets).apply((targets) =>
-								Object.fromEntries(
-									Object.entries(targets).map(([key, value]) => {
-										return [
-											key,
-											all([value.arn, value.targetId]).apply(
-												([arn, targetId]) => ({ arn, targetId }),
-											),
-										];
-									}),
-								),
-							),
+							Output.create(value.targets).apply(
+								(targets) =>
+									Object.fromEntries(
+										Object.entries(targets).map(([key, value]) => {
+											return [
+												key,
+												all([value.arn, value.targetId]).apply(
+													([arn, targetId]) => ({ arn, targetId }),
+												),
+											];
+										}),
+									) as Record<
+										keyof typeof value.targets,
+										Output<{ arn: string; targetId: string }>
+									>,
+							) as Record<
+								keyof typeof value.targets,
+								Output<{ arn: string; targetId: string }>
+							>,
 						]).apply(([ruleArn, ruleName, targets]) => ({
 							rule: {
 								arn: ruleArn,
@@ -1197,8 +1241,8 @@ export = async () => {
 			fourtwo_panel_http_codepipeline,
 			fourtwo_panel_http_eventbridge,
 		]) => {
-			return {
-				_FOURTWO_PANEL_HTTP_IMPORTS: {
+			const exported = {
+				fourtwo_panel_http_imports: {
 					fourtwo: {
 						codestar: __codestar,
 						datalayer: __datalayer,
@@ -1211,7 +1255,22 @@ export = async () => {
 				fourtwo_panel_http_codebuild,
 				fourtwo_panel_http_codepipeline,
 				fourtwo_panel_http_eventbridge,
+			} satisfies z.infer<typeof FourtwoPanelHttpStackExportsZod> & {
+				fourtwo_panel_http_imports: {
+					fourtwo: {
+						codestar: typeof __codestar;
+						datalayer: typeof __datalayer;
+					};
+				};
 			};
+			const validate = FourtwoPanelHttpStackExportsZod.safeParse(exported);
+			if (!validate.success) {
+				process.stderr.write(
+					`Validation failed: ${JSON.stringify(validate.error, null, 2)}`,
+				);
+			}
+
+			return exported;
 		},
 	);
 };

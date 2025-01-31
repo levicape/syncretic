@@ -1,11 +1,14 @@
-import { reactRouter } from "@react-router/dev/vite";
+import { defineConfig } from 'vite'
 import tailwindcss from "@tailwindcss/vite";
-import { defineConfig } from "vite";
-import tsconfigPaths from "vite-tsconfig-paths";
+import react from '@vitejs/plugin-react-swc'
 
+// https://vite.dev/config/
 export default defineConfig({
+  build: {
+    outDir: 'output/unknown',
+  },
   plugins: [
-	tailwindcss(),
-	reactRouter(), 
-	tsconfigPaths()
-]});
+    react(),
+  	tailwindcss(),
+  ],
+})

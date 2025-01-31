@@ -8,24 +8,36 @@
   },
   "config": {
     "packagemanager": "pnpm",
-    "packageexecutor": "pnpm exec",
+    "packagebin": "corepack pnpm",
+    "packageexecutor": "corepack pnpm exec",
     "binpath": "./src/cli/bin.mts",
-    "outpaths": "./module",
+    "outpaths": "./module **/*/commonjs **/*/module **/*/output",
     "clipath": "./module/cli/bin.mjs",
     "lintpaths": "./src ./canary ./iac"
   },
   "dependencies": {
+    "@aws-lambda-powertools/logger": "catalog:log-awspowertools",
     "@aws/codecatalyst-workflows-sdk": "catalog:aws",
+    "@effect/platform": "catalog:effect",
+    "@effect/platform-node": "catalog:effect",
+    "@loglayer/transport-aws-lambda-powertools": "catalog:log-loglayer",
+    "@loglayer/transport-consola": "catalog:log-loglayer",
     "@stricli/core": "catalog:cli",
     "aws4fetch": "catalog:aws",
     "better-sqlite3": "catalog:database-sqlite",
+    "consola": "catalog:log-consola",
+    "effect": "catalog:effect",
     "enquirer": "catalog:cli",
     "fast-xml-parser": "catalog:core",
     "ini": "catalog:core",
     "js-yaml": "catalog:core",
     "knex": "catalog:database-sql",
+    "loglayer": "catalog:log-loglayer",
     "pretty-ms": "catalog:core",
-    "verror": "catalog:core",
+    "serialize-error": "catalog:error",
+    "std-env": "catalog:core",
+    "ulidx": "catalog:id",
+    "verror": "catalog:error",
     "yaml": "catalog:core",
     "zod": "catalog:core"
   },
@@ -92,6 +104,18 @@
   "license": "AGPL-3.0-only",
   "nx": {
     "targets": {
+      "build:module": {
+        "dependsOn": [
+          "build:tsc"
+        ]
+      },
+      "dx:lint": {
+        "dependsOn": [
+          "nx:compile",
+          "lint:format",
+          "package:format"
+        ]
+      },
       "dx:precommit": {
         "dependsOn": [
           "dx:prepublish",
@@ -102,8 +126,8 @@
         "dependsOn": [
           "@levicape/fourtwo-builders:dx:precommit",
           "@levicape/fourtwo-pulumi:dx:precommit",
+          "@levicape/fourtwo-panel-http:dx:precommit",
           "@levicape/fourtwo-panel-ui:dx:precommit",
-          "@levicape/fourtwo-panel-io:dx:precommit",
           "@levicape/fourtwo-iac-stacks:dx:precommit"
         ]
       },
@@ -120,23 +144,23 @@
       },
       "nx:compile": {
         "dependsOn": [
-          "build:tsc",
+          "build:module",
+          "@levicape/fourtwo-builders:nx:compile",
           "@levicape/fourtwo-canary:nx:compile",
           "@levicape/fourtwo-pulumi:nx:compile",
-          "@levicape/fourtwo-panel-ui:nx:compile",
-          "@levicape/fourtwo-panel-io:nx:compile",
-          "@levicape/fourtwo-builders:nx:compile"
+          "@levicape/fourtwo-panel-http:nx:compile",
+          "@levicape/fourtwo-panel-ui:nx:compile"
+        ]
+      },
+      "nx:sync": {
+        "dependsOn": [
+          "iac-workflows:nx:sync"
         ]
       },
       "nx:test": {
         "dependsOn": [
           "@levicape/fourtwo-canary:nx:test",
           "test:module"
-        ]
-      },
-      "nx:sync": {
-        "dependsOn": [
-          "iac-workflows:nx:sync"
         ]
       }
     }
@@ -162,21 +186,21 @@
   "scripts": {
     "build": "$npm_package_config_packageexecutor nx nx:compile",
     "build:tsc": "$npm_package_config_packageexecutor tsc",
-    "clean": "$npm_package_config_packageexecutor nx nx:clean",
-    "clean:module": "rm -rf $npm_package_config_outpaths || true",
+    "clean": "$npm_package_config_packageexecutor nx nx:clean --verbose",
+    "clean:module": "rm -rf $npm_package_config_outpaths",
     "clean:packages": "rm -rf **/node_modules && $npm_package_config_packageexecutor nx reset",
     "dx:cli:bin": "NODE_NO_WARNINGS=1 $npm_package_config_packageexecutor tsx $npm_package_config_binpath",
     "dx:cli:dev": "node --inspect-brk --import tsx $npm_package_config_binpath",
     "dx:cli:mjs": "NODE_NO_WARNINGS=1 node $npm_package_config_clipath",
-    "dx:commit": "$npm_package_config_packagemanager run clean:packages && $npm_package_config_packageexecutor nx dx:precommit --no-cloud --verbose",
-    "dx:lint": "$npm_package_config_packageexecutor nx nx:compile && $npm_package_config_packageexecutor nx lint:format && $npm_package_config_packageexecutor nx package:format",
+    "dx:commit": "$npm_package_config_packagebin run clean:packages && $npm_package_config_packageexecutor nx dx:precommit --no-cloud --verbose",
+    "dx:image": "$npm_package_config_packageexecutor nx pack:build iac-images-application --verbose",
     "dx:precommit": "$npm_package_config_packageexecutor nx dx:precommit:pre && $npm_package_config_packageexecutor nx dx:sync && $npm_package_config_packageexecutor nx package:deps",
     "dx:precommit:pre": "echo \"Starting precommit dx. This will recompile iac files and check package.json dependencies.\"",
-    "dx:prepublish": "$npm_package_config_packageexecutor nx dx:prepublish:pre && $npm_package_config_packageexecutor nx dx:lint && $npm_package_config_packageexecutor nx prepublish",
-    "dx:prepublish:pre": "echo \"Starting prepublish dx. This will compile the package, lint it, format package.json and verify all exports are valid. \"",
-    "dx:sync": "$npm_package_config_packageexecutor nx dx:sync:pre && $npm_package_config_packageexecutor nx nx:sync --verbose",
+    "dx:prepublish": "$npm_package_config_packageexecutor nx dx:lint && $npm_package_config_packageexecutor nx prepublish",
+    "dx:prepublish:pre": "echo \"Starting prepublish dx. This will compile packages, run dx:lint and format package.json and verify all exports are valid. \"",
+    "dx:sync": "$npm_package_config_packageexecutor nx dx:sync:pre && $npm_package_config_packageexecutor nx nx:sync",
     "dx:sync:pre": "echo \"Starting sync dx. This will generate all the workflows and sync them with the repository.\"",
-    "heroku-prebuild": "$npm_package_config_packagemanager rebuild || true",
+    "dx:test": "$npm_package_config_packagebin run clean && $npm_package_config_packagebin run build && $npm_package_config_packagebin run test",
     "lint": "$npm_package_config_packageexecutor nx exec -- biome check $npm_package_config_lintpaths",
     "lint:format": "$npm_package_config_packageexecutor nx exec -- biome check --write $npm_package_config_lintpaths",
     "lint:unsafe": "$npm_package_config_packageexecutor nx exec -- biome check --write --unsafe $npm_package_config_lintpaths",
@@ -184,13 +208,13 @@
     "package:fix": "$npm_package_config_packageexecutor nx exec -- syncpack fix-mismatches",
     "package:format": "$npm_package_config_packageexecutor nx exec -- syncpack format",
     "package:update": "$npm_package_config_packageexecutor nx exec -- syncpack update",
-    "postclean:packages": "$npm_package_config_packagemanager install --ignore-scripts",
+    "postclean:packages": "$npm_package_config_packagebin install --ignore-scripts --prefer-offline && sleep 2s",
     "precommit": "$npm_package_config_packageexecutor nx dx:prepublish --no-cloud --verbose",
     "predx:lint": "$npm_package_config_packageexecutor nx clean",
     "prelint": "$npm_package_config_packageexecutor nx exec -- biome format $npm_package_config_lintpaths",
-    "prepublish": "$npm_package_config_packageexecutor publint --strict",
-    "test": "$npm_package_config_packageexecutor nx nx:test",
-    "test:module": "echo 'node --test --test-reporter junit \"module/**/*.test.js\"'",
+    "prepublish": "$npm_package_config_packageexecutor nx exec -- publint --strict",
+    "test": "$npm_package_config_packageexecutor nx nx:test --verbose",
+    "test:module": "echo 'node --test  \"module/**/*.test.js\"'",
     "xx:workflow": "$npm_package_config_packageexecutor nx run-many -t build,lint,test --parallel=1 --verbose --no-cloud"
   },
   "type": "module",

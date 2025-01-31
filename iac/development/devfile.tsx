@@ -10,7 +10,7 @@ import {
 	DevfileX,
 } from "@levicape/fourtwo/x/devfile";
 
-const NODE_VERSION = "23";
+const NODE_VERSION = "22";
 const MAKE_DEPENDENCIES = [
 	"g++",
 	"make",

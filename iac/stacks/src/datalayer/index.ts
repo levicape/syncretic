@@ -7,6 +7,10 @@ import { Role } from "@pulumi/aws/iam/role";
 import { PrivateDnsNamespace } from "@pulumi/aws/servicediscovery/privateDnsNamespace";
 import { Vpc } from "@pulumi/awsx/ec2/vpc";
 import { all, getStack } from "@pulumi/pulumi";
+import type { z } from "zod";
+import { FourtwoDatalayerStackExportsZod } from "./exports";
+
+const PACKAGE_NAME = "@levicape/fourtwo";
 
 export = async () => {
 	const context = await Context.fromConfig();
@@ -158,10 +162,12 @@ export = async () => {
 
 	const cloudmap = (({ vpc }) => {
 		const cloudMapPrivateDnsNamespace = new PrivateDnsNamespace(
-			_(`cloudmap-namespace`),
+			_(`cloudmap-ns`),
 			{
-				name: _("cloudmap-namespace"),
-				description: `(${getStack()}) Service mesh DNS namespace`,
+				name: all([vpc.vpcId, efs.filesystem.id]).apply(([vpcid, efsid]) =>
+					_(`cloudmap-ns-${vpcid.slice(-4)}-${efsid.slice(-4)}`),
+				),
+				description: `(${getStack()}) Service mesh DNS namespace for ${PACKAGE_NAME}`,
 				vpc: vpc.vpcId,
 			},
 		);
@@ -247,8 +253,8 @@ export = async () => {
 			cloudmapNamespaceId,
 			cloudmapNamespaceHostedZone,
 		]) => {
-			return {
-				_FOURTWO_DATALAYER_PROPS: jsonProps,
+			const exported = {
+				fourtwo_datalayer_props: JSON.parse(jsonProps),
 				fourtwo_datalayer_iam: {
 					roles: {
 						lambda: {
@@ -286,10 +292,15 @@ export = async () => {
 						hostedZone: cloudmapNamespaceHostedZone,
 					},
 				},
-				// sqs
-				// dynamodb
-				// streams
-			};
+			} satisfies z.infer<typeof FourtwoDatalayerStackExportsZod>;
+
+			const validate = FourtwoDatalayerStackExportsZod.safeParse(exported);
+			if (!validate.success) {
+				process.stderr.write(
+					`Validation failed: ${JSON.stringify(validate.error, null, 2)}`,
+				);
+			}
+			return exported;
 		},
 	);
 };

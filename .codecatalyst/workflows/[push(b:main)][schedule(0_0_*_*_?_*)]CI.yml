@@ -24,7 +24,7 @@ Actions:
         Caching:
           FileCaching:
             a64_nodejs:
-              Path: /layers/heroku_nodejs-pnpm-install
+              Path: /cc/cache/nodejs
               RestoreKeys:
                 - nodejs
             a64_docker:
@@ -44,7 +44,7 @@ Actions:
             - WorkflowSource
           Variables:
             - Name: COREPACK_HOME
-              Value: /layers/heroku_nodejs-pnpm-install/corepack
+              Value: /cc/cache/nodejs/corepack
             - Name: PNPM_VERSION
               Value: pnpm@9
             - Name: NODEJS_VERSION
@@ -56,7 +56,7 @@ Actions:
             - Name: NPM_REGISTRY_HOST
               Value: npm.pkg.github.com
             - Name: NX_CACHE_DIRECTORY
-              Value: /layers/heroku_nodejs-pnpm-install/nxcache
+              Value: /cc/cache/nodejs/nxcache
             - Name: AWS_REGION
               Value: us-west-2
             - Name: FRONTEND_HOSTNAME
@@ -84,31 +84,31 @@ Actions:
             Registry: CODECATALYST
             Image: CodeCatalystLinux_Arm64:2024_03
           Steps:
-            - Run: mkdir -p /layers/heroku_nodejs-pnpm-install
+            - Run: mkdir -p /cc/cache/nodejs
             - Run: mkdir -p /cc/cache/docker
             - Run: mkdir -p /cc/cache/pulumi
-            - Run: mkdir -p /layers/heroku_nodejs-pnpm-install/corepack
-            - Run: mkdir -p /layers/heroku_nodejs-pnpm-install/npm
-            - Run: mkdir -p /layers/heroku_nodejs-pnpm-install/pnpmcache
-            - Run: mkdir -p /layers/heroku_nodejs-pnpm-install/addressable
-            - Run: mkdir -p /layers/heroku_nodejs-pnpm-install/pnpmglobal
-            - Run: mkdir -p /layers/heroku_nodejs-pnpm-install/nxcache
+            - Run: mkdir -p /cc/cache/nodejs/corepack
+            - Run: mkdir -p /cc/cache/nodejs/npm
+            - Run: mkdir -p /cc/cache/nodejs/pnpmcache
+            - Run: mkdir -p /cc/cache/nodejs/addressable
+            - Run: mkdir -p /cc/cache/nodejs/pnpmglobal
+            - Run: mkdir -p /cc/cache/nodejs/nxcache
             - Run: mkdir -p /cc/cache/docker/images
             - Run: npm config set @levicape:registry=$NPM_REGISTRY_PROTOCOL://$NPM_REGISTRY_HOST --location project
             - Run: npm config set //$NPM_REGISTRY_HOST/:_authToken=$NODE_AUTH_TOKEN --location project
-            - Run: sudo npm config set prefix=/layers/heroku_nodejs-pnpm-install/npm
+            - Run: sudo npm config set prefix=/cc/cache/nodejs/npm
             - Run: sudo corepack -g install $PNPM_VERSION
             - Run: sudo corepack enable pnpm
-            - Run: sudo pnpm config set cache-dir /layers/heroku_nodejs-pnpm-install/pnpmcache
-            - Run: sudo pnpm config set global-dir /layers/heroku_nodejs-pnpm-install/pnpmglobal
-            - Run: sudo pnpm config set store-dir /layers/heroku_nodejs-pnpm-install/addressable
+            - Run: sudo pnpm config set cache-dir /cc/cache/nodejs/pnpmcache
+            - Run: sudo pnpm config set global-dir /cc/cache/nodejs/pnpmglobal
+            - Run: sudo pnpm config set store-dir /cc/cache/nodejs/addressable
             - Run: sudo pnpx n $NODEJS_VERSION
-            - Run: npm config set prefix=/layers/heroku_nodejs-pnpm-install/npm
+            - Run: npm config set prefix=/cc/cache/nodejs/npm
             - Run: corepack -g install $PNPM_VERSION
             - Run: corepack enable pnpm
-            - Run: pnpm config set cache-dir /layers/heroku_nodejs-pnpm-install/pnpmcache
-            - Run: pnpm config set global-dir /layers/heroku_nodejs-pnpm-install/pnpmglobal
-            - Run: pnpm config set store-dir /layers/heroku_nodejs-pnpm-install/addressable
+            - Run: pnpm config set cache-dir /cc/cache/nodejs/pnpmcache
+            - Run: pnpm config set global-dir /cc/cache/nodejs/pnpmglobal
+            - Run: pnpm config set store-dir /cc/cache/nodejs/addressable
             - Run: pnpx n $NODEJS_VERSION
             - Run: sudo npm root -g
             - Run: pnpm install --ignore-scripts
@@ -116,18 +116,18 @@ Actions:
             - Run: pnpm list
             - Run: du -sh node_modules || true
             - Run: "ls -la node_modules || true "
-            - Run: du -sh /layers/heroku_nodejs-pnpm-install/corepack || true
-            - Run: "ls -la /layers/heroku_nodejs-pnpm-install/corepack || true "
-            - Run: du -sh /layers/heroku_nodejs-pnpm-install/npm || true
-            - Run: "ls -la /layers/heroku_nodejs-pnpm-install/npm || true "
-            - Run: du -sh /layers/heroku_nodejs-pnpm-install/pnpmcache || true
-            - Run: "ls -la /layers/heroku_nodejs-pnpm-install/pnpmcache || true "
-            - Run: du -sh /layers/heroku_nodejs-pnpm-install/addressable || true
-            - Run: "ls -la /layers/heroku_nodejs-pnpm-install/addressable || true "
-            - Run: du -sh /layers/heroku_nodejs-pnpm-install/pnpmglobal || true
-            - Run: "ls -la /layers/heroku_nodejs-pnpm-install/pnpmglobal || true "
-            - Run: du -sh /layers/heroku_nodejs-pnpm-install/nxcache || true
-            - Run: "ls -la /layers/heroku_nodejs-pnpm-install/nxcache || true "
+            - Run: du -sh /cc/cache/nodejs/corepack || true
+            - Run: "ls -la /cc/cache/nodejs/corepack || true "
+            - Run: du -sh /cc/cache/nodejs/npm || true
+            - Run: "ls -la /cc/cache/nodejs/npm || true "
+            - Run: du -sh /cc/cache/nodejs/pnpmcache || true
+            - Run: "ls -la /cc/cache/nodejs/pnpmcache || true "
+            - Run: du -sh /cc/cache/nodejs/addressable || true
+            - Run: "ls -la /cc/cache/nodejs/addressable || true "
+            - Run: du -sh /cc/cache/nodejs/pnpmglobal || true
+            - Run: "ls -la /cc/cache/nodejs/pnpmglobal || true "
+            - Run: du -sh /cc/cache/nodejs/nxcache || true
+            - Run: "ls -la /cc/cache/nodejs/nxcache || true "
             - Run: curl -fsSL https://pyenv.run | bash || true
             - Run: '[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"'
             - Run: which pyenv || true
@@ -161,7 +161,7 @@ Actions:
         Caching:
           FileCaching:
             a64_nodejs:
-              Path: /layers/heroku_nodejs-pnpm-install
+              Path: /cc/cache/nodejs
               RestoreKeys:
                 - nodejs
             a64_python:
@@ -173,7 +173,7 @@ Actions:
             - WorkflowSource
           Variables:
             - Name: COREPACK_HOME
-              Value: /layers/heroku_nodejs-pnpm-install/corepack
+              Value: /cc/cache/nodejs/corepack
             - Name: PNPM_VERSION
               Value: pnpm@9
             - Name: NODEJS_VERSION
@@ -185,7 +185,7 @@ Actions:
             - Name: NPM_REGISTRY_HOST
               Value: npm.pkg.github.com
             - Name: NX_CACHE_DIRECTORY
-              Value: /layers/heroku_nodejs-pnpm-install/nxcache
+              Value: /cc/cache/nodejs/nxcache
             - Name: PYTHON
               Value: /cc/cache/pyenv/shims/python3
             - Name: PYENV_ROOT
@@ -203,19 +203,19 @@ Actions:
           Steps:
             - Run: npm config set @levicape:registry=$NPM_REGISTRY_PROTOCOL://$NPM_REGISTRY_HOST --location project
             - Run: npm config set //$NPM_REGISTRY_HOST/:_authToken=$NODE_AUTH_TOKEN --location project
-            - Run: sudo npm config set prefix=/layers/heroku_nodejs-pnpm-install/npm
+            - Run: sudo npm config set prefix=/cc/cache/nodejs/npm
             - Run: sudo corepack -g install $PNPM_VERSION
             - Run: sudo corepack enable pnpm
-            - Run: sudo pnpm config set cache-dir /layers/heroku_nodejs-pnpm-install/pnpmcache
-            - Run: sudo pnpm config set global-dir /layers/heroku_nodejs-pnpm-install/pnpmglobal
-            - Run: sudo pnpm config set store-dir /layers/heroku_nodejs-pnpm-install/addressable
+            - Run: sudo pnpm config set cache-dir /cc/cache/nodejs/pnpmcache
+            - Run: sudo pnpm config set global-dir /cc/cache/nodejs/pnpmglobal
+            - Run: sudo pnpm config set store-dir /cc/cache/nodejs/addressable
             - Run: sudo pnpx n $NODEJS_VERSION
-            - Run: npm config set prefix=/layers/heroku_nodejs-pnpm-install/npm
+            - Run: npm config set prefix=/cc/cache/nodejs/npm
             - Run: corepack -g install $PNPM_VERSION
             - Run: corepack enable pnpm
-            - Run: pnpm config set cache-dir /layers/heroku_nodejs-pnpm-install/pnpmcache
-            - Run: pnpm config set global-dir /layers/heroku_nodejs-pnpm-install/pnpmglobal
-            - Run: pnpm config set store-dir /layers/heroku_nodejs-pnpm-install/addressable
+            - Run: pnpm config set cache-dir /cc/cache/nodejs/pnpmcache
+            - Run: pnpm config set global-dir /cc/cache/nodejs/pnpmglobal
+            - Run: pnpm config set store-dir /cc/cache/nodejs/addressable
             - Run: pnpx n $NODEJS_VERSION
             - Run: pnpm install --prefer-offline --ignore-scripts
             - Run: python3 -c "print('ok')" || true
@@ -235,7 +235,7 @@ Actions:
         Caching:
           FileCaching:
             a64_nodejs:
-              Path: /layers/heroku_nodejs-pnpm-install
+              Path: /cc/cache/nodejs
               RestoreKeys:
                 - nodejs
             a64_docker:
@@ -251,7 +251,7 @@ Actions:
             - WorkflowSource
           Variables:
             - Name: COREPACK_HOME
-              Value: /layers/heroku_nodejs-pnpm-install/corepack
+              Value: /cc/cache/nodejs/corepack
             - Name: PNPM_VERSION
               Value: pnpm@9
             - Name: NODEJS_VERSION
@@ -263,7 +263,7 @@ Actions:
             - Name: NPM_REGISTRY_HOST
               Value: npm.pkg.github.com
             - Name: NX_CACHE_DIRECTORY
-              Value: /layers/heroku_nodejs-pnpm-install/nxcache
+              Value: /cc/cache/nodejs/nxcache
             - Name: PYTHON
               Value: /cc/cache/pyenv/shims/python3
             - Name: PYENV_ROOT
@@ -287,19 +287,19 @@ Actions:
             - Run: docker load --input /cc/cache/docker/images/launcher.tar.gz || true
             - Run: npm config set @levicape:registry=$NPM_REGISTRY_PROTOCOL://$NPM_REGISTRY_HOST --location project
             - Run: npm config set //$NPM_REGISTRY_HOST/:_authToken=$NODE_AUTH_TOKEN --location project
-            - Run: sudo npm config set prefix=/layers/heroku_nodejs-pnpm-install/npm
+            - Run: sudo npm config set prefix=/cc/cache/nodejs/npm
             - Run: sudo corepack -g install $PNPM_VERSION
             - Run: sudo corepack enable pnpm
-            - Run: sudo pnpm config set cache-dir /layers/heroku_nodejs-pnpm-install/pnpmcache
-            - Run: sudo pnpm config set global-dir /layers/heroku_nodejs-pnpm-install/pnpmglobal
-            - Run: sudo pnpm config set store-dir /layers/heroku_nodejs-pnpm-install/addressable
+            - Run: sudo pnpm config set cache-dir /cc/cache/nodejs/pnpmcache
+            - Run: sudo pnpm config set global-dir /cc/cache/nodejs/pnpmglobal
+            - Run: sudo pnpm config set store-dir /cc/cache/nodejs/addressable
             - Run: sudo pnpx n $NODEJS_VERSION
-            - Run: npm config set prefix=/layers/heroku_nodejs-pnpm-install/npm
+            - Run: npm config set prefix=/cc/cache/nodejs/npm
             - Run: corepack -g install $PNPM_VERSION
             - Run: corepack enable pnpm
-            - Run: pnpm config set cache-dir /layers/heroku_nodejs-pnpm-install/pnpmcache
-            - Run: pnpm config set global-dir /layers/heroku_nodejs-pnpm-install/pnpmglobal
-            - Run: pnpm config set store-dir /layers/heroku_nodejs-pnpm-install/addressable
+            - Run: pnpm config set cache-dir /cc/cache/nodejs/pnpmcache
+            - Run: pnpm config set global-dir /cc/cache/nodejs/pnpmglobal
+            - Run: pnpm config set store-dir /cc/cache/nodejs/addressable
             - Run: pnpx n $NODEJS_VERSION
             - Run: pnpm install --prefer-offline --ignore-scripts
             - Run: sudo yum install -y make cmake zip unzip automake autoconf || true
@@ -324,7 +324,7 @@ Actions:
         Caching:
           FileCaching:
             a64_nodejs:
-              Path: /layers/heroku_nodejs-pnpm-install
+              Path: /cc/cache/nodejs
               RestoreKeys:
                 - nodejs
             a64_pulumi:
@@ -336,7 +336,7 @@ Actions:
             - WorkflowSource
           Variables:
             - Name: COREPACK_HOME
-              Value: /layers/heroku_nodejs-pnpm-install/corepack
+              Value: /cc/cache/nodejs/corepack
             - Name: PNPM_VERSION
               Value: pnpm@9
             - Name: NODEJS_VERSION
@@ -348,7 +348,7 @@ Actions:
             - Name: NPM_REGISTRY_HOST
               Value: npm.pkg.github.com
             - Name: NX_CACHE_DIRECTORY
-              Value: /layers/heroku_nodejs-pnpm-install/nxcache
+              Value: /cc/cache/nodejs/nxcache
             - Name: AWS_REGION
               Value: us-west-2
             - Name: FRONTEND_HOSTNAME
@@ -377,19 +377,19 @@ Actions:
           Steps:
             - Run: npm config set @levicape:registry=$NPM_REGISTRY_PROTOCOL://$NPM_REGISTRY_HOST --location project
             - Run: npm config set //$NPM_REGISTRY_HOST/:_authToken=$NODE_AUTH_TOKEN --location project
-            - Run: sudo npm config set prefix=/layers/heroku_nodejs-pnpm-install/npm
+            - Run: sudo npm config set prefix=/cc/cache/nodejs/npm
             - Run: sudo corepack -g install $PNPM_VERSION
             - Run: sudo corepack enable pnpm
-            - Run: sudo pnpm config set cache-dir /layers/heroku_nodejs-pnpm-install/pnpmcache
-            - Run: sudo pnpm config set global-dir /layers/heroku_nodejs-pnpm-install/pnpmglobal
-            - Run: sudo pnpm config set store-dir /layers/heroku_nodejs-pnpm-install/addressable
+            - Run: sudo pnpm config set cache-dir /cc/cache/nodejs/pnpmcache
+            - Run: sudo pnpm config set global-dir /cc/cache/nodejs/pnpmglobal
+            - Run: sudo pnpm config set store-dir /cc/cache/nodejs/addressable
             - Run: sudo pnpx n $NODEJS_VERSION
-            - Run: npm config set prefix=/layers/heroku_nodejs-pnpm-install/npm
+            - Run: npm config set prefix=/cc/cache/nodejs/npm
             - Run: corepack -g install $PNPM_VERSION
             - Run: corepack enable pnpm
-            - Run: pnpm config set cache-dir /layers/heroku_nodejs-pnpm-install/pnpmcache
-            - Run: pnpm config set global-dir /layers/heroku_nodejs-pnpm-install/pnpmglobal
-            - Run: pnpm config set store-dir /layers/heroku_nodejs-pnpm-install/addressable
+            - Run: pnpm config set cache-dir /cc/cache/nodejs/pnpmcache
+            - Run: pnpm config set global-dir /cc/cache/nodejs/pnpmglobal
+            - Run: pnpm config set store-dir /cc/cache/nodejs/addressable
             - Run: pnpx n $NODEJS_VERSION
             - Run: pnpm install --prefer-offline --ignore-scripts
             - Run: pnpm build
@@ -472,7 +472,7 @@ Actions:
         Caching:
           FileCaching:
             a64_nodejs:
-              Path: /layers/heroku_nodejs-pnpm-install
+              Path: /cc/cache/nodejs
               RestoreKeys:
                 - nodejs
         Inputs:
@@ -480,7 +480,7 @@ Actions:
             - WorkflowSource
           Variables:
             - Name: COREPACK_HOME
-              Value: /layers/heroku_nodejs-pnpm-install/corepack
+              Value: /cc/cache/nodejs/corepack
             - Name: PNPM_VERSION
               Value: pnpm@9
             - Name: NODEJS_VERSION
@@ -492,7 +492,7 @@ Actions:
             - Name: NPM_REGISTRY_HOST
               Value: npm.pkg.github.com
             - Name: NX_CACHE_DIRECTORY
-              Value: /layers/heroku_nodejs-pnpm-install/nxcache
+              Value: /cc/cache/nodejs/nxcache
             - Name: APPLICATION_IMAGE_NAME
               Value: fourtwo
             - Name: AWS_REGION
@@ -509,19 +509,19 @@ Actions:
           Steps:
             - Run: npm config set @levicape:registry=$NPM_REGISTRY_PROTOCOL://$NPM_REGISTRY_HOST --location project
             - Run: npm config set //$NPM_REGISTRY_HOST/:_authToken=$NODE_AUTH_TOKEN --location project
-            - Run: sudo npm config set prefix=/layers/heroku_nodejs-pnpm-install/npm
+            - Run: sudo npm config set prefix=/cc/cache/nodejs/npm
             - Run: sudo corepack -g install $PNPM_VERSION
             - Run: sudo corepack enable pnpm
-            - Run: sudo pnpm config set cache-dir /layers/heroku_nodejs-pnpm-install/pnpmcache
-            - Run: sudo pnpm config set global-dir /layers/heroku_nodejs-pnpm-install/pnpmglobal
-            - Run: sudo pnpm config set store-dir /layers/heroku_nodejs-pnpm-install/addressable
+            - Run: sudo pnpm config set cache-dir /cc/cache/nodejs/pnpmcache
+            - Run: sudo pnpm config set global-dir /cc/cache/nodejs/pnpmglobal
+            - Run: sudo pnpm config set store-dir /cc/cache/nodejs/addressable
             - Run: sudo pnpx n $NODEJS_VERSION
-            - Run: npm config set prefix=/layers/heroku_nodejs-pnpm-install/npm
+            - Run: npm config set prefix=/cc/cache/nodejs/npm
             - Run: corepack -g install $PNPM_VERSION
             - Run: corepack enable pnpm
-            - Run: pnpm config set cache-dir /layers/heroku_nodejs-pnpm-install/pnpmcache
-            - Run: pnpm config set global-dir /layers/heroku_nodejs-pnpm-install/pnpmglobal
-            - Run: pnpm config set store-dir /layers/heroku_nodejs-pnpm-install/addressable
+            - Run: pnpm config set cache-dir /cc/cache/nodejs/pnpmcache
+            - Run: pnpm config set global-dir /cc/cache/nodejs/pnpmglobal
+            - Run: pnpm config set store-dir /cc/cache/nodejs/addressable
             - Run: pnpx n $NODEJS_VERSION
             - Run: pnpm install --prefer-offline --ignore-scripts
             - Run: ls -la $CATALYST_SOURCE_DIR_images/_images
@@ -560,7 +560,7 @@ Actions:
 ########################################
 #**:_$~- {"$$":"head","filename":"[push(b:main)][schedule(0_0_*_*_?_*)]CI.yml","source":"iac/workflows/codecatalyst/push/CI.js"}
 #**:_$~- {"$$":"script","generator":"codegen/codecatalyst/GenerateCodeCatalystWorkflow.mts"}
-#**:_$~- {"$$":"body","hashed":"faa8bc499e3a1ddff637f97e4bd6c046d82a8c43993314a42c922e68a0f5f05e"}
-#**:_$~- {"$$":"footer","started":"2025-01-27T17:48:09.559Z","now":"2025-01-27T17:48:09.572Z","elapsed":"13ms"}
+#**:_$~- {"$$":"body","hashed":"52f251f94e99d998b3dae3c3e7b1226c7c9416812ac1f64c0634bdaac488e455"}
+#**:_$~- {"$$":"footer","started":"2025-01-31T15:19:21.907Z","now":"2025-01-31T15:19:21.924Z","elapsed":"17ms"}
 # END OF GENERATED FILE
 

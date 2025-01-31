@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const FourtwoDatalayerStackExportsZod = z.object({
-	_FOURTWO_DATALAYER_PROPS: z.object({
+	fourtwo_datalayer_props: z.object({
 		lambda: z.object({
 			role: z.object({
 				arn: z.string(),
