@@ -3,7 +3,7 @@
   "version": "0.0.0-local.0",
   "config": {
     "packagemanager": "pnpm",
-    "packageexecutor": "corepack pnpm exec",
+    "packageexecutor": "pnpm exec",
     "lintpaths": "./src"
   },
   "dependencies": {

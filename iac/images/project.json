@@ -5,13 +5,17 @@
 			"executor": "nx:run-commands",
 			"options": {
 				"env": {
+					"DOCKER_CACHE": "/cc/cache/docker",
+					"DOCKER_DNS": "8.8.8.8",
+					"DOCKER_NETWORK": "host",
 					"DOCKER_SOCKET": "/var/run/docker.sock:/var/run/docker.sock",
 					"DOCKER_WORKSPACE": "/workspace",
-					"PAKETO_IMAGE": "buildpacksio/pack"
+					"PAKETO_IMAGE": "buildpacksio/pack",
+					"PAKETO_VOLUME": "globalvolume"
 				},
 				"forwardAllArgs": true,
 				"commands": [
-					"docker run --rm --network host -v $DOCKER_SOCKET -v $PWD:$DOCKER_WORKSPACE -w $DOCKER_WORKSPACE -e PACK_VOLUME_KEY=packvol --dns 8.8.8.8 $PAKETO_IMAGE"
+					"docker run --rm --network $DOCKER_NETWORK -v $DOCKER_SOCKET -v $PWD:$DOCKER_WORKSPACE -v $DOCKER_CACHE:$DOCKER_CACHE -w $DOCKER_WORKSPACE -e PACK_VOLUME_KEY=$PAKETO_VOLUME -e COREPACK_INTEGRITY_KEYS=0 --dns $DOCKER_DNS $DOCKER_RUN_ARGS $PAKETO_IMAGE"
 				]
 			}
 		},

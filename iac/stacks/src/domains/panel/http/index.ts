@@ -38,9 +38,9 @@ import { FourtwoCodestarStackExportsZod } from "../../../codestar/exports";
 import { FourtwoDatalayerStackExportsZod } from "../../../datalayer/exports";
 import { FourtwoPanelHttpStackExportsZod } from "./exports";
 
-const PACKAGE_NAME = "@levicape/fourtwo-panel-http" as const;
-const ARTIFACT_ROOT = "fourtwo-panel-http" as const;
-const HANDLER = "fourtwo-panel-http/module/lambda/HttpHandler.handler";
+const PACKAGE_NAME = "@levicape/fourtwo-panel-server" as const;
+const ARTIFACT_ROOT = "fourtwo-panel-server" as const;
+const HANDLER = "fourtwo-panel-server/module/lambda/HttpHandler.handler";
 // TODO: CI.tsx stacks include environment
 const LLRT_ARCH: string | undefined = process.env["LLRT_ARCH"]; //"lambda-arm64-full-sdk";
 
@@ -535,8 +535,6 @@ export = async () => {
 							`docker cp $(cat .container):/tmp/${ARTIFACT_ROOT} $CODEBUILD_SRC_DIR/.extractimage`,
 							"ls -al $CODEBUILD_SRC_DIR/.extractimage || true",
 							`ls -al $CODEBUILD_SRC_DIR/.extractimage/${ARTIFACT_ROOT} || true`,
-							"corepack -g install pnpm@9 || true",
-							`pnpm -C $CODEBUILD_SRC_DIR/.extractimage/${ARTIFACT_ROOT} install --offline --prod --ignore-scripts --node-linker=hoisted || true`,
 							`ls -al $CODEBUILD_SRC_DIR/.extractimage/${ARTIFACT_ROOT}/node_modules || true`,
 							// bootstrap binary
 							...(LLRT_ARCH

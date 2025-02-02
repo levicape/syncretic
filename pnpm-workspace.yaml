@@ -7,8 +7,9 @@ packages:
   - 'protocols/*'
 
 catalog:
-  "@levicape/paloma": "0.1.1-main.3"
+  "@levicape/paloma": "0.2.0-main.6"
   "@levicape/spork": "0.3.0-main.4"
+
 
 
 
@@ -67,6 +68,7 @@ catalogs:
   database-postgres:
     "pg": "^8.13.1"
   database-sql:
+    "db0": "^0.2.3"
     "knex": "^3.1.0"
     "slonik": "^46.4.0"
   database-sqlite:
@@ -121,6 +123,10 @@ catalogs:
     "nx": "^20.3.2"
     "publint": "^0.3.2"
     "syncpack": "^13.0.0"
+  parse-json:
+    "destr": "^2.0.3"
+  parse-path:
+    "pathe": "^2.0.2"
   protobuf:
     "@bufbuild/protobuf": "^2.2.3"
     "@bufbuild/buf": "^1.44.0"
@@ -202,14 +208,14 @@ catalogs:
     "@react-router/fs-routes": "^7.1.3"
     "react-router": "^7.1.3"
   web-style:
-    "@tailwindcss/vite": "^4.0.0"
     "autoprefixer": "^10.4.20"
     "clsx": "^2.1.1"
     "postcss": "^8.5.1"
     "sass-embedded": "^1.83.4"
+    "@tailwindcss/vite": "^4.0.0"
     "tailwindcss": "^4.0.0"
-    "tailwindcss-animate": "^1.0.7"
     "tailwind-merge": "^2.6.0"
+    "tailwindcss-animate": "^1.0.7"
   web-tanstack:
     "@tanstack/react-form": "^0.41.3"
     "@tanstack/react-query": "^5.64.2"

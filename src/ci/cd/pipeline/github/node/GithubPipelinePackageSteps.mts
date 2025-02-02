@@ -2,10 +2,11 @@ import VError from "verror";
 import type { PipelinePackageSteps } from "../../../steps/PipelinePackageSteps.mjs";
 import { GithubStepBuilder } from "../GithubStepBuilder.mjs";
 import type { GithubWorkflowExpressions } from "../GithubWorkflowExpressions.mjs";
+import type { GithubPipelineNodeOptions } from "./GithubPipelineNodeOptions.mjs";
 
 export type GithubPipelineNodePackageProps = {
 	version: {
-		node?: "22.12.0" | "16" | "18.19.0";
+		node?: GithubPipelineNodeOptions["version"]["node"];
 	};
 	packageManager: {
 		node: "npm" | "pnpm" | "yarn";

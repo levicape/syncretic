@@ -58,8 +58,8 @@ catalogs:
       version: 11.7.0
   default:
     '@levicape/paloma':
-      specifier: 0.1.1-main.3
-      version: 0.1.1-main.3
+      specifier: 0.2.0-main.6
+      version: 0.2.0-main.6
     '@levicape/spork':
       specifier: 0.3.0-main.4
       version: 0.3.0-main.4
@@ -357,7 +357,7 @@ importers:
     dependencies:
       '@levicape/paloma':
         specifier: 'catalog:'
-        version: 0.1.1-main.3
+        version: 0.2.0-main.6
     devDependencies:
       typescript:
         specifier: catalog:dev
@@ -1387,8 +1387,8 @@ packages:
     resolution: {integrity: sha512-rsfF5t3sd5c+3ejUgcy8q0cVG2/BxT064L4Xz+CuKEe014u8T4MtFZiWjWZFpfMXSGKzFYEA6DJYm9CqjmIfZg==}
     engines: {node: '>=14'}
 
-  '@levicape/paloma@0.1.1-main.3':
-    resolution: {integrity: sha512-VikKpyh32GK5NzvLVv5D7ALteuidhRiI4IRmWJSr3e1svPQM3Jz8KXSLT3kdvnqKjrmXopcBhFddLG21HT8xrg==, tarball: https://npm.pkg.github.com/download/@levicape/paloma/0.1.1-main.3/46d266a5839641d9aeddab9f4416f12eb95b27e8}
+  '@levicape/paloma@0.2.0-main.6':
+    resolution: {integrity: sha512-ZCna6pYEz9swxbmDc8pKn/Ho/kVJeS5hL9z5osTcILtoNdGrHtmKvIXEjwHKPZHNvV6CnNDSigJsyzEFyW2OZA==, tarball: https://npm.pkg.github.com/download/@levicape/paloma/0.2.0-main.6/f379e6d3b9532fb01611cd87be3107481bfec99e}
     engines: {node: '22'}
     hasBin: true
 
@@ -2978,6 +2978,29 @@ packages:
   csstype@3.1.3:
     resolution: {integrity: sha512-M1uQkMl8rQK/szD0LNhtqxIPLpimGm8sOBwU7lLnCpSbTyY3yeU1Vc7l4KT5zT4s/yOxHH5O7tIuuLOCnLADRw==}
 
+  db0@0.2.3:
+    resolution: {integrity: sha512-PunuHESDNefmwVy1LDpY663uWwKt2ogLGoB6NOz2sflGREWqDreMwDgF8gfkXxgNXW+dqviyiJGm924H1BaGiw==}
+    peerDependencies:
+      '@electric-sql/pglite': '*'
+      '@libsql/client': '*'
+      better-sqlite3: '*'
+      drizzle-orm: '*'
+      mysql2: '*'
+      sqlite3: '*'
+    peerDependenciesMeta:
+      '@electric-sql/pglite':
+        optional: true
+      '@libsql/client':
+        optional: true
+      better-sqlite3:
+        optional: true
+      drizzle-orm:
+        optional: true
+      mysql2:
+        optional: true
+      sqlite3:
+        optional: true
+
   debug@2.6.9:
     resolution: {integrity: sha512-bC7ElrdJaJnPbAP+1EotYvqZsb3ecl5wi6Bfi6BJTUcNowp6cvspg0jXznRTKDjm/E7AdgFBVeAPVMNcKGsHMA==}
     peerDependencies:
@@ -3038,6 +3061,9 @@ packages:
 
   deps-regex@0.2.0:
     resolution: {integrity: sha512-PwuBojGMQAYbWkMXOY9Pd/NWCDNHVH12pnS7WHqZkTSeMESe4hwnKKRp0yR87g37113x4JPbo/oIvXY+s/f56Q==}
+
+  destr@2.0.3:
+    resolution: {integrity: sha512-2N3BOUU4gYMpTP24s5rF5iP7BDr7uNTCs4ozw3kf/eKfvWSIu93GEBi5m427YoyJoeOzQ5smuu4nNAPGb8idSQ==}
 
   destroy@1.2.0:
     resolution: {integrity: sha512-2sJGJTaXIIaR1w4iJSNoN0hnMY7Gpc/n8D4qSCJw8QqFWXf7cuAgnEHxBpweaVcPevC2l3KpjYCx3NypQQgaJg==}
@@ -4276,6 +4302,9 @@ packages:
   path-type@5.0.0:
     resolution: {integrity: sha512-5HviZNaZcfqP95rwpv+1HDgUamezbqdSYTyzjTvwtJSnIH+3vnbmWsItli8OFEndS984VT55M3jduxZbX351gg==}
     engines: {node: '>=12'}
+
+  pathe@2.0.2:
+    resolution: {integrity: sha512-15Ztpk+nov8DR524R4BF7uEuzESgzUEAV4Ah7CUMNGXdE5ELuvxElxGXndBl32vMSsWa1jpNf22Z+Er3sKwq+w==}
 
   pg-cloudflare@1.1.1:
     resolution: {integrity: sha512-xWPagP/4B6BgFO+EKz3JONXv3YDgvkbVrGw2mTo3D6tVDQRh1e7cqVGvyR3BE+eQgAvx1XhW/iEASj4/jCWl3Q==}
@@ -6555,13 +6584,30 @@ snapshots:
     optionalDependencies:
       re2-wasm: 1.0.2
 
-  '@levicape/paloma@0.1.1-main.3':
+  '@levicape/paloma@0.2.0-main.6':
     dependencies:
+      '@aws-lambda-powertools/logger': 2.13.1
+      '@loglayer/transport-aws-lambda-powertools': 2.0.6(@aws-lambda-powertools/logger@2.13.1)
+      '@loglayer/transport-consola': 1.0.14(consola@3.4.0)
       '@stricli/core': 1.1.1
       better-sqlite3: 11.7.0
+      consola: 3.4.0
+      db0: 0.2.3(better-sqlite3@11.7.0)
+      destr: 2.0.3
+      effect: 3.12.7
       knex: 3.1.0(better-sqlite3@11.7.0)
       ksuid: 3.0.0
+      loglayer: 5.5.1
+      pathe: 2.0.2
+      serialize-error: 12.0.0
+      std-env: 3.8.0
+      ulidx: 2.4.1
+      verror: 1.10.1
     transitivePeerDependencies:
+      - '@electric-sql/pglite'
+      - '@libsql/client'
+      - '@middy/core'
+      - drizzle-orm
       - mysql
       - mysql2
       - pg
@@ -8460,6 +8506,10 @@ snapshots:
 
   csstype@3.1.3: {}
 
+  db0@0.2.3(better-sqlite3@11.7.0):
+    optionalDependencies:
+      better-sqlite3: 11.7.0
+
   debug@2.6.9:
     dependencies:
       ms: 2.0.0
@@ -8519,6 +8569,8 @@ snapshots:
   depd@2.0.0: {}
 
   deps-regex@0.2.0: {}
+
+  destr@2.0.3: {}
 
   destroy@1.2.0: {}
 
@@ -9804,6 +9856,8 @@ snapshots:
   path-type@4.0.0: {}
 
   path-type@5.0.0: {}
+
+  pathe@2.0.2: {}
 
   pg-cloudflare@1.1.1:
     optional: true

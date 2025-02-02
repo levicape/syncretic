@@ -6,11 +6,15 @@
 			"options": {
 				"env": {
 					"DEFAULT_IMAGE_NAME": "fourtwo",
+					"DEFAULT_PROCESS": "cli",
+					"DOCKER_NETWORK": "host",
+					"DOCKER_CACHE": "/cc/cache/docker",
+					"PAKETO_BUILDER": "heroku/builder:24",
 					"PAKETO_BUILDPACK": "heroku/python,heroku/nodejs,heroku/procfile",
-					"PAKETO_BUILDER": "heroku/builder:24"
+					"PAKETO_ENVFILE": "iac/images/application/.env"
 				},
 				"commands": [
-					"npx nx run iac-images:cli:pack build $DEFAULT_IMAGE_NAME --buildpack $PAKETO_BUILDPACK --builder $PAKETO_BUILDER --default-process cli  --cache 'type=build;format=bind;source=/cc/cache/docker;type=launch;format=volume;'"
+					"pnpm exec nx run --verbose iac-images:cli:pack build $DEFAULT_IMAGE_NAME --buildpack $PAKETO_BUILDPACK --builder $PAKETO_BUILDER --default-process $DEFAULT_PROCESS --env-file $PAKETO_ENVFILE --network $DOCKER_NETWORK --cache 'type=build;format=bind;source=$DOCKER_CACHE;type=launch;format=volume;' $PAKETO_BUILD_ARGS"
 				]
 			}
 		}
