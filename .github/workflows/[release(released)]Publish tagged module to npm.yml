@@ -26,10 +26,10 @@ jobs:
         uses: actions/checkout@v2
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-      - name: Setup Node 22.12.0
+      - name: Setup Node 22.13.1
         uses: actions/setup-node@v4
         with:
-          node-version: 22.12.0
+          node-version: 22.13.1
           registry-url: ${{ env.NPM_REGISTRY_PROTOCOL }}://${{ env.NPM_REGISTRY_HOST }}
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
@@ -97,10 +97,10 @@ jobs:
         uses: actions/checkout@v2
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-      - name: Setup Node 22.12.0
+      - name: Setup Node 22.13.1
         uses: actions/setup-node@v4
         with:
-          node-version: 22.12.0
+          node-version: 22.13.1
           registry-url: ${{ env.NPM_REGISTRY_PROTOCOL }}://${{ env.NPM_REGISTRY_HOST }}
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
@@ -168,10 +168,10 @@ jobs:
         uses: actions/checkout@v2
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-      - name: Setup Node 22.12.0
+      - name: Setup Node 22.13.1
         uses: actions/setup-node@v4
         with:
-          node-version: 22.12.0
+          node-version: 22.13.1
           registry-url: ${{ env.NPM_REGISTRY_PROTOCOL }}://${{ env.NPM_REGISTRY_HOST }}
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
@@ -225,7 +225,7 @@ jobs:
 ########################################
 #**:_$~- {"$$":"head","filename":"[release(released)]Publish tagged module to npm.yml","source":"iac/workflows/github/release/Publish tagged module to npm.js"}
 #**:_$~- {"$$":"script","generator":"codegen/github/GenerateGithubWorkflow.mts"}
-#**:_$~- {"$$":"body","hashed":"c30bffe62d064b3b5f5a16f49b8576b125f6c1232984783b69120f80456b1797"}
-#**:_$~- {"$$":"footer","started":"2025-01-27T11:55:42.123Z","now":"2025-01-27T11:55:42.128Z","elapsed":"5ms"}
+#**:_$~- {"$$":"body","hashed":"d5f4ad2c7c864eabd3aeea8eddd80730c38b9896e9dff74d2cbe72d6ee73e06b"}
+#**:_$~- {"$$":"footer","started":"2025-02-02T19:34:11.099Z","now":"2025-02-02T19:34:11.106Z","elapsed":"7ms"}
 # END OF GENERATED FILE
 

@@ -129,8 +129,8 @@ export default async () => {
 
 	const PNPM_ENVIRONMENT = [
 		register("COREPACK_HOME", COREPACK_GLOBAL_CACHE),
-		register("PNPM_VERSION", "pnpm@9"),
-		register("NODEJS_VERSION", "22"),
+		register("PNPM_VERSION", "pnpm@9.15.4"),
+		register("NODEJS_VERSION", "22.13.1"),
 		register("NODE_AUTH_TOKEN", _$_("Secrets.GITHUB_LEVICAPE_PAT")),
 		register("NPM_REGISTRY_PROTOCOL", "https"),
 		register("NPM_REGISTRY_HOST", "npm.pkg.github.com"),

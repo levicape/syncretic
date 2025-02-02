@@ -31,7 +31,7 @@ import { FourtwoPanelWebStackExportsZod } from "./exports";
 
 const PACKAGE_NAME = "@levicape/fourtwo-panel-ui" as const;
 const ARTIFACT_ROOT = "fourtwo-panel-ui" as const;
-const DEPLOY_DIRECTORY = "output/staticwww/client" as const;
+const DEPLOY_DIRECTORY = "output/staticwww" as const;
 
 const STACKREF_ROOT = process.env["STACKREF_ROOT"] ?? "fourtwo";
 const STACKREF_CONFIG = {
@@ -75,6 +75,9 @@ export = async () => {
 			const { daysToRetain, www } = props;
 			const bucket = new Bucket(_(name), {
 				acl: "private",
+				tags: {
+					Name: `${context.prefix}-${name}`,
+				},
 			});
 
 			new BucketServerSideEncryptionConfigurationV2(_(`${name}-encryption`), {
@@ -261,55 +264,61 @@ export = async () => {
 		})();
 
 		const project = (() => {
-			const project = new Project(_("project"), {
-				description: `(${getStack()}) CodeBuild project for @${PACKAGE_NAME}:${STACKREF_ROOT}`,
-				buildTimeout: 8,
-				serviceRole: farRole.arn,
-				artifacts: {
-					type: "CODEPIPELINE",
-					artifactIdentifier: "staticwww_extractimage",
+			const project = new Project(
+				_("project"),
+				{
+					description: `(${getStack()}) CodeBuild project for @${PACKAGE_NAME}:${STACKREF_ROOT}`,
+					buildTimeout: 14,
+					serviceRole: farRole.arn,
+					artifacts: {
+						type: "CODEPIPELINE",
+						artifactIdentifier: "staticwww_extractimage",
+					},
+					environment: {
+						type: "ARM_CONTAINER",
+						computeType: "BUILD_GENERAL1_MEDIUM",
+						image: "aws/codebuild/amazonlinux-aarch64-standard:3.0",
+						environmentVariables: [
+							{
+								name: "STACKREF_CODESTAR_ECR_REPOSITORY_ARN",
+								value: codestar.ecr.repository.arn,
+								type: "PLAINTEXT",
+							},
+							{
+								name: "STACKREF_CODESTAR_ECR_REPOSITORY_NAME",
+								value: codestar.ecr.repository.name,
+								type: "PLAINTEXT",
+							},
+							{
+								name: "STACKREF_CODESTAR_ECR_REPOSITORY_URL",
+								value: codestar.ecr.repository.url,
+							},
+							{
+								name: "SOURCE_IMAGE_REPOSITORY",
+								value: "SourceImage.RepositoryName",
+								type: "PLAINTEXT",
+							},
+							{
+								name: "SOURCE_IMAGE_URI",
+								value: "SourceImage.ImageUri",
+								type: "PLAINTEXT",
+							},
+							{
+								name: "S3_STATICWWW_BUCKET",
+								value: s3.staticwww.bucket.bucket,
+								type: "PLAINTEXT",
+							},
+						],
+					},
+					source: {
+						type: "CODEPIPELINE",
+						buildspec: buildspec.content,
+					},
 				},
-				environment: {
-					type: "ARM_CONTAINER",
-					computeType: "BUILD_GENERAL1_MEDIUM",
-					image: "aws/codebuild/amazonlinux-aarch64-standard:3.0",
-					environmentVariables: [
-						{
-							name: "STACKREF_CODESTAR_ECR_REPOSITORY_ARN",
-							value: codestar.ecr.repository.arn,
-							type: "PLAINTEXT",
-						},
-						{
-							name: "STACKREF_CODESTAR_ECR_REPOSITORY_NAME",
-							value: codestar.ecr.repository.name,
-							type: "PLAINTEXT",
-						},
-						{
-							name: "STACKREF_CODESTAR_ECR_REPOSITORY_URL",
-							value: codestar.ecr.repository.url,
-						},
-						{
-							name: "SOURCE_IMAGE_REPOSITORY",
-							value: "SourceImage.RepositoryName",
-							type: "PLAINTEXT",
-						},
-						{
-							name: "SOURCE_IMAGE_URI",
-							value: "SourceImage.ImageUri",
-							type: "PLAINTEXT",
-						},
-						{
-							name: "S3_STATICWWW_BUCKET",
-							value: s3.staticwww.bucket.bucket,
-							type: "PLAINTEXT",
-						},
-					],
+				{
+					dependsOn: [buildspec.upload, s3.staticwww.bucket],
 				},
-				source: {
-					type: "CODEPIPELINE",
-					buildspec: buildspec.content,
-				},
-			});
+			);
 
 			return {
 				project,
@@ -325,7 +334,7 @@ export = async () => {
 	})();
 
 	const codepipeline = (() => {
-		const pipeline = new Pipeline(_("web-pipeline"), {
+		const pipeline = new Pipeline(_("deploy"), {
 			pipelineType: "V2",
 			roleArn: farRole.arn,
 			executionMode: "QUEUED",
@@ -459,7 +468,7 @@ export = async () => {
 	const eventbridge = (() => {
 		const { name } = codestar.ecr.repository;
 
-		const rule = new EventRule(_("event-rule-ecr-push"), {
+		const rule = new EventRule(_("on-ecr-push"), {
 			description: `(${getStack()}) ECR push event rule @${PACKAGE_NAME}:${STACKREF_ROOT}`,
 			state: "ENABLED",
 			eventPattern: JSON.stringify({
@@ -473,7 +482,7 @@ export = async () => {
 				},
 			}),
 		});
-		const pipeline = new EventTarget(_("event-target-pipeline-web"), {
+		const pipeline = new EventTarget(_("on-ecr-push-deploy"), {
 			rule: rule.name,
 			arn: codepipeline.pipeline.arn,
 			roleArn: farRole.arn,

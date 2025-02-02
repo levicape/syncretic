@@ -8,8 +8,8 @@
   },
   "config": {
     "packagemanager": "pnpm",
-    "packagebin": "corepack pnpm",
-    "packageexecutor": "corepack pnpm exec",
+    "packageexecutor": "pnpm exec",
+    "packagescript": "pnpm run",
     "binpath": "./src/cli/bin.mts",
     "outpaths": "./module **/*/commonjs **/*/module **/*/output",
     "clipath": "./module/cli/bin.mjs",
@@ -58,7 +58,7 @@
     "typescript": "catalog:dev"
   },
   "engines": {
-    "node": "22"
+    "node": "^22.13.1"
   },
   "exports": {
     ".": {
@@ -126,7 +126,7 @@
         "dependsOn": [
           "@levicape/fourtwo-builders:dx:precommit",
           "@levicape/fourtwo-pulumi:dx:precommit",
-          "@levicape/fourtwo-panel-http:dx:precommit",
+          "@levicape/fourtwo-panel-server:dx:precommit",
           "@levicape/fourtwo-panel-ui:dx:precommit",
           "@levicape/fourtwo-iac-stacks:dx:precommit"
         ]
@@ -148,7 +148,7 @@
           "@levicape/fourtwo-builders:nx:compile",
           "@levicape/fourtwo-canary:nx:compile",
           "@levicape/fourtwo-pulumi:nx:compile",
-          "@levicape/fourtwo-panel-http:nx:compile",
+          "@levicape/fourtwo-panel-server:nx:compile",
           "@levicape/fourtwo-panel-ui:nx:compile"
         ]
       },
@@ -192,7 +192,7 @@
     "dx:cli:bin": "NODE_NO_WARNINGS=1 $npm_package_config_packageexecutor tsx $npm_package_config_binpath",
     "dx:cli:dev": "node --inspect-brk --import tsx $npm_package_config_binpath",
     "dx:cli:mjs": "NODE_NO_WARNINGS=1 node $npm_package_config_clipath",
-    "dx:commit": "$npm_package_config_packagebin run clean:packages && $npm_package_config_packageexecutor nx dx:precommit --no-cloud --verbose",
+    "dx:commit": "$npm_package_config_packagescript clean:packages && $npm_package_config_packageexecutor nx dx:precommit --no-cloud --verbose",
     "dx:image": "$npm_package_config_packageexecutor nx pack:build iac-images-application --verbose",
     "dx:precommit": "$npm_package_config_packageexecutor nx dx:precommit:pre && $npm_package_config_packageexecutor nx dx:sync && $npm_package_config_packageexecutor nx package:deps",
     "dx:precommit:pre": "echo \"Starting precommit dx. This will recompile iac files and check package.json dependencies.\"",
@@ -200,7 +200,7 @@
     "dx:prepublish:pre": "echo \"Starting prepublish dx. This will compile packages, run dx:lint and format package.json and verify all exports are valid. \"",
     "dx:sync": "$npm_package_config_packageexecutor nx dx:sync:pre && $npm_package_config_packageexecutor nx nx:sync",
     "dx:sync:pre": "echo \"Starting sync dx. This will generate all the workflows and sync them with the repository.\"",
-    "dx:test": "$npm_package_config_packagebin run clean && $npm_package_config_packagebin run build && $npm_package_config_packagebin run test",
+    "dx:test": "$npm_package_config_packagescript clean && $npm_package_config_packagescript build && $npm_package_config_packagescript test",
     "lint": "$npm_package_config_packageexecutor nx exec -- biome check $npm_package_config_lintpaths",
     "lint:format": "$npm_package_config_packageexecutor nx exec -- biome check --write $npm_package_config_lintpaths",
     "lint:unsafe": "$npm_package_config_packageexecutor nx exec -- biome check --write --unsafe $npm_package_config_lintpaths",
@@ -208,14 +208,14 @@
     "package:fix": "$npm_package_config_packageexecutor nx exec -- syncpack fix-mismatches",
     "package:format": "$npm_package_config_packageexecutor nx exec -- syncpack format",
     "package:update": "$npm_package_config_packageexecutor nx exec -- syncpack update",
-    "postclean:packages": "$npm_package_config_packagebin install --ignore-scripts --prefer-offline && sleep 2s",
+    "postclean:packages": "$npm_package_config_packageexecutor install --ignore-scripts --prefer-offline && sleep 2s",
     "precommit": "$npm_package_config_packageexecutor nx dx:prepublish --no-cloud --verbose",
     "predx:lint": "$npm_package_config_packageexecutor nx clean",
     "prelint": "$npm_package_config_packageexecutor nx exec -- biome format $npm_package_config_lintpaths",
     "prepublish": "$npm_package_config_packageexecutor nx exec -- publint --strict",
     "test": "$npm_package_config_packageexecutor nx nx:test --verbose",
     "test:module": "echo 'node --test  \"module/**/*.test.js\"'",
-    "xx:workflow": "$npm_package_config_packageexecutor nx run-many -t build,lint,test --parallel=1 --verbose --no-cloud"
+    "xx:workflow": "$npm_package_config_packageexecutor nx run-many -t build,lint,test,prepublish --parallel=1 --verbose --no-cloud"
   },
   "type": "module",
   "types": "./module/index.d.mts"

@@ -37,7 +37,7 @@ export const NodeGhaConfiguration = ({
 			secret,
 		},
 		version: {
-			node: "22.12.0",
+			node: "22.13.1",
 		},
 	}) as const;
 

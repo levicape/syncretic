@@ -10,7 +10,8 @@ import {
 	DevfileX,
 } from "@levicape/fourtwo/x/devfile";
 
-const NODE_VERSION = "22";
+const NODE_VERSION = "22.13.1";
+const PNPM_VERSION = "9.15.4";
 const MAKE_DEPENDENCIES = [
 	"g++",
 	"make",
@@ -32,7 +33,6 @@ const MAKE_DEPENDENCIES = [
 	"sqlite-libs",
 	"sqlite-tools",
 ].join(" ");
-const PNPM_VERSION = "9";
 const CCR_URL =
 	"https://github.com/aws/codecatalyst-runner-cli/releases/latest/download/ccr_Linux_x86_64.tar.gz";
 
