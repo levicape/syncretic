@@ -21,17 +21,18 @@ import { BucketOwnershipControls } from "@pulumi/aws/s3/bucketOwnershipControls"
 import { BucketPublicAccessBlock } from "@pulumi/aws/s3/bucketPublicAccessBlock";
 import { BucketVersioningV2 } from "@pulumi/aws/s3/bucketVersioningV2";
 import { BucketWebsiteConfigurationV2 } from "@pulumi/aws/s3/bucketWebsiteConfigurationV2";
-import { all, getStack } from "@pulumi/pulumi";
+import { type Output, all } from "@pulumi/pulumi";
 import { stringify } from "yaml";
 import type { z } from "zod";
-import { deref } from "../../../Stack";
+import type { WebsiteManifest } from "../../../RouteMap";
+import { $deref, type DereferencedOutput } from "../../../Stack";
 import { FourtwoCodestarStackExportsZod } from "../../../codestar/exports";
 import { FourtwoDatalayerStackExportsZod } from "../../../datalayer/exports";
 import { FourtwoPanelWebStackExportsZod } from "./exports";
 
 const PACKAGE_NAME = "@levicape/fourtwo-panel-ui" as const;
-const ARTIFACT_ROOT = "fourtwo-panel-ui" as const;
 const DEPLOY_DIRECTORY = "output/staticwww" as const;
+const MANIFEST_PATH = "/_web/routemap.json" as const;
 
 const STACKREF_ROOT = process.env["STACKREF_ROOT"] ?? "fourtwo";
 const STACKREF_CONFIG = {
@@ -51,14 +52,25 @@ const STACKREF_CONFIG = {
 		},
 	},
 };
+const ROUTE_MAP = (
+	stackrefs: DereferencedOutput<typeof STACKREF_CONFIG>[typeof STACKREF_ROOT],
+) => {
+	return {
+		// http: http.routemap,
+	};
+};
+
 export = async () => {
 	const context = await Context.fromConfig();
-	const _ = (name: string) => `${context.prefix}-${name}`;
+	const _ = (name?: string) =>
+		name ? `${context.prefix}-${name}` : context.prefix;
 	const stage = process.env.CI_ENVIRONMENT ?? "unknown";
 	const farRole = await getRole({ name: "FourtwoAccessRole" });
 
 	// Stack references
-	const { codestar, datalayer } = await deref(STACKREF_CONFIG);
+	const $dereference$ = await $deref(STACKREF_CONFIG);
+	const { codestar, datalayer } = $dereference$;
+	const routemap = ROUTE_MAP($dereference$);
 
 	// Object Store
 	const s3 = (() => {
@@ -68,7 +80,7 @@ export = async () => {
 				daysToRetain?: number;
 				www?: boolean;
 			} = {
-				daysToRetain: 30,
+				daysToRetain: context.environment.isProd ? 30 : 8,
 				www: false,
 			},
 		) => {
@@ -76,7 +88,10 @@ export = async () => {
 			const bucket = new Bucket(_(name), {
 				acl: "private",
 				tags: {
-					Name: `${context.prefix}-${name}`,
+					Name: _(name),
+					StackRef: STACKREF_ROOT,
+					PackageName: PACKAGE_NAME,
+					Key: name,
 				},
 			});
 
@@ -90,16 +105,12 @@ export = async () => {
 					},
 				],
 			});
-			new BucketVersioningV2(
-				_(`${name}-versioning`),
-
-				{
-					bucket: bucket.bucket,
-					versioningConfiguration: {
-						status: "Enabled",
-					},
+			new BucketVersioningV2(_(`${name}-versioning`), {
+				bucket: bucket.bucket,
+				versioningConfiguration: {
+					status: "Enabled",
 				},
-			);
+			});
 
 			let website: BucketWebsiteConfigurationV2 | undefined;
 			if (www) {
@@ -193,7 +204,63 @@ export = async () => {
 		};
 	})();
 
+	let manifest = (() => {
+		const {
+			stage,
+			environment: { isProd },
+			frontend,
+		} = context;
+
+		let content: Output<{ WebsiteComponent: WebsiteManifest }> | undefined;
+		content = all([s3.staticwww.website?.websiteEndpoint ?? ""]).apply(
+			([url]) => {
+				const { dns } = frontend ?? {};
+				const { hostnames } = dns ?? {};
+				return {
+					WebsiteComponent: {
+						manifest: {
+							ok: true,
+							routes: routemap,
+							frontend: {
+								...(isProd
+									? {}
+									: {
+											website: {
+												url,
+												protocol: "http",
+											},
+										}),
+								hostnames: hostnames ?? [],
+							},
+							version: {
+								sequence: Date.now().toString(),
+								stage,
+							},
+						},
+					} satisfies WebsiteManifest,
+				};
+			},
+		);
+
+		const upload = new BucketObjectv2(_("manifest-upload"), {
+			bucket: s3.build.bucket.bucket,
+			content: content.apply((c) => JSON.stringify(c, null, 2)),
+			key: MANIFEST_PATH,
+		});
+
+		return {
+			routemap: {
+				content,
+				upload,
+			},
+		};
+	})();
+
 	const codebuild = (() => {
+		const deployStage = "staticwww";
+		const deployAction = "extractimage";
+		const artifactIdentifier = `${deployStage}_${deployAction}`;
+
 		const buildspec = (() => {
 			const content = stringify(
 				new CodeBuildBuildspecBuilder()
@@ -201,8 +268,8 @@ export = async () => {
 					.setArtifacts(
 						new CodeBuildBuildspecArtifactsBuilder()
 							.setFiles(["**/*"])
-							.setBaseDirectory(`.extractimage/${DEPLOY_DIRECTORY}`)
-							.setName("staticwww_extractimage"),
+							.setBaseDirectory(`.${deployAction}/${DEPLOY_DIRECTORY}`)
+							.setName(artifactIdentifier),
 					)
 					.setEnv(
 						new CodeBuildBuildspecEnvBuilder().setVariables({
@@ -231,7 +298,7 @@ export = async () => {
 									"--entrypoint",
 									"deploy",
 									`-e DEPLOY_FILTER=${PACKAGE_NAME}`,
-									`-e DEPLOY_OUTPUT=/tmp/${ARTIFACT_ROOT}`,
+									`-e DEPLOY_OUTPUT=/tmp/web`,
 									"$SOURCE_IMAGE_URI",
 									"> .container",
 								].join(" "),
@@ -241,10 +308,10 @@ export = async () => {
 								`docker container logs $(cat .container)`,
 								"sleep 10s",
 								`docker container logs $(cat .container)`,
-								`docker cp $(cat .container):/tmp/${ARTIFACT_ROOT} $CODEBUILD_SRC_DIR/.extractimage`,
-								"ls -al $CODEBUILD_SRC_DIR/.extractimage || true",
-								`ls -al $CODEBUILD_SRC_DIR/.extractimage/${DEPLOY_DIRECTORY} || true`,
-								`du -sh $CODEBUILD_SRC_DIR/.extractimage/${DEPLOY_DIRECTORY} || true`,
+								`docker cp $(cat .container):/tmp/web $CODEBUILD_SRC_DIR/.${deployAction}`,
+								`ls -al $CODEBUILD_SRC_DIR/.${deployAction} || true`,
+								`ls -al $CODEBUILD_SRC_DIR/.${deployAction}/${DEPLOY_DIRECTORY} || true`,
+								`du -sh $CODEBUILD_SRC_DIR/.${deployAction}/${DEPLOY_DIRECTORY} || true`,
 								"aws s3 ls s3://$S3_STATICWWW_BUCKET",
 							]),
 					})
@@ -265,14 +332,14 @@ export = async () => {
 
 		const project = (() => {
 			const project = new Project(
-				_("project"),
+				_(artifactIdentifier),
 				{
-					description: `(${getStack()}) CodeBuild project for @${PACKAGE_NAME}:${STACKREF_ROOT}`,
+					description: `(${PACKAGE_NAME}) Deploy pipeline "${deployStage}" stage: "${deployAction}"`,
 					buildTimeout: 14,
 					serviceRole: farRole.arn,
 					artifacts: {
 						type: "CODEPIPELINE",
-						artifactIdentifier: "staticwww_extractimage",
+						artifactIdentifier,
 					},
 					environment: {
 						type: "ARM_CONTAINER",
@@ -314,9 +381,20 @@ export = async () => {
 						type: "CODEPIPELINE",
 						buildspec: buildspec.content,
 					},
+					tags: {
+						Name: _(artifactIdentifier),
+						StackRef: STACKREF_ROOT,
+						PackageName: PACKAGE_NAME,
+						DeployStage: deployStage,
+						Action: deployAction,
+					},
 				},
 				{
-					dependsOn: [buildspec.upload, s3.staticwww.bucket],
+					dependsOn: [
+						buildspec.upload,
+						s3.staticwww.bucket,
+						// manifest.upload
+					],
 				},
 			);
 
@@ -328,6 +406,7 @@ export = async () => {
 		return {
 			...project,
 			spec: {
+				artifactIdentifier,
 				buildspec,
 			},
 		};
@@ -379,7 +458,7 @@ export = async () => {
 							provider: "CodeBuild",
 							version: "1",
 							inputArtifacts: ["source_image"],
-							outputArtifacts: ["staticwww_extractimage"],
+							outputArtifacts: [codebuild.spec.artifactIdentifier],
 							configuration: all([
 								codestar.ecr.repository.arn,
 								codestar.ecr.repository.name,
@@ -440,7 +519,7 @@ export = async () => {
 							owner: "AWS",
 							provider: "S3",
 							version: "1",
-							inputArtifacts: ["staticwww_extractimage"],
+							inputArtifacts: [codebuild.spec.artifactIdentifier],
 							configuration: all([s3.staticwww.bucket.bucket]).apply(
 								([BucketName]) => ({
 									BucketName,
@@ -452,6 +531,11 @@ export = async () => {
 					],
 				},
 			],
+			tags: {
+				Name: _("deploy"),
+				StackRef: STACKREF_ROOT,
+				PackageName: PACKAGE_NAME,
+			},
 		});
 
 		new RolePolicyAttachment(_("codepipeline-rolepolicy"), {
@@ -468,8 +552,8 @@ export = async () => {
 	const eventbridge = (() => {
 		const { name } = codestar.ecr.repository;
 
-		const rule = new EventRule(_("on-ecr-push"), {
-			description: `(${getStack()}) ECR push event rule @${PACKAGE_NAME}:${STACKREF_ROOT}`,
+		const rule = new EventRule(_("on-ecr"), {
+			description: `(${PACKAGE_NAME}) ECR image deploy pipeline trigger for tag "${name}"`,
 			state: "ENABLED",
 			eventPattern: JSON.stringify({
 				source: ["aws.ecr"],
@@ -481,8 +565,12 @@ export = async () => {
 					"image-tag": [stage],
 				},
 			}),
+			tags: {
+				Name: _(`on-ecr-push`),
+				StackRef: STACKREF_ROOT,
+			},
 		});
-		const pipeline = new EventTarget(_("on-ecr-push-deploy"), {
+		const pipeline = new EventTarget(_("on-ecr-deploy"), {
 			rule: rule.name,
 			arn: codepipeline.pipeline.arn,
 			roleArn: farRole.arn,

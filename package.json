@@ -48,10 +48,9 @@
     "@types/node": "catalog:types",
     "@types/verror": "catalog:types",
     "depcheck": "catalog:package",
-    "esbuild": "catalog:build",
     "expect": "catalog:test",
     "jsonc-parser": "catalog:core",
-    "nx": "catalog:package",
+    "nx": "catalog:project-nx",
     "publint": "catalog:package",
     "syncpack": "catalog:package",
     "tsx": "catalog:dev",
@@ -61,45 +60,21 @@
     "node": "22.12.0"
   },
   "exports": {
-    ".": {
-      "types": {
-        "import": "./module/index.d.mts",
-        "require": "./module/index.d.cts"
-      },
-      "node": "./module/index.mjs",
-      "import": "./module/index.mjs",
-      "require": "./module/_exports.js",
-      "default": "./module/index.mjs"
-    },
+    "./*": "./module/*.mjs",
     "./jsx-runtime": "./module/jsx/jsx-runtime.js",
     "./jsx-runtime.js": "./module/jsx/jsx-runtime.js",
-    "./ci": "./module/ci/index.mjs",
-    "./ci/cd": "./module/ci/cd/index.mjs",
-    "./ci/cd/pipeline": "./module/ci/cd/pipeline/index.mjs",
-    "./ci/cd/pipeline/codebuild": "./module/ci/cd/pipeline/codebuild/index.mjs",
-    "./ci/cd/pipeline/codedeploy": "./module/ci/cd/pipeline/codedeploy/index.mjs",
-    "./ci/cd/pipeline/codecatalyst": "./module/ci/cd/pipeline/codecatalyst/index.mjs",
-    "./ci/cd/pipeline/codepipeline": "./module/ci/cd/pipeline/codepipeline/index.mjs",
-    "./ci/cd/pipeline/devfile": "./module/ci/cd/pipeline/devfile/index.mjs",
-    "./ci/cd/pipeline/github": "./module/ci/cd/pipeline/github/index.mjs",
-    "./ci/cd/state": "./module/ci/cd/state/index.mjs",
-    "./ci/codegen": "./module/ci/codegen/index.mjs",
-    "./ci/codegen/github": "./module/ci/codegen/github/index.mjs",
-    "./cli": "./module/cli/index.mjs",
-    "./sdk": "./module/sdk/index.mjs",
-    "./sdk/aws": "./module/sdk/aws/index.mjs",
-    "./x": "./module/ci/cd/pipeline/index-x.mjs",
-    "./x/devfile": "./module/ci/cd/pipeline/devfile/index-x.mjs",
-    "./x/codecatalyst": "./module/ci/cd/pipeline/codecatalyst/index-x.mjs",
-    "./x/codecatalyst/actions": "./module/ci/cd/pipeline/codecatalyst/actions/index-x.mjs",
-    "./x/codecatalyst/actions/aws": "./module/ci/cd/pipeline/codecatalyst/actions/aws/index-x.mjs",
-    "./x/codepipeline": "./module/ci/cd/pipeline/codepipeline/index-x.mjs",
-    "./x/github": "./module/ci/cd/pipeline/github/index-x.mjs",
-    "./x/github/node": "./module/ci/cd/pipeline/github/steps/node/index-x.mjs"
+    "./jsx-runtime.cjs": "./module/jsx/jsx-runtime.js",
+    "./jsx-runtime.mjs": "./module/jsx/jsx-runtime.js",
+    "./jsx-runtime.ts": "./src/jsx/jsx-runtime.ts",
+    "./jsx-runtime.cts": "./src/jsx/jsx-runtime.ts",
+    "./jsx-runtime.mts": "./src/jsx/jsx-runtime.ts"
   },
   "files": [
+    "src/cli",
+    "src/jsx",
     "iac",
-    "module"
+    "module",
+    "output"
   ],
   "license": "AGPL-3.0-only",
   "nx": {
@@ -217,6 +192,5 @@
     "test:module": "echo 'node --test  \"module/**/*.test.js\"'",
     "xx:workflow": "$npm_package_config_packageexecutor nx run-many -t build,lint,test,prepublish --parallel=1 --verbose --no-cloud"
   },
-  "type": "module",
-  "types": "./module/index.d.mts"
+  "type": "module"
 }

@@ -4,10 +4,8 @@ import type {
 	GithubStep,
 	GithubStepBuilder,
 } from "../../../cd/pipeline/github/GithubStepBuilder.mjs";
-import {
-	type GithubPipelineNodeOptions,
-	GithubWorkflowExpressions,
-} from "../../../cd/pipeline/github/index.mjs";
+import { GithubWorkflowExpressions } from "../../../cd/pipeline/github/GithubWorkflowExpressions.mjs";
+import type { GithubPipelineNodeOptions } from "../../../cd/pipeline/github/node/GithubPipelineNodeOptions.mjs";
 import { GithubNodePipelinePackageSteps } from "../../../cd/pipeline/github/node/GithubPipelinePackageSteps.mjs";
 import { PlatformTargets } from "../../../cd/platform/PlatformTargets.mjs";
 import type { PipelinePackageOptions } from "../../../cd/steps/PipelinePackageSteps.mjs";

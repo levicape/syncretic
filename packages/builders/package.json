@@ -19,13 +19,12 @@
     "@types/node": "catalog:types",
     "@types/verror": "catalog:types",
     "depcheck": "catalog:package",
-    "nx": "catalog:package",
     "publint": "catalog:package",
     "syncpack": "catalog:package",
     "typescript": "catalog:dev"
   },
   "engines": {
-    "node": "22"
+    "node": "^22"
   },
   "exports": "./commonjs/index.js",
   "files": [

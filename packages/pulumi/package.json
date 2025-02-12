@@ -26,18 +26,18 @@
     "@types/folder-hash": "catalog:types",
     "depcheck": "catalog:package",
     "expect": "catalog:test",
-    "nx": "catalog:package",
     "publint": "catalog:package",
     "syncpack": "catalog:package",
     "tsx": "catalog:dev",
     "typescript": "catalog:dev"
   },
   "engines": {
-    "node": "22"
+    "node": "^22"
   },
   "exports": "./commonjs/index.js",
   "files": [
-    "commonjs"
+    "commonjs",
+    "output"
   ],
   "license": "AGPL-3.0-only",
   "nx": {

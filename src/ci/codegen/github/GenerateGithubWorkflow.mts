@@ -1,6 +1,7 @@
 import { hash } from "node:crypto";
 import { basename, extname } from "node:path";
 import { Context, Effect } from "effect";
+import { process } from "std-env";
 import VError from "verror";
 import { stringify } from "yaml";
 import {
@@ -13,7 +14,7 @@ import type {
 	GithubWorkflowBuilder,
 } from "../../cd/pipeline/github/GithubWorkflowBuilder.mjs";
 import { GithubWorkflowExpressions } from "../../cd/pipeline/github/GithubWorkflowExpressions.mjs";
-import { GenerateWorkflowTemplate } from "../index.mjs";
+import { GenerateWorkflowTemplate } from "../pipeline/GenerateWorkflowTemplate.mjs";
 
 const pathToWorkflows = (named: string) => `/.github/workflows/${named}.yml`;
 
@@ -212,12 +213,16 @@ export const GenerateGithubWorkflow = async function* () {
 	// }
 	const now = Date.now();
 	const content = GenerateWorkflowTemplate({
-		cwd: process.cwd(),
+		cwd: process?.cwd?.() ?? "$PWD",
 		filename,
 		source,
 		yaml,
 		hashed,
-		generator: import.meta?.filename?.split("/").slice(-3).join("/") ?? "",
+		generator:
+			(import.meta as { filename?: string })?.filename
+				?.split("/")
+				.slice(-3)
+				.join("/") ?? "",
 		then,
 		now,
 	});

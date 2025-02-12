@@ -3,6 +3,7 @@ import { basename, extname } from "node:path";
 import { WorkflowDefinition } from "@aws/codecatalyst-workflows-sdk";
 import { Context, Effect } from "effect";
 import { load } from "js-yaml";
+import { process } from "std-env";
 import VError from "verror";
 import { stringify } from "yaml";
 import {
@@ -10,11 +11,9 @@ import {
 	withStructuredLogging,
 } from "../../../server/logging/LoggingContext.mjs";
 import type { CodeCatalystWorkflowBuilder } from "../../cd/pipeline/codecatalyst/CodeCatalystWorkflowBuilder.mjs";
-import type {
-	CodeCatalystPullrequestTriggerSpec,
-	CodeCatalystPushTriggerSpec,
-	CodeCatalystScheduleTriggerSpec,
-} from "../../cd/pipeline/codecatalyst/index.mjs";
+import type { CodeCatalystPullrequestTriggerSpec } from "../../cd/pipeline/codecatalyst/triggers/CodeCatalystPullrequestTrigger.mjs";
+import type { CodeCatalystPushTriggerSpec } from "../../cd/pipeline/codecatalyst/triggers/CodeCatalystPushTrigger.mjs";
+import type { CodeCatalystScheduleTriggerSpec } from "../../cd/pipeline/codecatalyst/triggers/CodeCatalystScheduleTrigger.mjs";
 import { GenerateWorkflowTemplate } from "../../codegen/pipeline/GenerateWorkflowTemplate.mjs";
 
 export const GenerateCodeCatalystWorkflow = async function* () {
@@ -155,12 +154,16 @@ export const GenerateCodeCatalystWorkflow = async function* () {
 	// }
 	const now = Date.now();
 	const content = GenerateWorkflowTemplate({
-		cwd: process.cwd(),
+		cwd: process?.cwd?.() ?? "$PWD",
 		filename,
 		source,
 		yaml,
 		hashed,
-		generator: import.meta?.filename?.split("/").slice(-3).join("/") ?? "",
+		generator:
+			(import.meta as { filename?: string })?.filename
+				?.split("/")
+				.slice(-3)
+				.join("/") ?? "",
 		then,
 		now,
 	});

@@ -32,11 +32,9 @@
   "engines": {
     "node": "22"
   },
-  "exports": {
-    "./app": "./module/app/index.mjs"
-  },
   "files": [
-    "module"
+    "module",
+    "output"
   ],
   "license": "AGPL-3.0-only",
   "nx": {
@@ -129,6 +127,5 @@
     "test": "$npm_package_config_packageexecutor nx nx:test --verbose --no-cloud",
     "test:module": "echo 'node --test  \"module/**/*.test.js\"'"
   },
-  "type": "module",
-  "types": "module/app/index.d.mts"
+  "type": "module"
 }

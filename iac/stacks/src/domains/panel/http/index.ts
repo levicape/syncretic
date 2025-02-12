@@ -33,7 +33,7 @@ import { Output, all, getStack } from "@pulumi/pulumi";
 import { AssetArchive, StringAsset } from "@pulumi/pulumi/asset";
 import { stringify } from "yaml";
 import type { z } from "zod";
-import { deref } from "../../../Stack";
+import { $deref } from "../../../Stack";
 import { FourtwoCodestarStackExportsZod } from "../../../codestar/exports";
 import { FourtwoDatalayerStackExportsZod } from "../../../datalayer/exports";
 import { FourtwoPanelHttpStackExportsZod } from "./exports";
@@ -78,7 +78,7 @@ export = async () => {
 	const farRole = await getRole({ name: CI.CI_ACCESS_ROLE });
 	// Stack references
 	const { codestar: __codestar, datalayer: __datalayer } =
-		await deref(STACKREF_CONFIG);
+		await $deref(STACKREF_CONFIG);
 
 	// Object Store
 	const s3 = (() => {

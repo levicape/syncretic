@@ -1,14 +1,20 @@
+ignore-patterns:
+- "output"
+- "tsconfig.json"
+one-line: true
 ignores: 
-- "@levicape/*"
 - "@bufbuild/protobuf"
+- "@levicape/*"
+- "@types/node"
 - "aws4fetch"
-- "aws-lambda-ric"
 - "better-sqlite3"
-- "esbuild"
 - "expect"
 - "jsonc-parser"
 - "knex"
 - "nx" 
+- "tailwindcss"
 - "tslib"
 - "tsx" 
 - "ts-proto"
+- "ulid"
+- "verror"

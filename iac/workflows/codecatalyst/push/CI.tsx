@@ -1,14 +1,12 @@
 /** @jsxImportSource @levicape/fourtwo */
 /** @jsxRuntime automatic */
 
-import { AwsStateBackendCommandsParameter } from "@levicape/fourtwo";
-import { CodeCatalystWorkflowExpressions } from "@levicape/fourtwo/ci/cd/pipeline/codecatalyst";
-import {
-	CodeCatalystActionGroupX,
-	CodeCatalystStepX,
-	CodeCatalystWorkflowX,
-} from "@levicape/fourtwo/x/codecatalyst";
-import { CodeCatalystBuildX } from "@levicape/fourtwo/x/codecatalyst/actions/aws";
+import { CodeCatalystWorkflowExpressions } from "@levicape/fourtwo/ci/cd/pipeline/codecatalyst/CodeCatalystWorkflowExpressions";
+import { AwsStateBackendCommandsParameter } from "@levicape/fourtwo/cli/commands/aws/pulumi/AwsPulumiBackendCommand";
+import { CodeCatalystActionGroupX } from "@levicape/fourtwo/jsx/codecatalyst/CodeCatalystActionGroupX";
+import { CodeCatalystStepX } from "@levicape/fourtwo/jsx/codecatalyst/CodeCatalystStepX";
+import { CodeCatalystWorkflowX } from "@levicape/fourtwo/jsx/codecatalyst/CodeCatalystWorkflowX";
+import { CodeCatalystBuildX } from "@levicape/fourtwo/jsx/codecatalyst/actions/aws/CodeCatalystBuildX";
 
 const APPLICATION = "fourtwo";
 const PUSH_IMAGE_ECR_STACK_OUTPUT = "fourtwo_codestar_ecr";
