@@ -73,3 +73,10 @@ export function CodePipelineDefinitionX(props: CodePipelineDefinitionXProps) {
 
 	return builder;
 }
+
+export * from "./CodePipelineActionX.mjs";
+export * from "./CodePipelineArtifactStoreX.mjs";
+export * from "./CodePipelineConditionX.mjs";
+export * from "./CodePipelineRulesX.mjs";
+export * from "./CodePipelineStageX.mjs";
+export * from "./CodePipelineVariableX.mjs";

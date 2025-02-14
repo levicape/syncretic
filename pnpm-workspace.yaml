@@ -27,6 +27,7 @@ catalog:
 
 
 
+
 catalogs:
   aws:
     "@aws/codecatalyst-workflows-sdk": "^0.1.5-preview.6"
@@ -81,8 +82,10 @@ catalogs:
   data-row-avro:
     "avsc": "^5.7.7"
   dev:
-    "typescript": "^5.7.3"
+    "tslib": "^2.8.1"
     "tsx": "^4.19.2"
+    "ts-node": "^10.9.2"
+    "typescript": "^5.7.3"
   effect:
     "effect": "^3.12.7"
     "@effect/platform": "^0.75.1"

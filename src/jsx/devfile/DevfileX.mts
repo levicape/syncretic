@@ -26,3 +26,8 @@ export const DevfileX = <Id extends string, Component extends string>(
 	}
 	return builder;
 };
+
+export * from "./DevfileCommandX.mjs";
+export * from "./DevfileComponentX.mjs";
+export * from "./DevfileEventX.mjs";
+export * from "./DevfileMetadataX.mjs";

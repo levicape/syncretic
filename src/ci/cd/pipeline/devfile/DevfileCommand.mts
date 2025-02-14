@@ -36,6 +36,9 @@ export class DevfileCommandBuilder<Id extends string> {
 	}
 
 	build() {
+		if (!this.exec.commandLine.endsWith(";")) {
+			this.exec.commandLine += ";";
+		}
 		return { id: this.id, exec: this.exec };
 	}
 }

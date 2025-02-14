@@ -8,10 +8,11 @@ import {
 	DevfileMetadataX,
 	DevfileSourceComponentX,
 	DevfileX,
-} from "@levicape/fourtwo/x/devfile";
+} from "@levicape/fourtwo/devfile";
 
+const APPLICATION_NAME = "fourtwo";
 const NODE_VERSION = "22.12.0";
-const PNPM_VERSION = "9.15.4";
+const PNPM_VERSION = "pnpm@9.15.4";
 const MAKE_DEPENDENCIES = [
 	"g++",
 	"make",
@@ -41,7 +42,7 @@ const sudodo = (script: string) =>
 
 let data = (
 	<DevfileX
-		metadata={<DevfileMetadataX name={"fourtwo"} />}
+		metadata={<DevfileMetadataX name={APPLICATION_NAME} />}
 		components={[<DevfileSourceComponentX name={"source"} />]}
 		events={
 			<DevfileEventX
@@ -99,7 +100,7 @@ let data = (
 				id={"node"}
 				exec={{
 					component: "source",
-					commandLine: sudodo(`pnpx n ${NODE_VERSION} -y;`),
+					commandLine: sudodo(`pnpx n ${NODE_VERSION} -y`),
 				}}
 			/>,
 			<DevfileCommandX
