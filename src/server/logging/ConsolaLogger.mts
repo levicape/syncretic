@@ -4,11 +4,16 @@ import { Context, Effect } from "effect";
 import { LogLayer } from "loglayer";
 import { serializeError } from "serialize-error";
 import { env } from "std-env";
-import { ulid } from "ulidx";
-import { LoggingContext } from "./LoggingContext.mjs";
+import { LoggingContext, LogstreamPassthrough } from "./LoggingContext.mjs";
+import {
+	$$_spanId_$$,
+	$$_traceId_$$,
+	LoggingPlugins,
+} from "./LoggingPlugins.mjs";
 
-const rootloglayer = Effect.succeed(
-	new LogLayer({
+const rootloglayer = Effect.sync(() => {
+	const rootId = $$_traceId_$$();
+	return new LogLayer({
 		transport: new ConsolaTransport({
 			logger: createConsola({
 				formatOptions: {
@@ -18,43 +23,36 @@ const rootloglayer = Effect.succeed(
 			}),
 		}),
 		errorSerializer: serializeError,
-		plugins: [
-			{
-				id: "unixtime-plugin",
-				onBeforeDataOut: ({ data }) => {
-					if (data) {
-						data.unixtime = Date.now();
-					}
-					return data;
-				},
-			},
-		],
+		plugins: LoggingPlugins,
 	}).withContext({
-		rootId: ulid(),
-	}),
-);
+		_$span: "root",
+		rootId,
+		traceId: rootId,
+	});
+});
 
 export const withConsolaLogger = (props: {
+	prefix: string;
 	context?: Record<string, unknown>;
-	prefix?: string;
-	supress?: boolean;
 }) =>
 	Context.add(LoggingContext, {
 		props,
 		logger: Effect.gen(function* () {
 			const logger = yield* yield* Effect.cached(rootloglayer);
-			const loggerId = ulid().slice(-16);
+			const loggerId = $$_spanId_$$();
 			let child = props.prefix
 				? logger.withPrefix(props.prefix)
 				: logger.child();
-
-			if (props.supress) {
-				child = child.disableLogging();
-			}
-
-			return child.withContext({
+			const loglayer = child.withContext({
 				...props.context,
+				_$span: "logger",
 				loggerId,
+				spanId: loggerId,
 			});
+
+			loglayer.debug(`logger span`);
+
+			return loglayer;
 		}),
+		stream: LogstreamPassthrough,
 	});

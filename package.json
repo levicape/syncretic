@@ -36,7 +36,6 @@
     "pretty-ms": "catalog:core",
     "serialize-error": "catalog:error",
     "std-env": "catalog:core",
-    "ulidx": "catalog:id",
     "verror": "catalog:error",
     "yaml": "catalog:core",
     "zod": "catalog:core"

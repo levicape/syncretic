@@ -1,25 +1,45 @@
+import { inspect } from "node:util";
 import { StackReference, getStack } from "@pulumi/pulumi";
+import { log } from "@pulumi/pulumi";
+import { destr } from "destr";
+import { deserializeError, serializeError } from "serialize-error";
 import { VError } from "verror";
 import type { z } from "zod";
-import { JsonParseException } from "./Exception";
 
 export const $stack$ = getStack().split(".").pop();
 
-export const $ref = (stack: string) =>
-	new StackReference(`organization/${stack}/${stack}.${$stack$}`);
+const $$refpath = (stack: string) =>
+	`organization/${stack}/${stack}.${$stack$}`;
+
+export const $ref = (stack: string) => new StackReference($$refpath(stack));
 
 export const $val = <Z extends z.AnyZodObject | z.ZodRecord>(
 	json: string,
 	schema: Z,
+	opts?: {
+		info?: Record<string, unknown>;
+	},
 ): z.infer<Z> => {
 	try {
 		if (typeof json !== "string") {
 			return schema.parse(json);
 		}
 
-		return schema.parse(JSON.parse(json));
-	} catch (e) {
-		throw new JsonParseException(e, json);
+		return schema.parse(destr(json));
+	} catch (e: unknown) {
+		throw new VError(
+			{
+				name: "StackrefValueParseError",
+				cause: deserializeError(e),
+				message: `Failed to parse value`,
+				info: {
+					error: serializeError(e),
+					json,
+					schema,
+				},
+			},
+			`Failed to parse '${opts?.info?.["outputName"] ?? "<OUTPUT_NAME>"}' value`,
+		);
 	}
 };
 
@@ -41,6 +61,17 @@ export const $deref = async <T extends DereferenceConfig>(
 ): Promise<DereferencedOutput<T>[string]> => {
 	const dereferencedRoots = {} as DereferencedOutput<T>;
 
+	log.debug(
+		inspect(
+			{
+				$deref: {
+					config,
+				},
+			},
+			{ depth: null },
+		),
+	);
+
 	if (Object.keys(config).length > 1) {
 		throw new VError("Only one root key is allowed");
 	}
@@ -53,14 +84,35 @@ export const $deref = async <T extends DereferenceConfig>(
 			const stackConfig = rootStacks[stackName];
 			const outputValues = {} as Record<string, unknown>;
 
-			const ref = $ref(`${rootKey}-${stackName}`);
-
+			const stackRefKey = `${rootKey}-${stackName}`;
+			const ref = $ref(stackRefKey);
 			for (const stackOutput in stackConfig.refs) {
 				const schema = stackConfig.refs[stackOutput];
-				const output = await ref.getOutputDetails(
-					`${rootKey}_${stackName}_${stackOutput}`,
+				const envStackName = stackName.replace(/-/g, "_");
+				const outputName = `${rootKey}_${envStackName}_${stackOutput}`;
+				log.info(
+					inspect(
+						{
+							$deref: {
+								$$ref: stackRefKey,
+								$$refpath: $$refpath(stackRefKey),
+								output: {
+									stackName,
+									outputName,
+								},
+							},
+						},
+						{ depth: null },
+					),
 				);
-				outputValues[stackOutput] = $val(output.value, schema);
+				const output = await ref.getOutputDetails(outputName);
+				outputValues[stackOutput] = $val(output.value, schema, {
+					info: {
+						rootKey,
+						envStackName,
+						stackOutput,
+					},
+				});
 			}
 
 			dereferencedStacks[stackName] = outputValues;
@@ -69,6 +121,18 @@ export const $deref = async <T extends DereferenceConfig>(
 		dereferencedRoots[rootKey] =
 			dereferencedStacks as DereferencedOutput<T>[typeof rootKey];
 	}
+	log.info(
+		inspect(
+			{
+				$deref: {
+					$stack$,
+					stack: getStack(),
+					dereferenced: dereferencedRoots,
+				},
+			},
+			{ depth: null },
+		),
+	);
 
 	return Object.values(dereferencedRoots)[0];
 };

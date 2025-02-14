@@ -15,6 +15,7 @@
     "@pulumi/awsx": "catalog:pulumi",
     "@pulumi/docker-build": "catalog:pulumi",
     "@pulumi/pulumi": "catalog:pulumi",
+    "destr": "catalog:parse-json",
     "ts-node": "catalog:dev",
     "tslib": "catalog:dev",
     "typescript": "catalog:dev",
