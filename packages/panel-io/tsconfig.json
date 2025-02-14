@@ -27,8 +27,8 @@
 		/* Modules */
 		"module": "NodeNext",
 		"moduleResolution": "nodenext" /* Specify how TypeScript looks up a file from a given module specifier. */,
-		"rootDir": "./src" /* Specify what module code is generated. */,
-		// "rootDirs": [],                                   /* Allow multiple folders to be treated as one when resolving modules. */
+		// "rootDir": "./src" /* Specify what module code is generated. */,
+		"rootDirs": ["./src", "./canary"],                                   /* Allow multiple folders to be treated as one when resolving modules. */
 		// "typeRoots": [],                                  /* Specify multiple folders that act like './node_modules/@types'. */
 		"types": [
 			"node"
@@ -83,7 +83,7 @@
 		// "strictBindCallApply": true,                      /* Check that the arguments for 'bind', 'call', and 'apply' methods match the original function. */
 		"strictPropertyInitialization": false /* Check for class properties that are declared but not set in the constructor. */,
 		"noImplicitThis": true /* Enable error reporting when 'this' is given the type 'any'. */,
-		// "useUnknownInCatchVariables": true,               /* Default catch clause variables as 'unknown' instead of 'any'. */
+		"useUnknownInCatchVariables": true,               /* Default catch clause variables as 'unknown' instead of 'any'. */
 		"alwaysStrict": true /* Ensure 'use strict' is always emitted. */,
 		"noUnusedLocals": false /* Enable error reporting when local variables aren't read. */,
 		"noUnusedParameters": false /* Raise an error when a function parameter isn't read. */,
@@ -100,7 +100,5 @@
 		// "skipDefaultLibCheck": true,                      /* Skip type checking .d.ts files that are included with TypeScript. */
 		"skipLibCheck": true,
 		"isolatedModules": true /* Skip type checking all .d.ts files. */
-	},
-	"include": ["src/**/*"],
-	"exclude": ["node_modules", "tsc.out", "module"]
+	}
 }

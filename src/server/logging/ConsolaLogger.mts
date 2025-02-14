@@ -16,6 +16,7 @@ const rootloglayer = Effect.sync(() => {
 	return new LogLayer({
 		transport: new ConsolaTransport({
 			logger: createConsola({
+				fancy: false,
 				formatOptions: {
 					compact: false,
 				},

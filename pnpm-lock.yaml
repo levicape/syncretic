@@ -54,11 +54,11 @@ catalogs:
       version: 11.8.1
   default:
     '@levicape/paloma':
-      specifier: 0.3.1-main.8
-      version: 0.3.1-main.8
+      specifier: 0.3.2-main.9
+      version: 0.3.2-main.9
     '@levicape/spork':
-      specifier: 0.4.1-main.6
-      version: 0.4.1-main.6
+      specifier: 0.5.1-main.8
+      version: 0.5.1-main.8
   dev:
     ts-node:
       specifier: ^10.9.2
@@ -127,9 +127,19 @@ catalogs:
     '@loglayer/transport-consola':
       specifier: ^2.0.0
       version: 2.0.0
+    '@loglayer/transport-pino':
+      specifier: ^2.0.0
+      version: 2.0.0
     loglayer:
       specifier: ^6.0.0
       version: 6.0.0
+  log-pino:
+    pino:
+      specifier: ^9.6.0
+      version: 9.6.0
+    pino-pretty:
+      specifier: ^13.0.0
+      version: 13.0.0
   package:
     depcheck:
       specifier: ^1.4.7
@@ -262,6 +272,9 @@ importers:
       '@loglayer/transport-consola':
         specifier: catalog:log-loglayer
         version: 2.0.0(consola@3.4.0)
+      '@loglayer/transport-pino':
+        specifier: catalog:log-loglayer
+        version: 2.0.0(pino@9.6.0)
       '@stricli/core':
         specifier: catalog:cli
         version: 1.1.1
@@ -291,10 +304,16 @@ importers:
         version: 4.1.0
       knex:
         specifier: catalog:database-sql
-        version: 3.1.0(better-sqlite3@11.8.1)
+        version: 3.1.0(better-sqlite3@11.8.1)(pg@8.13.1)
       loglayer:
         specifier: catalog:log-loglayer
         version: 6.0.0
+      pino:
+        specifier: catalog:log-pino
+        version: 9.6.0
+      pino-pretty:
+        specifier: catalog:log-pino
+        version: 13.0.0
       pretty-ms:
         specifier: catalog:core
         version: 9.2.0
@@ -358,7 +377,7 @@ importers:
     dependencies:
       '@levicape/paloma':
         specifier: 'catalog:'
-        version: 0.3.1-main.8
+        version: 0.3.2-main.9(pg@8.13.1)
     devDependencies:
       typescript:
         specifier: catalog:dev
@@ -399,6 +418,9 @@ importers:
       destr:
         specifier: catalog:parse-json
         version: 2.0.3
+      serialize-error:
+        specifier: catalog:error
+        version: 12.0.0
       ts-node:
         specifier: catalog:dev
         version: 10.9.2(@swc/core@1.10.12(@swc/helpers@0.5.15))(@types/node@22.13.4)(typescript@5.7.3)
@@ -471,23 +493,26 @@ importers:
         specifier: catalog:dev
         version: 5.7.3
 
-  packages/panel-http:
+  packages/panel-io:
     dependencies:
       '@bufbuild/protobuf':
         specifier: catalog:protobuf
         version: 2.2.3
+      '@levicape/paloma':
+        specifier: 'catalog:'
+        version: 0.3.2-main.9(pg@8.13.1)
       '@levicape/spork':
         specifier: 'catalog:'
-        version: 0.4.1-main.6(@bufbuild/protobuf@2.2.3)(@hono/node-server@1.13.7(hono@4.7.1))(hono@4.7.1)(jsonwebtoken@9.0.2)(zod@3.24.1)
-      aws4fetch:
-        specifier: catalog:aws
-        version: 1.0.20
+        version: 0.5.1-main.8(@bufbuild/protobuf@2.2.3)(@hono/node-server@1.13.7(hono@4.7.1))(hono@4.7.1)(jsonwebtoken@9.0.2)(zod@3.24.1)
       effect:
         specifier: catalog:effect
         version: 3.13.0
       hono:
         specifier: catalog:hono
         version: 4.7.1
+      ts-proto:
+        specifier: catalog:protobuf
+        version: 2.6.1
     devDependencies:
       '@biomejs/biome':
         specifier: catalog:lint
@@ -498,9 +523,6 @@ importers:
       publint:
         specifier: catalog:package
         version: 0.3.5
-      ts-proto:
-        specifier: catalog:protobuf
-        version: 2.6.1
       typescript:
         specifier: catalog:dev
         version: 5.7.3
@@ -1398,13 +1420,13 @@ packages:
     resolution: {integrity: sha512-rsfF5t3sd5c+3ejUgcy8q0cVG2/BxT064L4Xz+CuKEe014u8T4MtFZiWjWZFpfMXSGKzFYEA6DJYm9CqjmIfZg==}
     engines: {node: '>=14'}
 
-  '@levicape/paloma@0.3.1-main.8':
-    resolution: {integrity: sha512-Z+j+T2k6GEYBFoyUTmye33LzBeliOt4Ob1INSHc0WmNfzPaxbbKWBJ/H19K9maw+mqMtzo+Ey+/yyM3bc7LaCQ==, tarball: https://npm.pkg.github.com/download/@levicape/paloma/0.3.1-main.8/20f4728f0fe1616b8f3785dcdd706c575056aed9}
+  '@levicape/paloma@0.3.2-main.9':
+    resolution: {integrity: sha512-RyknVb1/eANhETCsKy4E9zA1OhHI7B6lQu7i+by2whPyWZOAvDYlfgk1evNXSs+t0dVZ3abojvj2uPurIUfkLQ==, tarball: https://npm.pkg.github.com/download/@levicape/paloma/0.3.2-main.9/223f589fa939a07170606683d4a2b025daf715d8}
     engines: {node: 22.12.0}
     hasBin: true
 
-  '@levicape/spork@0.4.1-main.6':
-    resolution: {integrity: sha512-ePvaOfC1GhQn/zmKxFHNOmMFeffDPSZ4+vCPHPYSleLwzz72oun+inaOMcDyrkVqfn5FeqL1nYGkeagh7xH7gQ==, tarball: https://npm.pkg.github.com/download/@levicape/spork/0.4.1-main.6/c643c71d2b5794b881eac361c2ee2de92b6c4b16}
+  '@levicape/spork@0.5.1-main.8':
+    resolution: {integrity: sha512-+JupTT3xhLGbMgK9DJru98wnZl4BZpWUIrgWpttIL3UXZFV8OuSf0idOpbIwA5WC8dWIk2kQuv0699o/JJURmw==, tarball: https://npm.pkg.github.com/download/@levicape/spork/0.5.1-main.8/4df5f63566e7f49c2d625b8e4ba42edd3b56753a}
     engines: {node: 22.12.0}
     hasBin: true
     peerDependencies:
@@ -1441,6 +1463,12 @@ packages:
     engines: {node: '>=18'}
     peerDependencies:
       consola: '*'
+
+  '@loglayer/transport-pino@2.0.0':
+    resolution: {integrity: sha512-epMMQ+EBXaZQEcaAFZvmd3nXeRlGWlGVtXOejLStwhh0Ts53q2mMkuu9+dpeu0HzvZbJ8LsWxuw6rLipbsSjaw==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      pino: '*'
 
   '@loglayer/transport@2.0.0':
     resolution: {integrity: sha512-S4/JG0jollgfx6ERPc3cZfjzJu9/GXwF0D7Z+WU9I7zs8vTmoy2U8FZCcfKiKsg68spHY+dINzMrd8YwMPoajQ==}
@@ -2766,6 +2794,10 @@ packages:
   asynckit@0.4.0:
     resolution: {integrity: sha512-Oei9OH4tRh0YqU3GxhX79dM/mwVgvbZJaSNaRk+bshkj0S5cfHcgYakreBjrHwatXKbz+IoIdYLxrKim2MjW0Q==}
 
+  atomic-sleep@1.0.0:
+    resolution: {integrity: sha512-kNOjDqAh7px0XWNI+4QbzoiR/nTkHAWNud2uvnJquD1/x5a7EQZMJT0AczqK0Qn67oY/TTQ1LbUKajZpp3I9tQ==}
+    engines: {node: '>=8.0.0'}
+
   aws4fetch@1.0.20:
     resolution: {integrity: sha512-/djoAN709iY65ETD6LKCtyyEI04XIBP5xVvfmNxsEP0uJB5tyaGBztSryRr4HqMStr9R06PisQE7m9zDTXKu6g==}
 
@@ -3030,6 +3062,9 @@ packages:
   csv@6.3.11:
     resolution: {integrity: sha512-a8bhT76Q546jOElHcTrkzWY7Py925mfLO/jqquseH61ThOebYwOjLbWHBqdRB4K1VpU36sTyIei6Jwj7QdEZ7g==}
     engines: {node: '>= 0.1.90'}
+
+  dateformat@4.6.3:
+    resolution: {integrity: sha512-2P0p0pFGzHS5EMnhdxQi7aJN+iMheud0UhG4dlE1DLAlvL8JHjJJTX/CSm4JXwV0Ka5nGk3zC5mcb5bUQUxxMA==}
 
   db0@0.2.4:
     resolution: {integrity: sha512-hIzftLH1nMsF95zSLjDLYLbE9huOXnLYUTAQ5yKF5amp0FpeD+B15XJa8BvGYSOeSCH4gl2WahB/y1FcUByQSg==}
@@ -3312,6 +3347,9 @@ packages:
     resolution: {integrity: sha512-h5+1OzzfCC3Ef7VbtKdcv7zsstUQwUDlYpUTvjeUsJAssPgLn7QzbboPtL5ro04Mq0rPOsMzl7q5hIbRs2wD1A==}
     engines: {node: '>=8.0.0'}
 
+  fast-copy@3.0.2:
+    resolution: {integrity: sha512-dl0O9Vhju8IrcLndv2eU4ldt1ftXMqqfgN4H1cpmGV7P6jeB9FwpN9a2c8DPGE1Ys88rNUJVYDHq73CGAGOPfQ==}
+
   fast-deep-equal@3.1.3:
     resolution: {integrity: sha512-f3qQ9oQy9j2AhBe/H9VC91wLmKBCCU/gDOnKNAYG5hswO7BLKj09Hc5HYNz9cGI++xlpDCIgDaitVs03ATR84Q==}
 
@@ -3322,6 +3360,13 @@ packages:
   fast-printf@1.6.10:
     resolution: {integrity: sha512-GwTgG9O4FVIdShhbVF3JxOgSBY2+ePGsu2V/UONgoCPzF9VY6ZdBMKsHKCYQHZwNk3qNouUolRDsgVxcVA5G1w==}
     engines: {node: '>=10.0'}
+
+  fast-redact@3.5.0:
+    resolution: {integrity: sha512-dwsoQlS7h9hMeYUq1W++23NDcBLV4KqONnITDV9DjfS3q1SgDGVrBdvvTLUotWtPSD7asWDV9/CmsZPy8Hf70A==}
+    engines: {node: '>=6'}
+
+  fast-safe-stringify@2.1.1:
+    resolution: {integrity: sha512-W+KJc2dmILlPplD/H4K9l9LcAHAfPtP6BY84uVLXQ6Evcz9Lcg33Y2z1IVblT6xdY54PXYVHEv+0Wpq8Io6zkA==}
 
   fast-uri@3.0.3:
     resolution: {integrity: sha512-aLrHthzCjH5He4Z2H9YZ+v6Ujb9ocRuW6ZzkJQOrTxleEijANq4v1TsaPaVG1PZcuurEzrLcWRyYBYXD5cEiaw==}
@@ -3527,6 +3572,9 @@ packages:
   hasown@2.0.2:
     resolution: {integrity: sha512-0hJU9SCPvmMzIBdZFqNPXWa6dqh7WdH0cII9y+CyS8rG3nL48Bclra9HmKhVVUHyPWNH5Y7xDwAB7bfgSjkUMQ==}
     engines: {node: '>= 0.4'}
+
+  help-me@5.0.0:
+    resolution: {integrity: sha512-7xgomUX6ADmcYzFik0HzAxh/73YlKR9bmFzf51CZwR+b6YtzU2m0u49hQCqV6SvlqIqsaxovfwdvbnsw3b/zpg==}
 
   homedir-polyfill@1.0.3:
     resolution: {integrity: sha512-eSmmWE5bZTK2Nou4g0AI3zZ9rswp7GRKoKXS1BLUkvPviOqs4YTN1djQIqrXy9k5gEtdLPy86JjRwsNM9tnDcA==}
@@ -3754,6 +3802,10 @@ packages:
   jiti@2.4.2:
     resolution: {integrity: sha512-rg9zJN+G4n2nfJl5MW3BMygZX56zKPNVEYYqq7adpmMh4Jn2QNEwhvQlFy6jPVdcod7txZtKHWnyZiA3a0zP7A==}
     hasBin: true
+
+  joycon@3.1.1:
+    resolution: {integrity: sha512-34wB/Y7MW7bzjKRjUKTa46I2Z7eV62Rkhva+KkopW7Qvv/OSWBqvkSY7vusOPrNuZcUG3tApvdVgNB8POj3SPw==}
+    engines: {node: '>=10'}
 
   js-tokens@4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
@@ -4274,6 +4326,10 @@ packages:
   obuf@1.1.2:
     resolution: {integrity: sha512-PX1wu0AmAdPqOL1mWhqmlOd8kOIZQwGZw6rh7uby9fTc5lhaOWFLX3I6R1hrF9k3zUY40e6igsLGkDXK92LJNg==}
 
+  on-exit-leak-free@2.1.2:
+    resolution: {integrity: sha512-0eJJY6hXLGf1udHwfNftBqH+g73EU4B504nZeKpz1sYRKafAghwxEJunB2O7rDZkL4PGfsMVnTXZ2EjibbqcsA==}
+    engines: {node: '>=14.0.0'}
+
   on-finished@2.4.1:
     resolution: {integrity: sha512-oVlzkg3ENAhCk2zdv7IJwd/QUD4z2RxRwpkcGY8psCVcCYZNq4wYnVWALHM+brtuJjePWiYF/ClmuDr8Ch5+kg==}
     engines: {node: '>= 0.8'}
@@ -4448,6 +4504,20 @@ packages:
     resolution: {integrity: sha512-I3EurrIQMlRc9IaAZnqRR044Phh2DXY+55o7uJ0V+hYZAcQYSuFWsc9q5PvyDHUSCe1Qxn/iBz+78s86zWnGag==}
     engines: {node: '>=10'}
 
+  pino-abstract-transport@2.0.0:
+    resolution: {integrity: sha512-F63x5tizV6WCh4R6RHyi2Ml+M70DNRXt/+HANowMflpgGFMAym/VKm6G7ZOQRjqN7XbGxK1Lg9t6ZrtzOaivMw==}
+
+  pino-pretty@13.0.0:
+    resolution: {integrity: sha512-cQBBIVG3YajgoUjo1FdKVRX6t9XPxwB9lcNJVD5GCnNM4Y6T12YYx8c6zEejxQsU0wrg9TwmDulcE9LR7qcJqA==}
+    hasBin: true
+
+  pino-std-serializers@7.0.0:
+    resolution: {integrity: sha512-e906FRY0+tV27iq4juKzSYPbUj2do2X2JX4EzSca1631EB2QJQUqGbDuERal7LCtOpxl6x3+nvo9NPZcmjkiFA==}
+
+  pino@9.6.0:
+    resolution: {integrity: sha512-i85pKRCt4qMjZ1+L7sy2Ag4t1atFcdbEt76+7iRJn1g2BvsnRMGu9p8pivl9fs63M2kF/A0OacFZhTub+m/qMg==}
+    hasBin: true
+
   pkg-dir@7.0.0:
     resolution: {integrity: sha512-Ie9z/WINcxxLp27BKOCHGde4ITq9UklYKDzVo1nhk5sqGEXU3FpkwP5GM2voTGJkGd9B3Otl+Q4uwSOeSUtOBA==}
     engines: {node: '>=14.16'}
@@ -4522,6 +4592,9 @@ packages:
   proc-log@5.0.0:
     resolution: {integrity: sha512-Azwzvl90HaF0aCz1JrDdXQykFakSSNPaPoiZ9fm5qJIMHioDZEi7OAdRwSm6rSoPtY3Qutnm3L7ogmg3dc+wbQ==}
     engines: {node: ^18.17.0 || >=20.5.0}
+
+  process-warning@4.0.1:
+    resolution: {integrity: sha512-3c2LzQ3rY9d0hc1emcsHhfT9Jwz0cChib/QN89oME2R451w5fy3f0afAhERFZAwrbDU43wk12d0ORBpDVME50Q==}
 
   proggy@2.0.0:
     resolution: {integrity: sha512-69agxLtnI8xBs9gUGqEnK26UfiexpHy+KUpBQWabiytQjnn5wFY8rklAi7GRfABIuPNnQ/ik48+LGLkYYJcy4A==}
@@ -4601,6 +4674,9 @@ packages:
   queue-microtask@1.2.3:
     resolution: {integrity: sha512-NuaNSa6flKT5JaSYQzJok04JzTL1CA6aGhv5rfLW3PgqA+M2ChpZQnAC8h8i4ZFkBS8X5RqkDBHA7r4hej3K9A==}
 
+  quick-format-unescaped@4.0.4:
+    resolution: {integrity: sha512-tYC1Q1hgyRuHgloV/YXs2w15unPVh8qfu/qCTfhTYamaw7fyhumKa2yGpdSo87vY32rIclj+4fWYQXUMs9EHvg==}
+
   quick-lru@5.1.1:
     resolution: {integrity: sha512-WuyALRjWPDGtt/wzJiadO5AXY+8hZ80hVpe6MyivgraREW751X3SbhRvG3eLKOYN+8VEvqLcf3wdnt44Z4S4SA==}
     engines: {node: '>=10'}
@@ -4663,6 +4739,10 @@ packages:
   readdirp@4.1.1:
     resolution: {integrity: sha512-h80JrZu/MHUZCyHu5ciuoI0+WxsCxzxJTILn6Fs8rxSnFPh+UVHYfeIxK1nVGugMqkfC4vJcBOYbkfkwYK0+gw==}
     engines: {node: '>= 14.18.0'}
+
+  real-require@0.2.0:
+    resolution: {integrity: sha512-57frrGM/OCTLqLOAh0mhVA9VBMHd+9U7Zb2THMGdBUoZVOtGbJzjxsYGDJ3A9AYYCP4hn6y1TVbaOfzWtm5GFg==}
+    engines: {node: '>= 12.13.0'}
 
   rechoir@0.8.0:
     resolution: {integrity: sha512-/vxpCXddiX8NGfGO/mTafwjq4aFa/71pvamip0++IQk3zG8cbCj0fifNPrjjF1XMXUne91jL9OoxmdykoEtifQ==}
@@ -4893,6 +4973,9 @@ packages:
   schemes@1.4.0:
     resolution: {integrity: sha512-ImFy9FbCsQlVgnE3TCWmLPCFnVzx0lHL/l+umHplDqAKd0dzFpnS6lFZIpagBlYhKwzVmlV36ec0Y1XTu8JBAQ==}
 
+  secure-json-parse@2.7.0:
+    resolution: {integrity: sha512-6aU+Rwsezw7VR8/nyvKTx8QpWH9FrcYiXXlqC4z5d5XQBDRqtbfsRjnwGyqbi3gddNtWHuEk9OANUotL26qKUw==}
+
   semver-compare@1.0.0:
     resolution: {integrity: sha512-YM3/ITh2MJ5MtzaM429anh+x2jiLVjqILF4m4oyQB18W7Ggea7BfqdH/wGMK7dDiMghv/6WG7znWMwUDzJiXow==}
 
@@ -5014,6 +5097,9 @@ packages:
     resolution: {integrity: sha512-l5x7VUUWbjVFbafGLxPWkYsHIhEvmF85tbIeFZWc8ZPtoMyybuEhL7Jye/ooC4/d48FgOjSJXgsF/AJPYCW8Zw==}
     engines: {node: '>= 10.0.0', npm: '>= 3.0.0'}
 
+  sonic-boom@4.2.0:
+    resolution: {integrity: sha512-INb7TM37/mAcsGmc9hyyI6+QR3rR1zVRu36B0NeGXKnOOLiZOfER5SA+N7X7k3yUYRzLWafduTDvJAfDswwEww==}
+
   source-map-js@1.2.1:
     resolution: {integrity: sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA==}
     engines: {node: '>=0.10.0'}
@@ -5115,6 +5201,10 @@ packages:
     resolution: {integrity: sha512-4gB8na07fecVVkOI6Rs4e7T6NOTki5EmL7TUduTs6bu3EdnSycntVJ4re8kgZA+wx9IueI2Y11bfbgwtzuE0KQ==}
     engines: {node: '>=0.10.0'}
 
+  strip-json-comments@3.1.1:
+    resolution: {integrity: sha512-6fPc+R4ihwqP6N/aIv2f1gMH8lOVtWQHoqC4yK6oSDVVocumAsfCqjkXnqiYMhmMwS/mEHLp7Vehlt3ql6lEig==}
+    engines: {node: '>=8'}
+
   strnum@1.0.5:
     resolution: {integrity: sha512-J8bbNyKKXl5qYcR36TIO8W3mVGVHrmmxsd5PAItGkmyzwJvybiw2IVq5nqd0i4LSNSkB/sx9VHllbfFdr9k1JA==}
 
@@ -5169,6 +5259,9 @@ packages:
     resolution: {integrity: sha512-B8wRRkmre4ERucLM/uXx4MOV5cbnOlVAqUst+1+iLKPI0dOgFO28f84ptoQt9HEI537PMzfYa/d+GEPKTRXmYA==}
     engines: {node: '>=10'}
     hasBin: true
+
+  thread-stream@3.1.0:
+    resolution: {integrity: sha512-OqyPZ9u96VohAyMfJykzmivOrY2wfMSf3C5TtFJVgN+Hm6aj+voFhlK+kZEIv2FBh1X6Xp3DlnCOfEQ3B2J86A==}
 
   tightrope@0.2.0:
     resolution: {integrity: sha512-Kw36UHxJEELq2VUqdaSGR2/8cAsPgMtvX8uGVU6Jk26O66PhXec0A5ZnRYs47btbtwPDpXXF66+Fo3vimCM9aQ==}
@@ -6710,13 +6803,14 @@ snapshots:
     optionalDependencies:
       re2-wasm: 1.0.2
 
-  '@levicape/paloma@0.3.1-main.8':
+  '@levicape/paloma@0.3.2-main.9(pg@8.13.1)':
     dependencies:
       '@aws-lambda-powertools/logger': 2.14.0
       '@effect/platform': 0.77.0(effect@3.13.0)
       '@effect/platform-node': 0.73.0(@effect/platform@0.77.0(effect@3.13.0))(effect@3.13.0)
       '@loglayer/transport-aws-lambda-powertools': 3.0.0(@aws-lambda-powertools/logger@2.14.0)
       '@loglayer/transport-consola': 2.0.0(consola@3.4.0)
+      '@loglayer/transport-pino': 2.0.0(pino@9.6.0)
       '@stricli/core': 1.1.1
       better-sqlite3: 11.8.1
       consola: 3.4.0
@@ -6725,9 +6819,11 @@ snapshots:
       destr: 2.0.3
       effect: 3.13.0
       fs-extra: 11.3.0
-      knex: 3.1.0(better-sqlite3@11.8.1)
+      knex: 3.1.0(better-sqlite3@11.8.1)(pg@8.13.1)
       ksuid: 3.0.0
       loglayer: 6.0.0
+      pino: 9.6.0
+      pino-pretty: 13.0.0
       serialize-error: 12.0.0
       std-env: 3.8.0
       verror: 1.10.1
@@ -6746,7 +6842,7 @@ snapshots:
       - tedious
       - utf-8-validate
 
-  '@levicape/spork@0.4.1-main.6(@bufbuild/protobuf@2.2.3)(@hono/node-server@1.13.7(hono@4.7.1))(hono@4.7.1)(jsonwebtoken@9.0.2)(zod@3.24.1)':
+  '@levicape/spork@0.5.1-main.8(@bufbuild/protobuf@2.2.3)(@hono/node-server@1.13.7(hono@4.7.1))(hono@4.7.1)(jsonwebtoken@9.0.2)(zod@3.24.1)':
     dependencies:
       '@aws-lambda-powertools/logger': 2.14.0
       '@aws-sdk/client-dynamodb': 3.744.0
@@ -6761,6 +6857,7 @@ snapshots:
       '@hono/zod-validator': 0.4.2(hono@4.7.1)(zod@3.24.1)
       '@loglayer/transport-aws-lambda-powertools': 3.0.0(@aws-lambda-powertools/logger@2.14.0)
       '@loglayer/transport-consola': 2.0.0(consola@3.4.0)
+      '@loglayer/transport-pino': 2.0.0(pino@9.6.0)
       '@stricli/core': 1.1.1
       chokidar: 4.0.3
       consola: 3.4.0
@@ -6769,6 +6866,8 @@ snapshots:
       hono-rate-limiter: 0.4.2(hono@4.7.1)
       jsonwebtoken: 9.0.2
       loglayer: 6.0.0
+      pino: 9.6.0
+      pino-pretty: 13.0.0
       serialize-error: 12.0.0
       slonik: 46.4.0(zod@3.24.1)
       std-env: 3.8.0
@@ -6804,6 +6903,11 @@ snapshots:
     dependencies:
       '@loglayer/transport': 2.0.0
       consola: 3.4.0
+
+  '@loglayer/transport-pino@2.0.0(pino@9.6.0)':
+    dependencies:
+      '@loglayer/transport': 2.0.0
+      pino: 9.6.0
 
   '@loglayer/transport@2.0.0':
     dependencies:
@@ -8401,6 +8505,8 @@ snapshots:
 
   asynckit@0.4.0: {}
 
+  atomic-sleep@1.0.0: {}
+
   aws4fetch@1.0.20: {}
 
   axios@1.7.9:
@@ -8671,6 +8777,8 @@ snapshots:
       csv-parse: 5.6.0
       csv-stringify: 6.5.2
       stream-transform: 3.3.3
+
+  dateformat@4.6.3: {}
 
   db0@0.2.4(better-sqlite3@11.8.1):
     optionalDependencies:
@@ -8979,6 +9087,8 @@ snapshots:
     dependencies:
       pure-rand: 6.1.0
 
+  fast-copy@3.0.2: {}
+
   fast-deep-equal@3.1.3: {}
 
   fast-glob@3.3.2:
@@ -8990,6 +9100,10 @@ snapshots:
       micromatch: 4.0.8
 
   fast-printf@1.6.10: {}
+
+  fast-redact@3.5.0: {}
+
+  fast-safe-stringify@2.1.1: {}
 
   fast-uri@3.0.3: {}
 
@@ -9214,6 +9328,8 @@ snapshots:
     dependencies:
       function-bind: 1.1.2
 
+  help-me@5.0.0: {}
+
   homedir-polyfill@1.0.3:
     dependencies:
       parse-passwd: 1.0.0
@@ -9420,6 +9536,8 @@ snapshots:
 
   jiti@2.4.2: {}
 
+  joycon@3.1.1: {}
+
   js-tokens@4.0.0: {}
 
   js-yaml@3.14.1:
@@ -9495,7 +9613,7 @@ snapshots:
 
   kleur@3.0.3: {}
 
-  knex@3.1.0(better-sqlite3@11.8.1):
+  knex@3.1.0(better-sqlite3@11.8.1)(pg@8.13.1):
     dependencies:
       colorette: 2.0.19
       commander: 10.0.1
@@ -9513,6 +9631,7 @@ snapshots:
       tildify: 2.0.0
     optionalDependencies:
       better-sqlite3: 11.8.1
+      pg: 8.13.1
     transitivePeerDependencies:
       - supports-color
 
@@ -9928,6 +10047,8 @@ snapshots:
 
   obuf@1.1.2: {}
 
+  on-exit-leak-free@2.1.2: {}
+
   on-finished@2.4.1:
     dependencies:
       ee-first: 1.1.1
@@ -10120,6 +10241,42 @@ snapshots:
 
   picomatch@3.0.1: {}
 
+  pino-abstract-transport@2.0.0:
+    dependencies:
+      split2: 4.2.0
+
+  pino-pretty@13.0.0:
+    dependencies:
+      colorette: 2.0.19
+      dateformat: 4.6.3
+      fast-copy: 3.0.2
+      fast-safe-stringify: 2.1.1
+      help-me: 5.0.0
+      joycon: 3.1.1
+      minimist: 1.2.8
+      on-exit-leak-free: 2.1.2
+      pino-abstract-transport: 2.0.0
+      pump: 3.0.2
+      secure-json-parse: 2.7.0
+      sonic-boom: 4.2.0
+      strip-json-comments: 3.1.1
+
+  pino-std-serializers@7.0.0: {}
+
+  pino@9.6.0:
+    dependencies:
+      atomic-sleep: 1.0.0
+      fast-redact: 3.5.0
+      on-exit-leak-free: 2.1.2
+      pino-abstract-transport: 2.0.0
+      pino-std-serializers: 7.0.0
+      process-warning: 4.0.1
+      quick-format-unescaped: 4.0.4
+      real-require: 0.2.0
+      safe-stable-stringify: 2.5.0
+      sonic-boom: 4.2.0
+      thread-stream: 3.1.0
+
   pkg-dir@7.0.0:
     dependencies:
       find-up: 6.3.0
@@ -10192,6 +10349,8 @@ snapshots:
 
   proc-log@5.0.0: {}
 
+  process-warning@4.0.1: {}
+
   proggy@2.0.0: {}
 
   projen@0.71.163: {}
@@ -10256,6 +10415,8 @@ snapshots:
 
   queue-microtask@1.2.3: {}
 
+  quick-format-unescaped@4.0.4: {}
+
   quick-lru@5.1.1: {}
 
   railroad-diagrams@1.0.0: {}
@@ -10316,6 +10477,8 @@ snapshots:
       picomatch: 2.3.1
 
   readdirp@4.1.1: {}
+
+  real-require@0.2.0: {}
 
   rechoir@0.8.0:
     dependencies:
@@ -10525,6 +10688,8 @@ snapshots:
     dependencies:
       extend: 3.0.2
 
+  secure-json-parse@2.7.0: {}
+
   semver-compare@1.0.0: {}
 
   semver@5.7.2: {}
@@ -10679,6 +10844,10 @@ snapshots:
       ip-address: 9.0.5
       smart-buffer: 4.2.0
 
+  sonic-boom@4.2.0:
+    dependencies:
+      atomic-sleep: 1.0.0
+
   source-map-js@1.2.1: {}
 
   source-map-support@0.5.21:
@@ -10768,6 +10937,8 @@ snapshots:
 
   strip-json-comments@2.0.1: {}
 
+  strip-json-comments@3.1.1: {}
+
   strnum@1.0.5: {}
 
   supports-color@7.2.0:
@@ -10849,6 +11020,10 @@ snapshots:
       commander: 2.20.3
       source-map-support: 0.5.21
     optional: true
+
+  thread-stream@3.1.0:
+    dependencies:
+      real-require: 0.2.0
 
   tightrope@0.2.0: {}
 

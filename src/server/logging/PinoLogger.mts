@@ -1,9 +1,9 @@
-import { LogLevel, Logger } from "@aws-lambda-powertools/logger";
-import { PowertoolsTransport } from "@loglayer/transport-aws-lambda-powertools";
+import { PinoTransport } from "@loglayer/transport-pino";
 import { Context, Effect, pipe } from "effect";
 import { LogLayer } from "loglayer";
+import { pino } from "pino";
+import pretty from "pino-pretty";
 import { serializeError } from "serialize-error";
-import { env } from "std-env";
 import { LoggingConfigMain } from "./LoggingConfig.mjs";
 import { LoggingContext, LogstreamPassthrough } from "./LoggingContext.mjs";
 import {
@@ -14,23 +14,19 @@ import {
 
 const rootloglayer = pipe(
 	LoggingConfigMain,
-	Effect.flatMap(({ LOG_LEVEL }) =>
+	Effect.flatMap(({ LOG_LEVEL, CI }) =>
 		Effect.sync(() => {
 			const rootId = $$_traceId_$$();
-			const { AWS_CLOUDMAP_SERVICE_NAME, PULUMI__NAME } = env;
-			const serviceName = AWS_CLOUDMAP_SERVICE_NAME ?? PULUMI__NAME;
-
 			return new LogLayer({
-				transport: new PowertoolsTransport({
-					logger: new Logger({
-						// TODO: Stack env vars, add to protocol stands
-						...(serviceName !== undefined
-							? {
-									serviceName,
-								}
-							: {}),
-						logLevel: LOG_LEVEL >= 3 ? LogLevel.INFO : LogLevel.DEBUG,
-					}),
+				transport: new PinoTransport({
+					logger: pino(
+						{
+							level: CI !== "" || LOG_LEVEL < 5 ? "debug" : "info",
+						},
+						pretty({
+							errorLikeObjectKeys: ["err", "error", "$error"],
+						}),
+					),
 				}),
 				errorSerializer: serializeError,
 				plugins: LoggingPlugins,
@@ -43,7 +39,7 @@ const rootloglayer = pipe(
 	),
 );
 
-export const withAwsPowertoolsLogger = (props: {
+export const withPinoLogger = (props: {
 	prefix: string;
 	context?: Record<string, unknown>;
 }) =>

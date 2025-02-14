@@ -22,6 +22,7 @@
     "@effect/platform-node": "catalog:effect",
     "@loglayer/transport-aws-lambda-powertools": "catalog:log-loglayer",
     "@loglayer/transport-consola": "catalog:log-loglayer",
+    "@loglayer/transport-pino": "catalog:log-loglayer",
     "@stricli/core": "catalog:cli",
     "aws4fetch": "catalog:aws",
     "better-sqlite3": "catalog:database-sqlite",
@@ -33,6 +34,8 @@
     "js-yaml": "catalog:core",
     "knex": "catalog:database-sql",
     "loglayer": "catalog:log-loglayer",
+    "pino": "catalog:log-pino",
+    "pino-pretty": "catalog:log-pino",
     "pretty-ms": "catalog:core",
     "serialize-error": "catalog:error",
     "std-env": "catalog:core",
@@ -104,7 +107,7 @@
         "dependsOn": [
           "@levicape/fourtwo-builders:dx:precommit",
           "@levicape/fourtwo-pulumi:dx:precommit",
-          "@levicape/fourtwo-panel-server:dx:precommit",
+          "@levicape/fourtwo-panel-io:dx:precommit",
           "@levicape/fourtwo-panel-ui:dx:precommit",
           "@levicape/fourtwo-iac-stacks:dx:precommit"
         ]
@@ -126,7 +129,7 @@
           "@levicape/fourtwo-builders:nx:compile",
           "@levicape/fourtwo-canary:nx:compile",
           "@levicape/fourtwo-pulumi:nx:compile",
-          "@levicape/fourtwo-panel-server:nx:compile",
+          "@levicape/fourtwo-panel-io:nx:compile",
           "@levicape/fourtwo-panel-ui:nx:compile"
         ]
       },

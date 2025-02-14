@@ -117,6 +117,10 @@ export const PULUMI_STACKS: Stack[] = [
 		stack: "domains/panel/web",
 		name: "panel-web",
 	},
+	{
+		stack: "domains/panel/monitor",
+		name: "panel-monitor",
+	},
 	// "wwwroot"
 ].map((stack) => ({ ...stack, output: stack.stack.replaceAll("/", "_") }));
 

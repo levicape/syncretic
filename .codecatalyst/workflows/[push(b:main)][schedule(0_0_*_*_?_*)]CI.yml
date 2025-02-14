@@ -459,6 +459,20 @@ Actions:
             - Run: cat _pulumi/domains_panel_web.json
             - Run: /cc/cache/pulumi/bin/pulumi stack output -C $(pwd)/iac/stacks/src/domains/panel/web --shell > $(pwd)/_pulumi/domains_panel_web.sh
             - Run: cat _pulumi/domains_panel_web.sh
+            - Run: /cc/cache/pulumi/bin/pulumi stack init "$APPLICATION_IMAGE_NAME-panel-monitor.$CI_ENVIRONMENT" -C $(pwd)/iac/stacks/src/domains/panel/monitor || true
+            - Run: /cc/cache/pulumi/bin/pulumi stack select "$APPLICATION_IMAGE_NAME-panel-monitor.$CI_ENVIRONMENT" -C $(pwd)/iac/stacks/src/domains/panel/monitor || true
+            - Run: /cc/cache/pulumi/bin/pulumi config set aws:skipMetadataApiCheck false -C $(pwd)/iac/stacks/src/domains/panel/monitor
+            - Run: /cc/cache/pulumi/bin/pulumi config set --path context:stack.environment.isProd false -C $(pwd)/iac/stacks/src/domains/panel/monitor
+            - Run: /cc/cache/pulumi/bin/pulumi config set --path context:stack.environment.features aws -C $(pwd)/iac/stacks/src/domains/panel/monitor
+            - Run: /cc/cache/pulumi/bin/pulumi config set --path 'frontend:stack.dns.hostnames[0]' "$CI_ENVIRONMENT.$APPLICATION_IMAGE_NAME.cloud.$FRONTEND_HOSTNAME" -C $(pwd)/iac/stacks/src/domains/panel/monitor
+            - Run: /cc/cache/pulumi/bin/pulumi stack change-secrets-provider $AWS_PROVIDER_KEY -C $(pwd)/iac/stacks/src/domains/panel/monitor
+            - Run: /cc/cache/pulumi/bin/pulumi refresh -C $(pwd)/iac/stacks/src/domains/panel/monitor --yes --skip-preview --clear-pending-creates --json --suppress-progress --non-interactive --diff --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-refresh"
+            - Run: /cc/cache/pulumi/bin/pulumi preview -C $(pwd)/iac/stacks/src/domains/panel/monitor  --show-replacement-steps --json --suppress-progress --non-interactive --diff --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-preview"
+            - Run: /cc/cache/pulumi/bin/pulumi up -C $(pwd)/iac/stacks/src/domains/panel/monitor --yes --suppress-progress --non-interactive --diff --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-up"
+            - Run: /cc/cache/pulumi/bin/pulumi stack output -C $(pwd)/iac/stacks/src/domains/panel/monitor --json > $(pwd)/_pulumi/domains_panel_monitor.json
+            - Run: cat _pulumi/domains_panel_monitor.json
+            - Run: /cc/cache/pulumi/bin/pulumi stack output -C $(pwd)/iac/stacks/src/domains/panel/monitor --shell > $(pwd)/_pulumi/domains_panel_monitor.sh
+            - Run: cat _pulumi/domains_panel_monitor.sh
             - Run: du -sh _pulumi
   Deployment:
     DependsOn:
@@ -536,6 +550,8 @@ Actions:
             - Run: source $CATALYST_SOURCE_DIR_pulumi/_pulumi/domains_panel_http.sh
             - Run: cat $CATALYST_SOURCE_DIR_pulumi/_pulumi/domains_panel_web.sh
             - Run: source $CATALYST_SOURCE_DIR_pulumi/_pulumi/domains_panel_web.sh
+            - Run: cat $CATALYST_SOURCE_DIR_pulumi/_pulumi/domains_panel_monitor.sh
+            - Run: source $CATALYST_SOURCE_DIR_pulumi/_pulumi/domains_panel_monitor.sh
             - Run: env
             - Run: |-
                 NODE_NO_WARNINGS=1 node -e '(function(){let outputs=JSON.parse(process.env["fourtwo_codestar_ecr"]??"");let envs={"_FOURTWO_CODE_REPOSITORY_URL":outputs.repository.url};Object.entries(envs).forEach(([key,value])=>{process.stdout.write(`export ${key}="${value}"
@@ -560,7 +576,7 @@ Actions:
 ########################################
 #**:_$~- {"$$":"head","filename":"[push(b:main)][schedule(0_0_*_*_?_*)]CI.yml","source":"iac/workflows/codecatalyst/push/CI.js"}
 #**:_$~- {"$$":"script","generator":"codegen/codecatalyst/GenerateCodeCatalystWorkflow.mts"}
-#**:_$~- {"$$":"body","hashed":"435e1eb4c34644099f9df14459d03344e508c9a7a35e87c54b1e27e722823819"}
-#**:_$~- {"$$":"footer","started":"2025-02-03T09:27:54.912Z","now":"2025-02-03T09:27:54.922Z","elapsed":"10ms"}
+#**:_$~- {"$$":"body","hashed":"35b6b5fdd069f9d8a1cd536f9fad6cd31175d9e5c749808f71f565fefcc06039"}
+#**:_$~- {"$$":"footer","started":"2025-02-14T18:13:57.774Z","now":"2025-02-14T18:13:57.782Z","elapsed":"8ms"}
 # END OF GENERATED FILE
 

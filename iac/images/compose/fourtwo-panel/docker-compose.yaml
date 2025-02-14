@@ -18,16 +18,28 @@ services:
     volumes:
       # iac/images/compose/manifest
       - "../../../..:/workspace"
-  fourtwo-panel-server:
+  fourtwo-panel-http:
     image: fourtwo
     entrypoint: project
     environment:
-      PROJECT_PATH: ./packages/panel-server
+      PROJECT_PATH: ./packages/panel-io
       PROJECT_COMMAND: http:start
       PORT: "4202"
       LOG_LEVEL: "5"
     ports:
       - "4202:4202"
     volumes:
-      # iac/images/compose/manifest
+
+      - "../../../..:/workspace"
+  fourtwo-panel-canary:
+    image: fourtwo
+    entrypoint: project
+    environment:
+      PROJECT_PATH: ./packages/panel-io
+      PROJECT_COMMAND: http:canary
+      LOG_LEVEL: "5"
+    depends_on:
+      - fourtwo-panel-http
+    volumes:
+      # iac/images/compose/<$PWD>
       - "../../../..:/workspace"

@@ -1,5 +1,5 @@
 {
-  "name": "@levicape/fourtwo-panel-server",
+  "name": "@levicape/fourtwo-panel-io",
   "description": "Server for panel-ui. Loads information on current environment resources.",
   "version": "0.0.0-local.0",
   "author": "Pedro Cardona",
@@ -13,14 +13,17 @@
     "i18n": "./src/_i18n",
     "protocols": "./src/_protocols",
     "models": "./src/_models",
-    "server": "module/app/PanelHonoApp.mjs"
+    "server": "module/src/app/PanelHonoApp.mjs",
+    "httpcanary": "module/canary/HttpCanary.mjs",
+    "port": "64128"
   },
   "dependencies": {
     "@bufbuild/protobuf": "catalog:protobuf",
+    "@levicape/paloma": "catalog:",
     "@levicape/spork": "catalog:",
-    "aws4fetch": "catalog:aws",
     "effect": "catalog:effect",
-    "hono": "catalog:hono"
+    "hono": "catalog:hono",
+    "ts-proto": "catalog:protobuf"
   },
   "devDependencies": {
     "@biomejs/biome": "catalog:lint",
@@ -109,12 +112,12 @@
     "generate:i18n": "NODE_NO_WARNINGS=1 NPM_CONFIG_UPDATE_NOTIFIER=false $npm_package_config_packageexecutor spork code gen --root \"../../i18n\" --command \"$(which $npm_package_config_packagemanager) --silent run build\" --artifact module --destination $npm_package_config_i18n --clean",
     "generate:models": "NODE_NO_WARNINGS=1 NPM_CONFIG_UPDATE_NOTIFIER=false $npm_package_config_packageexecutor spork code gen --root \"../../models\" --command \"$(which $npm_package_config_packagemanager) --silent run build\" --artifact module --destination $npm_package_config_models --clean",
     "generate:protocols": "NODE_NO_WARNINGS=1 NPM_CONFIG_UPDATE_NOTIFIER=false $npm_package_config_packageexecutor spork code gen --root \"../../protocols\" --command \"$(which $npm_package_config_packagemanager) --silent run build\" --artifact gen --destination $npm_package_config_protocols --clean",
-    "http:start": "$npm_package_config_packageexecutor spork server start $npm_package_config_server --port $PORT --import server",
-    "http:watch": "rm nohup.out || true; nohup $npm_package_config_packageexecutor tsc -w & echo $! > .pidfile.tsc && pnpm run http:start --watch 'module'; kill $(cat .pidfile.tsc) || true; rm -f .pidfile.tsc || true",
+    "http:canary": "node $npm_package_config_httpcanary",
+    "http:dev": "rm nohup.out || true; nohup $npm_package_config_packageexecutor tsc -w & echo $! > .pidfile.tsc && LOG_LEVEL=5 pnpm run http:start --watch module; kill $(cat .pidfile.tsc) || true; rm -f .pidfile.tsc || true",
+    "http:start": "$npm_package_config_packageexecutor spork server start $npm_package_config_server --port ${PORT:-64128}",
     "lint": "$npm_package_config_packageexecutor biome check $npm_package_config_srcpaths",
-    "lint:format": "$npm_package_config_packageexecutor biome format --write $npm_package_config_srcpaths",
+    "lint:format": "$npm_package_config_packageexecutor biome check --write $npm_package_config_srcpaths",
     "lint:unsafe": "$npm_package_config_packageexecutor biome check --write --unsafe $npm_package_config_srcpaths",
-    "lint:write": "$npm_package_config_packageexecutor biome check --write $npm_package_config_srcpaths",
     "package:deps": "$npm_package_config_packageexecutor nx exec -- depcheck",
     "package:fix": "$npm_package_config_packageexecutor nx exec -- syncpack fix-mismatches",
     "package:format": "$npm_package_config_packageexecutor nx exec -- syncpack format",

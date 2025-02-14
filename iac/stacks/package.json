@@ -16,6 +16,7 @@
     "@pulumi/docker-build": "catalog:pulumi",
     "@pulumi/pulumi": "catalog:pulumi",
     "destr": "catalog:parse-json",
+    "serialize-error": "catalog:error",
     "ts-node": "catalog:dev",
     "tslib": "catalog:dev",
     "typescript": "catalog:dev",

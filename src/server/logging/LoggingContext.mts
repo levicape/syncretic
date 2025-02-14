@@ -3,6 +3,7 @@ import type { ILogLayer } from "loglayer";
 import { env } from "std-env";
 import { withAwsPowertoolsLogger } from "./AwsPowertoolsLogger.mjs";
 import { withConsolaLogger } from "./ConsolaLogger.mjs";
+import { withPinoLogger } from "./PinoLogger.mjs";
 
 export type LoggingContextProps = {
 	readonly prefix: string;
@@ -29,12 +30,15 @@ export const LogstreamPassthrough =
 	};
 
 export const withStructuredLogging = (props: LoggingContextProps) => {
-	if (
-		env.AWS_LAMBDA_FUNCTION_NAME ||
-		env.STRUCTURED_LOGGING === "awspowertools"
-	) {
+	const { AWS_LAMBDA_FUNCTION_NAME, STRUCTURED_LOGGING } = env;
+
+	if (AWS_LAMBDA_FUNCTION_NAME || STRUCTURED_LOGGING === "awspowertools") {
 		return withAwsPowertoolsLogger(props);
 	}
 
-	return withConsolaLogger(props);
+	if (STRUCTURED_LOGGING === "consola") {
+		return withConsolaLogger(props);
+	}
+
+	return withPinoLogger(props);
 };

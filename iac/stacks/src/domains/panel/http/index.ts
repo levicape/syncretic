@@ -38,9 +38,9 @@ import { FourtwoCodestarStackExportsZod } from "../../../codestar/exports";
 import { FourtwoDatalayerStackExportsZod } from "../../../datalayer/exports";
 import { FourtwoPanelHttpStackExportsZod } from "./exports";
 
-const PACKAGE_NAME = "@levicape/fourtwo-panel-server" as const;
-const ARTIFACT_ROOT = "fourtwo-panel-server" as const;
-const HANDLER = "fourtwo-panel-server/module/lambda/HttpHandler.handler";
+const PACKAGE_NAME = "@levicape/fourtwo-panel-io" as const;
+const ARTIFACT_ROOT = "fourtwo-panel-io" as const;
+const HANDLER = "fourtwo-panel-io/module/app/PanelHonoApp.handler";
 // TODO: CI.tsx stacks include environment
 const LLRT_ARCH: string | undefined = process.env["LLRT_ARCH"]; //"lambda-arm64-full-sdk";
 

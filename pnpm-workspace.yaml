@@ -7,8 +7,8 @@ packages:
   - 'protocols/*'
 
 catalog:
-  "@levicape/paloma": "0.3.1-main.8"
-  "@levicape/spork": "0.4.1-main.6"
+  "@levicape/paloma": "0.3.2-main.9"
+  "@levicape/spork": "0.5.1-main.8"
 
 
 
@@ -128,7 +128,11 @@ catalogs:
   log-loglayer:
     "@loglayer/transport-aws-lambda-powertools": "^3.0.0"
     "@loglayer/transport-consola": "^2.0.0"
+    "@loglayer/transport-pino": "^2.0.0"
     "loglayer": "^6.0.0"
+  log-pino:
+    "pino": "^9.6.0"
+    "pino-pretty": "^13.0.0"
   package:
     "ci": "^2.3.0"
     "depcheck": "^1.4.7"
