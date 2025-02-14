@@ -3,6 +3,7 @@
 		"strict": true,
 		"target": "es2022",
 		"module": "preserve",
+		"moduleResolution": "bundler",
 		"jsx": "react-jsx",
 		"jsxImportSource": "@levicape/fourtwo",
 		"lib": ["es2022"],

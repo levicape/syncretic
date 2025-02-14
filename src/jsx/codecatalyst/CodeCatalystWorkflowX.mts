@@ -116,3 +116,12 @@ export const CodeCatalystWorkflowX = <
 
 	return factory;
 };
+
+export * from "../../ci/cd/pipeline/codecatalyst/CodeCatalystWorkflowBuilder.mjs";
+export * from "../../ci/cd/pipeline/codecatalyst/CodeCatalystWorkflowExpressions.mjs";
+export * from "./actions/aws/CodeCatalystApprovalX.mjs";
+export * from "./actions/aws/CodeCatalystBuildX.mjs";
+export * from "./actions/aws/CodeCatalystGithubActionsRunnerX.mjs";
+export * from "./actions/aws/CodeCatalystTestX.mjs";
+export * from "./CodeCatalystActionGroupX.mjs";
+export * from "./CodeCatalystStepX.mjs";

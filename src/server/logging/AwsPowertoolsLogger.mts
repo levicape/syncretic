@@ -25,10 +25,10 @@ const rootloglayer = Effect.succeed(
 		errorSerializer: serializeError,
 		plugins: [
 			{
-				id: "timestamp-plugin",
+				id: "unixtime-plugin",
 				onBeforeDataOut: ({ data }) => {
 					if (data) {
-						data.timestamp = Date.now();
+						data.unixtime = Date.now();
 					}
 					return data;
 				},

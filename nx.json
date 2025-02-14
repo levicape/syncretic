@@ -1,6 +1,8 @@
 {
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "defaultBase": "main",
+  "useDaemonProcess": false,
+  "neverConnectToCloud": true,
   "targetDefaults": {
     "build:tsc": {
       "cache": true,

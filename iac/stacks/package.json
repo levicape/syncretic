@@ -15,6 +15,9 @@
     "@pulumi/awsx": "catalog:pulumi",
     "@pulumi/docker-build": "catalog:pulumi",
     "@pulumi/pulumi": "catalog:pulumi",
+    "ts-node": "catalog:dev",
+    "tslib": "catalog:dev",
+    "typescript": "catalog:dev",
     "verror": "catalog:error",
     "zod": "catalog:core"
   },
@@ -22,8 +25,7 @@
     "@biomejs/biome": "catalog:lint",
     "@types/node": "catalog:types",
     "depcheck": "catalog:package",
-    "publint": "catalog:package",
-    "typescript": "catalog:dev"
+    "publint": "catalog:package"
   },
   "nx": {
     "targets": {

@@ -61,6 +61,11 @@
   },
   "exports": {
     "./*": "./module/*.mjs",
+    "./module/*": "./module/*",
+    "./codecatalyst": "./module/jsx/codecatalyst/CodeCatalystWorkflowX.mjs",
+    "./codepipeline": "./module/jsx/codepipeline/CodePipelineDefinitionX.mjs",
+    "./devfile": "./module/jsx/devfile/DevfileX.mjs",
+    "./github": "./module/jsx/github/GithubWorkflowX.mjs",
     "./jsx-runtime": "./module/jsx/jsx-runtime.js",
     "./jsx-runtime.js": "./module/jsx/jsx-runtime.js",
     "./jsx-runtime.cjs": "./module/jsx/jsx-runtime.js",
@@ -70,8 +75,7 @@
     "./jsx-runtime.mts": "./src/jsx/jsx-runtime.ts"
   },
   "files": [
-    "src/cli",
-    "src/jsx",
+    "src",
     "iac",
     "module",
     "output"

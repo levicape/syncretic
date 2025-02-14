@@ -13,35 +13,35 @@ commands:
   - id: make
     exec:
       component: source
-      commandLine: sudo yum install -y g++ make cmake zip unzip libcurl-devel automake autoconf libtool zlib zlib-devel zlib-static protobuf protobuf-devel protobuf-compiler sqlite sqlite-devel sqlite-libs sqlite-tools || true
+      commandLine: sudo yum install -y g++ make cmake zip unzip libcurl-devel automake autoconf libtool zlib zlib-devel zlib-static protobuf protobuf-devel protobuf-compiler sqlite sqlite-devel sqlite-libs sqlite-tools || true;
   - id: pyenv
     exec:
       component: source
-      commandLine: 'export PYENV_URL="https://pyenv.run" && echo "Downloading pyenv. URL: $PYENV_URL" && $(curl -fsSL $PYENV_URL | bash) || true && export PYENV_ROOT="$HOME/.pyenv" && [[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH" && eval "$(pyenv init - bash)" && echo "pyenv configured. Root: $PYENV_ROOT"'
+      commandLine: 'export PYENV_URL="https://pyenv.run" && echo "Downloading pyenv. URL: $PYENV_URL" && $(curl -fsSL $PYENV_URL | bash) || true && export PYENV_ROOT="$HOME/.pyenv" && [[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH" && eval "$(pyenv init - bash)" && echo "pyenv configured. Root: $PYENV_ROOT";'
   - id: corepack
     exec:
       component: source
-      commandLine: sudo corepack enable pnpm || true; corepack enable pnpm || true
+      commandLine: sudo corepack enable pnpm || true; corepack enable pnpm || true;
   - id: pnpm
     exec:
       component: source
-      commandLine: sudo corepack install -g 9.15.3 || true; corepack install -g 9.15.3 || true
+      commandLine: sudo corepack install -g pnpm@9.15.4 || true; corepack install -g pnpm@9.15.4 || true;
   - id: node
     exec:
       component: source
-      commandLine: sudo pnpx n 22.13.1 -y;; pnpx n 22.13.1 -y;
+      commandLine: sudo pnpx n 22.12.0 -y; pnpx n 22.12.0 -y;
   - id: codecatalyst-workflow-cli
     exec:
       component: source
-      commandLine: sudo curl -sL https://github.com/aws/codecatalyst-runner-cli/releases/latest/download/ccr_Linux_x86_64.tar.gz -o - | sudo tar -zx ccr && sudo mv ccr /usr/local/bin/ccr
+      commandLine: sudo curl -sL https://github.com/aws/codecatalyst-runner-cli/releases/latest/download/ccr_Linux_x86_64.tar.gz -o - | sudo tar -zx ccr && sudo mv ccr /usr/local/bin/ccr;
   - id: docker
     exec:
       component: source
-      commandLine: "sudo sh -c 'echo {\"dns\": [\"8.8.8.8\"]} > /etc/docker/daemon.json' && sudo sh -c 'dockerd --storage-opt dm.basesize=60G > /var/log/docker-daemon.log 2>&1 &'"
+      commandLine: "sudo sh -c 'echo {\"dns\": [\"8.8.8.8\"]} > /etc/docker/daemon.json' && sudo sh -c 'dockerd --storage-opt dm.basesize=60G > /var/log/docker-daemon.log 2>&1 &';"
   - id: finch
     exec:
       component: source
-      commandLine: sudo dnf install runfinch-finch; sudo dnf install amazon-ecr-credential-helper
+      commandLine: sudo dnf install runfinch-finch; sudo dnf install amazon-ecr-credential-helper;
 events:
   postStart:
     - make
