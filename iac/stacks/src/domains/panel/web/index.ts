@@ -28,6 +28,7 @@ import type { WebsiteManifest } from "../../../RouteMap";
 import { $deref, type DereferencedOutput } from "../../../Stack";
 import { FourtwoCodestarStackExportsZod } from "../../../codestar/exports";
 import { FourtwoDatalayerStackExportsZod } from "../../../datalayer/exports";
+import { FourtwoPanelHttpStackExportsZod } from "../http/exports";
 import { FourtwoPanelWebStackExportsZod } from "./exports";
 
 const PACKAGE_NAME = "@levicape/fourtwo-panel-ui" as const;
@@ -50,13 +51,20 @@ const STACKREF_CONFIG = {
 				iam: FourtwoDatalayerStackExportsZod.shape.fourtwo_datalayer_iam,
 			},
 		},
+		["panel-http"]: {
+			refs: {
+				routemap:
+					FourtwoPanelHttpStackExportsZod.shape.fourtwo_panel_http_routemap,
+			},
+		},
 	},
 };
 const ROUTE_MAP = (
 	stackrefs: DereferencedOutput<typeof STACKREF_CONFIG>[typeof STACKREF_ROOT],
 ) => {
+	const { "panel-http": panel_http } = stackrefs;
 	return {
-		// http: http.routemap,
+		panel_http: panel_http.routemap,
 	};
 };
 
@@ -216,11 +224,40 @@ export = async () => {
 			([url]) => {
 				const { dns } = frontend ?? {};
 				const { hostnames } = dns ?? {};
+
+				let allroutes = {
+					...routemap.panel_http,
+				} as const;
+
 				return {
 					WebsiteComponent: {
 						manifest: {
 							ok: true,
-							routes: routemap,
+							routes: Object.fromEntries(
+								Object.entries(allroutes).map(([key, value]) => {
+									const { url, cdn, protocol } = value;
+									const { service, instance, namespace } = value.cloudmap ?? {};
+
+									return [
+										key,
+										{
+											url,
+											cdn,
+											protocol,
+											...(instance !== undefined
+												? {
+														cloudmap: {
+															service: service?.name,
+															instance: instance?.id,
+															namespace: namespace?.name,
+															attributes: instance?.attributes ?? {},
+														},
+													}
+												: {}),
+										},
+									];
+								}),
+							),
 							frontend: {
 								...(isProd
 									? {}
@@ -390,11 +427,7 @@ export = async () => {
 					},
 				},
 				{
-					dependsOn: [
-						buildspec.upload,
-						s3.staticwww.bucket,
-						// manifest.upload
-					],
+					dependsOn: [buildspec.upload, s3.staticwww.bucket],
 				},
 			);
 

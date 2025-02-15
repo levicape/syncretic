@@ -7,6 +7,9 @@ export default defineConfig({
   build: {
     outDir: 'output/unknown',
   },
+  server: {
+    allowedHosts: true,
+  },
   plugins: [
     react(),
   	tailwindcss(),

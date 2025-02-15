@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-export const PalomaMonitorStackExportsZod = z.object({
-	paloma_monitor_cloudwatch: z.object({
+export const FourtwoPanelMonitorStackExportsZod = z.object({
+	fourtwo_panel_monitor_cloudwatch: z.object({
 		build: z.object({
 			logGroup: z.object({
 				arn: z.string(),
@@ -9,7 +9,7 @@ export const PalomaMonitorStackExportsZod = z.object({
 			}),
 		}),
 	}),
-	paloma_monitor_s3: z.object({
+	fourtwo_panel_monitor_s3: z.object({
 		artifactStore: z.object({
 			bucket: z.string(),
 			region: z.string(),
@@ -23,7 +23,7 @@ export const PalomaMonitorStackExportsZod = z.object({
 			region: z.string(),
 		}),
 	}),
-	paloma_monitor_codebuild: z.record(
+	fourtwo_panel_monitor_codebuild: z.record(
 		z.object({
 			extractimage: z.object({
 				buildspec: z.object({
@@ -47,7 +47,7 @@ export const PalomaMonitorStackExportsZod = z.object({
 			}),
 		}),
 	),
-	paloma_monitor_codepipeline: z.object({
+	fourtwo_panel_monitor_codepipeline: z.object({
 		pipeline: z.object({
 			arn: z.string(),
 			name: z.string(),
@@ -68,7 +68,7 @@ export const PalomaMonitorStackExportsZod = z.object({
 			),
 		}),
 	}),
-	paloma_monitor_eventbridge: z.record(
+	fourtwo_panel_monitor_eventbridge: z.record(
 		z.object({
 			targets: z.record(
 				z.object({
@@ -84,7 +84,7 @@ export const PalomaMonitorStackExportsZod = z.object({
 			),
 		}),
 	),
-	paloma_monitor_lambda: z.record(
+	fourtwo_panel_monitor_lambda: z.record(
 		z.object({
 			codedeploy: z.object({
 				deploymentGroup: z.object({

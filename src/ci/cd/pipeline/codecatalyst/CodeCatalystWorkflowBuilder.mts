@@ -139,10 +139,6 @@ export class CodeCatalystWorkflowBuilder<
 			throw new VError("No actions added to workflow");
 		}
 
-		if (!this.triggers.length) {
-			throw new VError("No triggers added to workflow");
-		}
-
 		const workflow = {
 			Name: this.name,
 			RunMode: this.runMode,

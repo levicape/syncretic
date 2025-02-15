@@ -139,29 +139,31 @@ export const AwsCodecatalystWorkflowsGenerateCommand = async () => {
 
 					source = fixExtension({ path: source, strict });
 
-					let workflow: CodeCatalystWorkflowBuilder<
-						string,
-						string,
-						// biome-ignore lint/suspicious/noExplicitAny:
-						any,
-						// biome-ignore lint/suspicious/noExplicitAny:
-						any,
-						// biome-ignore lint/suspicious/noExplicitAny:
-						any
-					> = (await import(source))[
-						import_
-					] as unknown as CodeCatalystWorkflowBuilder<
-						string,
-						string,
-						// biome-ignore lint/suspicious/noExplicitAny:
-						any,
-						// biome-ignore lint/suspicious/noExplicitAny:
-						any,
-						// biome-ignore lint/suspicious/noExplicitAny:
-						any
+					let workflows: Array<
+						CodeCatalystWorkflowBuilder<
+							string,
+							string,
+							// biome-ignore lint/suspicious/noExplicitAny:
+							any,
+							// biome-ignore lint/suspicious/noExplicitAny:
+							any,
+							// biome-ignore lint/suspicious/noExplicitAny:
+							any
+						>
+					> = (await import(source))[import_] as unknown as Array<
+						CodeCatalystWorkflowBuilder<
+							string,
+							string,
+							// biome-ignore lint/suspicious/noExplicitAny:
+							any,
+							// biome-ignore lint/suspicious/noExplicitAny:
+							any,
+							// biome-ignore lint/suspicious/noExplicitAny:
+							any
+						>
 					>;
 
-					if (typeof workflow === "object") {
+					if (typeof workflows === "object") {
 						console.warn({
 							GenerateCommand: {
 								message:
@@ -170,122 +172,138 @@ export const AwsCodecatalystWorkflowsGenerateCommand = async () => {
 						});
 					}
 
-					if (typeof workflow === "function") {
-						workflow = (
-							workflow as () => CodeCatalystWorkflowBuilder<
-								string,
-								string,
-								// biome-ignore lint/suspicious/noExplicitAny:
-								any,
-								// biome-ignore lint/suspicious/noExplicitAny:
-								any,
-								// biome-ignore lint/suspicious/noExplicitAny:
-								any
+					if (typeof workflows === "function") {
+						workflows = (
+							workflows as () => Array<
+								CodeCatalystWorkflowBuilder<
+									string,
+									string,
+									// biome-ignore lint/suspicious/noExplicitAny:
+									any,
+									// biome-ignore lint/suspicious/noExplicitAny:
+									any,
+									// biome-ignore lint/suspicious/noExplicitAny:
+									any
+								>
 							>
 						)();
 					}
 
-					if (workflow instanceof Promise) {
-						workflow = await workflow;
+					if (workflows instanceof Promise) {
+						workflows = await workflows;
 					}
 
-					const input = {
-						workflow,
-						source,
-					};
-
-					// Configure fleet
-					let generator = GenerateCodeCatalystWorkflow();
-
-					console.debug({
-						GenerateCommand: {
-							message: "Starting workflow generation",
-							generator,
-						},
-					});
-					if ((await generator.next(input)).value.$state !== "workflow") {
-						throw new VError("Failed to generate workflow");
+					if (!Array.isArray(workflows)) {
+						workflows = [workflows];
 					}
 
-					let { value, done } = await generator.next(input);
-					if (done || value.$state !== "content") {
-						throw new VError(`Failed to generate workflow content: ${value}`);
-					}
+					let count = (() => {
+						let current = 1;
+						let total = workflows.length;
+						return () => {
+							return `${current++}/${total}`;
+						};
+					})();
 
-					let valid = false;
-					if (output) {
-						let content = value.content;
-						AfterExit.execute(() => {
-							if (!valid) {
-								return;
-							}
-							process.stdout.write("\n");
-							process.stdout.write(content);
+					for (let workflow of workflows) {
+						const input = {
+							workflow,
+							source,
+						};
+
+						// Configure fleet
+						let generator = GenerateCodeCatalystWorkflow();
+
+						console.debug({
+							GenerateCommand: {
+								message: `Starting workflow generation ${count()}`,
+								generator,
+							},
 						});
-					}
-
-					({ value, done } = await generator.next(input));
-					if (done || value.$state !== "validate") {
-						throw new VError(`Failed to validate workflow: ${value}`);
-					}
-					valid = value.result.errors.length === 0;
-					if (!valid) {
-						throw new VError(
-							`Failed to validate workflow: ${JSON.stringify(value)}`,
-						);
-					}
-
-					({ value, done } = await generator.next(input));
-					if (!done || value.$state !== "done") {
-						valid = false;
-						throw new VError(
-							`Failed to finish workflow: ${JSON.stringify(value)}`,
-						);
-					}
-
-					if (write) {
-						const { filename, content, hashed } = value;
-						let resolved = resolve(join(".", path));
-						mkdirSync(resolved, { recursive: true });
-
-						if (!isDirectory(resolved)) {
-							throw new VError(`Failed to create directory: ${resolved}`);
+						if ((await generator.next(input)).value.$state !== "workflow") {
+							throw new VError("Failed to generate workflow");
 						}
 
-						let isSameHash = false;
-						const file = join(resolved, filename);
-						if (existsSync(file)) {
-							const data = readFileSync(file, "ascii");
-							const lines = data.split("\n");
-							const meta = lines.filter((line: string) =>
-								line.startsWith("#**:_$~-"),
+						let { value, done } = await generator.next(input);
+						if (done || value.$state !== "content") {
+							throw new VError(`Failed to generate workflow content: ${value}`);
+						}
+
+						let valid = false;
+						if (output) {
+							let content = value.content;
+							AfterExit.execute(() => {
+								if (!valid) {
+									return;
+								}
+								process.stdout.write("\n");
+								process.stdout.write(content);
+							});
+						}
+
+						({ value, done } = await generator.next(input));
+						if (done || value.$state !== "validate") {
+							throw new VError(`Failed to validate workflow: ${value}`);
+						}
+						valid = value.result.errors.length === 0;
+						if (!valid) {
+							throw new VError(
+								`Failed to validate workflow: ${JSON.stringify(value)}`,
 							);
-							if (meta.length > 0) {
-								meta.forEach((hash) => {
-									const parsed = JSON.parse(hash.split("#**:_$~- ")[1]);
-									if (parsed.$$ === "body" && parsed.hashed === hashed) {
-										isSameHash = true;
-									}
+						}
+
+						({ value, done } = await generator.next(input));
+						if (!done || value.$state !== "done") {
+							valid = false;
+							throw new VError(
+								`Failed to finish workflow: ${JSON.stringify(value)}`,
+							);
+						}
+
+						if (write) {
+							const { filename, content, hashed } = value;
+							let resolved = resolve(join(".", path));
+							mkdirSync(resolved, { recursive: true });
+
+							if (!isDirectory(resolved)) {
+								throw new VError(`Failed to create directory: ${resolved}`);
+							}
+
+							let isSameHash = false;
+							const file = join(resolved, filename);
+							if (existsSync(file)) {
+								const data = readFileSync(file, "ascii");
+								const lines = data.split("\n");
+								const meta = lines.filter((line: string) =>
+									line.startsWith("#**:_$~-"),
+								);
+								if (meta.length > 0) {
+									meta.forEach((hash) => {
+										const parsed = JSON.parse(hash.split("#**:_$~- ")[1]);
+										if (parsed.$$ === "body" && parsed.hashed === hashed) {
+											isSameHash = true;
+										}
+									});
+								}
+							}
+
+							if (!isSameHash) {
+								writeFileSync(file, content);
+								console.debug({
+									GenerateCommand: {
+										message: "Wrote workflow file",
+										filename,
+									},
+								});
+							} else {
+								console.debug({
+									GenerateCommand: {
+										message: "Workflow file already exists",
+										filename,
+										hashed,
+									},
 								});
 							}
-						}
-
-						if (!isSameHash) {
-							writeFileSync(file, content);
-							console.debug({
-								GenerateCommand: {
-									message: "Wrote workflow file",
-									filename,
-								},
-							});
-						} else {
-							console.debug({
-								GenerateCommand: {
-									message: "Workflow file already exists",
-									filename,
-									hashed,
-								},
-							});
 						}
 					}
 				};

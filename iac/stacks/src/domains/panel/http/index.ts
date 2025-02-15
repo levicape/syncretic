@@ -1,3 +1,4 @@
+import { inspect } from "node:util";
 import {
 	CodeBuildBuildspecArtifactsBuilder,
 	CodeBuildBuildspecBuilder,
@@ -29,20 +30,26 @@ import { BucketPublicAccessBlock } from "@pulumi/aws/s3/bucketPublicAccessBlock"
 import { BucketVersioningV2 } from "@pulumi/aws/s3/bucketVersioningV2";
 import { Instance } from "@pulumi/aws/servicediscovery/instance";
 import { Service } from "@pulumi/aws/servicediscovery/service";
-import { Output, all, getStack } from "@pulumi/pulumi";
+import { Output, all, getStack, log } from "@pulumi/pulumi";
 import { AssetArchive, StringAsset } from "@pulumi/pulumi/asset";
+import { serializeError } from "serialize-error";
 import { stringify } from "yaml";
 import type { z } from "zod";
-import { $deref } from "../../../Stack";
+import type { LambdaRouteResource, Route } from "../../../RouteMap";
+import { $deref, type DereferencedOutput } from "../../../Stack";
 import { FourtwoCodestarStackExportsZod } from "../../../codestar/exports";
 import { FourtwoDatalayerStackExportsZod } from "../../../datalayer/exports";
+import type { WWWIntraRoute } from "../../../wwwintra/routes";
 import { FourtwoPanelHttpStackExportsZod } from "./exports";
 
 const PACKAGE_NAME = "@levicape/fourtwo-panel-io" as const;
-const ARTIFACT_ROOT = "fourtwo-panel-io" as const;
-const HANDLER = "fourtwo-panel-io/module/app/PanelHonoApp.handler";
-// TODO: CI.tsx stacks include environment
+const DESCRIPTION = "Provides AWS account data to Panel UI" as const;
 const LLRT_ARCH: string | undefined = process.env["LLRT_ARCH"]; //"lambda-arm64-full-sdk";
+const LLRT_PLATFORM: "node" | "browser" | undefined = LLRT_ARCH
+	? "node"
+	: undefined;
+const OUTPUT_DIRECTORY = `output/esbuild`;
+const HANDLER = `${LLRT_ARCH ? `${OUTPUT_DIRECTORY}/${LLRT_PLATFORM}` : "module"}/http/PanelHonoApp.handler`;
 
 const CI = {
 	CI_ENVIRONMENT: process.env.CI_ENVIRONMENT ?? "unknown",
@@ -71,20 +78,36 @@ const STACKREF_CONFIG = {
 	},
 };
 
+const ENVIRONMENT = (
+	$refs: DereferencedOutput<typeof STACKREF_CONFIG>[typeof STACKREF_ROOT],
+) => {
+	const { datalayer } = $refs;
+
+	return {
+		FOURTWO_DATALAYER_PROPS: datalayer.props,
+	};
+};
+
 export = async () => {
 	const context = await Context.fromConfig();
 	const _ = (name: string) => `${context.prefix}-${name}`;
 	const stage = CI.CI_ENVIRONMENT;
 	const farRole = await getRole({ name: CI.CI_ACCESS_ROLE });
 	// Stack references
-	const { codestar: __codestar, datalayer: __datalayer } =
-		await $deref(STACKREF_CONFIG);
+	const dereferenced$ = await $deref(STACKREF_CONFIG);
+	const { codestar: __codestar, datalayer: __datalayer } = dereferenced$;
 
 	// Object Store
 	const s3 = (() => {
 		const bucket = (name: string) => {
-			const bucket = new Bucket(_(name), {
+			const bucket = new Bucket(_(`${name}-store`), {
 				acl: "private",
+				tags: {
+					Name: _(`${name}-store`),
+					StackRef: STACKREF_ROOT,
+					PackageName: PACKAGE_NAME,
+					Key: name,
+				},
 			});
 
 			new BucketServerSideEncryptionConfigurationV2(_(`${name}-encryption`), {
@@ -132,7 +155,7 @@ export = async () => {
 			return bucket;
 		};
 		return {
-			artifactStore: bucket("artifact-store"),
+			artifactStore: bucket("artifact"),
 			build: bucket("build"),
 			deploy: bucket("deploy"),
 		};
@@ -140,12 +163,22 @@ export = async () => {
 
 	// Logging
 	const cloudwatch = (() => {
-		const loggroup = new LogGroup(_("loggroup"), {
-			retentionInDays: 365,
-		});
+		const loggroup = (name: string) => {
+			const loggroup = new LogGroup(_(`${name}-logs`), {
+				retentionInDays: context.environment.isProd ? 180 : 14,
+				tags: {
+					Name: _(`${name}-logs`),
+					StackRef: STACKREF_ROOT,
+					PackageName: PACKAGE_NAME,
+				},
+			});
+
+			return { loggroup };
+		};
 
 		return {
-			loggroup,
+			build: loggroup("build"),
+			function: loggroup("function"),
 		};
 	})();
 
@@ -153,7 +186,7 @@ export = async () => {
 	const handler = await (async ({ datalayer, codestar }, cloudwatch) => {
 		const role = datalayer.iam.roles.lambda.name;
 		const roleArn = datalayer.iam.roles.lambda.arn;
-		const loggroup = cloudwatch.loggroup;
+		const loggroup = cloudwatch.function.loggroup;
 
 		const lambdaPolicyDocument = all([loggroup.arn]).apply(([loggroupArn]) => {
 			return {
@@ -253,15 +286,20 @@ export = async () => {
 			}),
 			contentType: "application/zip",
 			key: "http.zip",
+			tags: {
+				Name: _(`zip`),
+				StackRef: STACKREF_ROOT,
+			},
 		});
 
+		const memorySize = context.environment.isProd ? 512 : 256;
 		const lambda = new LambdaFn(
 			_("function"),
 			{
-				description: `(${getStack()}) Lambda function for @${PACKAGE_NAME}:${STACKREF_ROOT}}`,
+				description: `(${PACKAGE_NAME}) "${DESCRIPTION ?? `HTTP lambda`}" in #${stage}`,
 				role: roleArn,
 				architectures: ["arm64"],
-				memorySize: Number.parseInt(context.environment.isProd ? "512" : "256"),
+				memorySize,
 				timeout: 18,
 				packageType: "Zip",
 				runtime: LLRT_ARCH ? Runtime.CustomAL2023 : Runtime.NodeJS22dX,
@@ -280,8 +318,8 @@ export = async () => {
 				},
 				loggingConfig: {
 					logFormat: "JSON",
-					logGroup: cloudwatch.loggroup.name,
-					applicationLogLevel: "DEBUG",
+					logGroup: loggroup.name,
+					applicationLogLevel: context.environment.isProd ? "INFO" : "DEBUG",
 				},
 				environment: all([cloudmapEnvironment]).apply(([cloudmapEnv]) => {
 					return {
@@ -289,13 +327,76 @@ export = async () => {
 							...cloudmapEnv,
 							NODE_ENV: "production",
 							LOG_LEVEL: "5",
+							...(LLRT_PLATFORM
+								? {
+										LLRT_PLATFORM,
+										LLRT_GC_THRESHOLD_MB: String(memorySize / 4),
+									}
+								: {}),
+							...(ENVIRONMENT !== undefined && typeof ENVIRONMENT === "function"
+								? Object.fromEntries(
+										Object.entries(ENVIRONMENT(dereferenced$))
+											.filter(([_, value]) => value !== undefined)
+											.filter(
+												([_, value]) =>
+													typeof value !== "function" &&
+													typeof value !== "symbol",
+											)
+											.map(([key, value]) => {
+												log.debug(
+													inspect({
+														LambdaFn: {
+															environment: {
+																key,
+																value,
+															},
+														},
+													}),
+												);
+
+												if (typeof value === "object") {
+													return [
+														key,
+														Buffer.from(JSON.stringify(value)).toString(
+															"base64",
+														),
+													];
+												}
+												try {
+													return [key, String(value)];
+												} catch (e) {
+													log.warn(
+														inspect(
+															{
+																LambdaFn: {
+																	environment: {
+																		key,
+																		value,
+																		error: serializeError(e),
+																	},
+																},
+															},
+															{ depth: null },
+														),
+													);
+													return [key, undefined];
+												}
+											}),
+									)
+								: {}),
 						},
 					};
 				}),
+				tags: {
+					Name: _("function"),
+					StackRef: STACKREF_ROOT,
+					Handler: "Http",
+					PackageName: PACKAGE_NAME,
+				},
 			},
 			{
 				dependsOn: [zip],
-				ignoreChanges: ["handler", "s3Key", "s3ObjectVersion"],
+				ignoreChanges: ["handler", "s3Bucket", "s3Key", "s3ObjectVersion"],
 			},
 		);
 
@@ -305,13 +406,14 @@ export = async () => {
 				.reduce((acc, current) => [...acc, ...current], []) ?? [];
 
 		const version = new Version(_("version"), {
+			description: `(${PACKAGE_NAME}) version for "${stage}"`,
 			functionName: lambda.name,
-			description: `(${getStack()}) Version ${stage} for @${PACKAGE_NAME}:${STACKREF_ROOT}`,
 		});
 
 		const alias = new Alias(
 			_("alias"),
 			{
+				description: `(${PACKAGE_NAME}) alias`,
 				name: stage,
 				functionName: lambda.name,
 				functionVersion: version.version,
@@ -324,6 +426,16 @@ export = async () => {
 		const url = new FunctionUrl(_("url"), {
 			functionName: lambda.name,
 			qualifier: alias.name,
+			authorizationType: context.environment.isProd ? "AWS_IAM" : "NONE",
+			cors: {
+				allowMethods: ["*"],
+				allowOrigins: context.environment.isProd ? hostnames : ["*"],
+				maxAge: 86400,
+			},
+		});
+
+		const latestUrl = new FunctionUrl(_("url-latest"), {
+			functionName: lambda.name,
 			authorizationType: context.environment.isProd ? "AWS_IAM" : "NONE",
 			cors: {
 				allowMethods: ["*"],
@@ -344,6 +456,17 @@ export = async () => {
 				deploymentStyle: {
 					deploymentOption: "WITH_TRAFFIC_CONTROL",
 					deploymentType: "BLUE_GREEN",
+				},
+				tags: {
+					Name: _("deployment-group"),
+					StackRef: STACKREF_ROOT,
+					PackageName: PACKAGE_NAME,
+					Kind: "HttpHandler",
+					LambdaArn: lambda.arn,
+					LambdaFunction: lambda.name,
+					LambdaAlias: alias.name,
+					LambdaVersion: version.version,
+					LambdaUrl: url.functionUrl,
 				},
 			},
 			{
@@ -366,6 +489,7 @@ export = async () => {
 				qualifier: url.qualifier,
 				alias,
 				version,
+				$latest: latestUrl,
 			},
 			codedeploy: {
 				deploymentGroup,
@@ -378,7 +502,7 @@ export = async () => {
 		const { namespace } = cloudmap;
 		const cloudMapService = new Service(_("service"), {
 			name: handler.http.name.apply((name) => _(`service-${name.slice(-10)}`)),
-			description: `(${getStack()}) Service mesh service for ${PACKAGE_NAME}@${STACKREF_ROOT}`,
+			description: `(${PACKAGE_NAME}) "${DESCRIPTION}" in #${stage}`,
 			dnsConfig: {
 				namespaceId: namespace.id,
 				routingPolicy: "WEIGHTED",
@@ -389,6 +513,11 @@ export = async () => {
 					},
 				],
 			},
+			tags: {
+				Name: _("service"),
+				StackRef: STACKREF_ROOT,
+				PackageName: PACKAGE_NAME,
+			},
 		});
 
 		const cloudMapInstance = new Instance(_("instance"), {
@@ -397,8 +526,11 @@ export = async () => {
 			attributes: {
 				AWS_INSTANCE_CNAME: handler.http.url,
 				LAMBDA_FUNCTION_ARN: handler.http.arn,
-				STACK_NAME: _("").slice(0, -1),
+				STACK_NAME: getStack(),
+				STACKREF_ROOT,
+				CONTEXT_PREFIX: context.prefix,
 				CI_ENVIRONMENT: stage,
+				PACKAGE_NAME,
 			},
 		});
 
@@ -435,11 +567,17 @@ export = async () => {
 		};
 
 		const project = (() => {
+			const PIPELINE_STAGE = "httphandler" as const;
+			const EXTRACT_ACTION = "extractimage" as const;
+			const UPDATE_ACTION = "updatelambda" as const;
+
 			const stages = [
 				{
+					stage: PIPELINE_STAGE,
+					action: EXTRACT_ACTION,
 					artifact: {
-						name: "httphandler_extractimage",
-						baseDirectory: ".extractimage" as string | undefined,
+						name: `${PIPELINE_STAGE}_${EXTRACT_ACTION}`,
+						baseDirectory: `.${EXTRACT_ACTION}` as string | undefined,
 						files: ["**/*"] as string[],
 					},
 					variables: {
@@ -464,7 +602,7 @@ export = async () => {
 					] as string[],
 					environment: {
 						type: "ARM_CONTAINER",
-						computeType: "BUILD_GENERAL1_MEDIUM",
+						computeType: "BUILD_GENERAL1_SMALL",
 						image: "aws/codebuild/amazonlinux-aarch64-standard:3.0",
 						environmentVariables: [
 							{
@@ -519,7 +657,7 @@ export = async () => {
 										"--detach",
 										"--entrypoint deploy",
 										`--env DEPLOY_FILTER=${PACKAGE_NAME}`,
-										`--env DEPLOY_OUTPUT=/tmp/${ARTIFACT_ROOT}`,
+										`--env DEPLOY_OUTPUT=/tmp/${PIPELINE_STAGE}`,
 									],
 									"$SOURCE_IMAGE_URI",
 								],
@@ -531,14 +669,15 @@ export = async () => {
 								`sleep ${i}s`,
 								`docker container logs $(cat .container)`,
 							]),
-							"mkdir -p $CODEBUILD_SRC_DIR/.extractimage || true",
-							`docker cp $(cat .container):/tmp/${ARTIFACT_ROOT} $CODEBUILD_SRC_DIR/.extractimage`,
-							"ls -al $CODEBUILD_SRC_DIR/.extractimage || true",
-							`ls -al $CODEBUILD_SRC_DIR/.extractimage/${ARTIFACT_ROOT} || true`,
-							`ls -al $CODEBUILD_SRC_DIR/.extractimage/${ARTIFACT_ROOT}/node_modules || true`,
+							`mkdir -p $CODEBUILD_SRC_DIR/.${EXTRACT_ACTION} || true`,
+							`docker cp $(cat .container):/tmp/${PIPELINE_STAGE} $CODEBUILD_SRC_DIR/.${EXTRACT_ACTION}`,
+							`ls -al $CODEBUILD_SRC_DIR/.${EXTRACT_ACTION} || true`,
+							`ls -al $CODEBUILD_SRC_DIR/.${EXTRACT_ACTION}/${PIPELINE_STAGE} || true`,
+							`ls -al $CODEBUILD_SRC_DIR/.${EXTRACT_ACTION}/${PIPELINE_STAGE}/node_modules || true`,
 							// bootstrap binary
 							...(LLRT_ARCH
 								? [
+										`echo 'LLRT_ARCH: ${LLRT_ARCH}, extracting bootstrap'`,
 										[
 											...[
 												"docker run",
@@ -557,11 +696,16 @@ export = async () => {
 											`sleep ${i}s`,
 											`docker container logs $(cat .container)`,
 										]),
-										`docker cp $(cat .container):/tmp/bootstrap $CODEBUILD_SRC_DIR/.extractimage/bootstrap`,
-										"ls -al $CODEBUILD_SRC_DIR/.extractimage || true",
-										`ls -al $CODEBUILD_SRC_DIR/.extractimage/${ARTIFACT_ROOT} || true`,
+										`docker cp $(cat .container):/tmp/bootstrap $CODEBUILD_SRC_DIR/.${EXTRACT_ACTION}/bootstrap`,
+										`ls -al $CODEBUILD_SRC_DIR/.${EXTRACT_ACTION} || true`,
+										`ls -al $CODEBUILD_SRC_DIR/.${EXTRACT_ACTION}/${PIPELINE_STAGE} || true`,
+										`du -sh $CODEBUILD_SRC_DIR/.${EXTRACT_ACTION}/${PIPELINE_STAGE}/${OUTPUT_DIRECTORY} || true`,
 									]
-								: []),
+								: [
+										`echo 'No LLRT_ARCH specified, removing ${OUTPUT_DIRECTORY}'`,
+										`rm -rf $CODEBUILD_SRC_DIR/.${EXTRACT_ACTION}/${PIPELINE_STAGE}/${OUTPUT_DIRECTORY} || true`,
+										`ls -al $CODEBUILD_SRC_DIR/.${EXTRACT_ACTION}/${PIPELINE_STAGE} || true`,
+									]),
 							`NODE_NO_WARNINGS=1 node -e '(${
 								// biome-ignore lint/complexity/useArrowFunction:
 								function () {
@@ -579,8 +723,10 @@ export = async () => {
 					},
 				},
 				{
+					stage: PIPELINE_STAGE,
+					action: UPDATE_ACTION,
 					artifact: {
-						name: "httphandler_updatelambda",
+						name: `${PIPELINE_STAGE}_${UPDATE_ACTION}`,
 						baseDirectory: undefined as string | undefined,
 						files: ["appspec.yml", "appspec.zip"] as string[],
 					},
@@ -650,7 +796,7 @@ export = async () => {
 							[
 								"aws lambda update-function-configuration",
 								"--function-name $LAMBDA_FUNCTION_NAME",
-								`--handler ${HANDLER}`,
+								`--handler httphandler/${HANDLER}`,
 							].join(" "),
 							"echo $DeployKey",
 							[
@@ -700,7 +846,15 @@ export = async () => {
 
 			const entries = Object.fromEntries(
 				stages.map(
-					({ artifact, environment, variables, phases, exportedVariables }) => {
+					({
+						stage,
+						action,
+						artifact,
+						environment,
+						variables,
+						phases,
+						exportedVariables,
+					}) => {
 						const artifacts = new CodeBuildBuildspecArtifactsBuilder()
 							.setFiles(artifact.files)
 							.setName(artifact.name);
@@ -730,28 +884,44 @@ export = async () => {
 								.build(),
 						);
 
-						const upload = new BucketObjectv2(_(`buildspec-${artifact.name}`), {
+						const upload = new BucketObjectv2(_(`${artifact.name}-buildspec`), {
 							bucket: s3.build.bucket,
 							content,
 							key: `${artifact.name}/Buildspec.yml`,
 						});
 
 						const project = new Project(
-							_(`project-${artifact.name}`),
+							_(`${artifact.name}`),
 							{
-								description: `(${getStack()}) CodeBuild project: ${
-									artifact.name
-								} @ ${PACKAGE_NAME}`,
+								description: `(${PACKAGE_NAME}) Deploy "${stage}" pipeline stage: "${action}"`,
 								buildTimeout: 14,
 								serviceRole: farRole.arn,
 								artifacts: {
 									type: "CODEPIPELINE",
 									artifactIdentifier: artifact.name,
 								},
+								logsConfig: {
+									cloudwatchLogs: {
+										groupName: cloudwatch.build.loggroup.name,
+										streamName: `${artifact.name}`,
+									},
+									// s3Logs: {
+									// 	status: "ENABLED",
+									// 	location: s3.build.bucket,
+									// },
+								},
 								environment,
 								source: {
 									type: "CODEPIPELINE",
 									buildspec: content,
+								},
+								tags: {
+									Name: _(artifact.name),
+									StackRef: STACKREF_ROOT,
+									PackageName: PACKAGE_NAME,
+									Handler: "http",
+									DeployStage: stage,
+									Action: action,
 								},
 							},
 							{
@@ -766,6 +936,9 @@ export = async () => {
 						return [
 							artifact.name,
 							{
+								stage,
+								action,
+								artifactName: artifact.name,
 								project,
 								buildspec: {
 									content,
@@ -780,6 +953,9 @@ export = async () => {
 			return entries as Record<
 				(typeof stages)[number]["artifact"]["name"],
 				{
+					stage: string;
+					action: string;
+					artifactName: string;
 					project: Project;
 					buildspec: {
 						content: string;
@@ -796,7 +972,7 @@ export = async () => {
 
 	const codepipeline = (() => {
 		const pipeline = new Pipeline(
-			_("pipeline-deploy"),
+			_("deploy"),
 			{
 				pipelineType: "V2",
 				roleArn: farRole.arn,
@@ -842,7 +1018,9 @@ export = async () => {
 								provider: "CodeBuild",
 								version: "1",
 								inputArtifacts: ["source_image"],
-								outputArtifacts: ["httphandler_extractimage"],
+								outputArtifacts: [
+									codebuild.httphandler_extractimage.artifactName,
+								],
 								configuration: all([
 									__codestar.ecr.repository.arn,
 									__codestar.ecr.repository.name,
@@ -908,7 +1086,9 @@ export = async () => {
 								owner: "AWS",
 								provider: "S3",
 								version: "1",
-								inputArtifacts: ["httphandler_extractimage"],
+								inputArtifacts: [
+									codebuild.httphandler_extractimage.artifactName,
+								],
 								configuration: all([s3.deploy.bucket]).apply(
 									([BucketName]) => ({
 										BucketName,
@@ -925,8 +1105,12 @@ export = async () => {
 								owner: "AWS",
 								provider: "CodeBuild",
 								version: "1",
-								inputArtifacts: ["httphandler_extractimage"],
-								outputArtifacts: ["httphandler_updatelambda"],
+								inputArtifacts: [
+									codebuild.httphandler_extractimage.artifactName,
+								],
+								outputArtifacts: [
+									codebuild.httphandler_updatelambda.artifactName,
+								],
 								configuration: all([
 									codebuild.httphandler_updatelambda.project.name,
 									handler.http.name,
@@ -989,7 +1173,9 @@ export = async () => {
 								owner: "AWS",
 								provider: "CodeDeploy",
 								version: "1",
-								inputArtifacts: ["httphandler_updatelambda"],
+								inputArtifacts: [
+									codebuild.httphandler_updatelambda.artifactName,
+								],
 								configuration: all([
 									__codestar.codedeploy.application.name,
 									handler.codedeploy.deploymentGroup.deploymentGroupName,
@@ -1003,6 +1189,11 @@ export = async () => {
 						],
 					},
 				],
+				tags: {
+					Name: _("deploy"),
+					StackRef: STACKREF_ROOT,
+					PackageName: PACKAGE_NAME,
+				},
 			},
 			{
 				dependsOn: [handler.codedeploy.deploymentGroup],
@@ -1023,8 +1214,8 @@ export = async () => {
 	const eventbridge = (() => {
 		const { name: codestarRepositoryName } = __codestar.ecr.repository;
 
-		const rule = new EventRule(_("event-rule-ecr-push"), {
-			description: `(${getStack()}) ECR push event rule for ${PACKAGE_NAME}:${STACKREF_ROOT}`,
+		const rule = new EventRule(_("on-ecr-push"), {
+			description: `(${PACKAGE_NAME}) ECR image deploy pipeline trigger for tag "${stage}"`,
 			state: "ENABLED",
 			eventPattern: JSON.stringify({
 				source: ["aws.ecr"],
@@ -1036,8 +1227,13 @@ export = async () => {
 					"image-tag": [stage],
 				},
 			}),
+			tags: {
+				Name: _(`on-ecr-push`),
+				StackRef: STACKREF_ROOT,
+			},
 		});
-		const pipeline = new EventTarget(_("event-target-pipeline"), {
+
+		const pipeline = new EventTarget(_("on-ecr-push-deploy"), {
 			rule: rule.name,
 			arn: codepipeline.pipeline.arn,
 			roleArn: farRole.arn,
@@ -1070,11 +1266,24 @@ export = async () => {
 		) as Record<keyof typeof s3, Output<{ bucket: string; region: string }>>,
 	);
 
-	const cloudwatchOutput = Output.create(cloudwatch).apply((cloudwatch) => ({
-		loggroup: all([cloudwatch.loggroup.arn]).apply(([loggroupArn]) => ({
-			arn: loggroupArn,
-		})),
-	}));
+	const cloudwatchOutput = Output.create(
+		Object.fromEntries(
+			Object.entries(cloudwatch).map(([key, { loggroup }]) => {
+				return [
+					key,
+					all([loggroup.name, loggroup.arn]).apply(([name, arn]) => ({
+						logGroup: {
+							name,
+							arn,
+						},
+					})),
+				];
+			}),
+		) as Record<
+			keyof typeof cloudwatch,
+			Output<{ logGroup: { name: string; arn: string } }>
+		>,
+	);
 
 	const codebuildProjectsOutput = Output.create(
 		Object.fromEntries(
@@ -1112,7 +1321,7 @@ export = async () => {
 			arn,
 			name,
 		})),
-		http: all([
+		function: all([
 			handler.http.arn,
 			handler.http.name,
 			handler.http.url,
@@ -1140,9 +1349,11 @@ export = async () => {
 	}));
 
 	const cloudmapOutput = Output.create(cloudmap).apply((cloudmap) => ({
-		application: {
-			name: __codestar.codedeploy.application.name,
-			arn: __codestar.codedeploy.application.arn,
+		namespace: {
+			arn: __datalayer.cloudmap.namespace.arn,
+			name: __datalayer.cloudmap.namespace.name,
+			id: __datalayer.cloudmap.namespace.id,
+			hostedZone: __datalayer.cloudmap.namespace.hostedZone,
 		},
 		service: all([cloudmap.service.arn, cloudmap.service.name]).apply(
 			([arn, name]) => ({ arn, name }),
@@ -1239,6 +1450,44 @@ export = async () => {
 			fourtwo_panel_http_codepipeline,
 			fourtwo_panel_http_eventbridge,
 		]) => {
+			const fourtwo_panel_http_routemap = (() => {
+				const routes: Partial<
+					Record<WWWIntraRoute, Route<LambdaRouteResource>>
+				> = {
+					["/~/v1/Fourtwo/Panel"]: {
+						$kind: "LambdaRouteResource",
+						lambda: {
+							arn: fourtwo_panel_http_lambda.function.arn,
+							name: fourtwo_panel_http_lambda.function.name,
+							role: {
+								arn: fourtwo_panel_http_lambda.role.arn,
+								name: fourtwo_panel_http_lambda.role.name,
+							},
+							qualifier: fourtwo_panel_http_lambda.function.alias.name,
+						},
+						url: fourtwo_panel_http_lambda.function.url.replace("https://", ""),
+						protocol: "https",
+						cloudmap: {
+							namespace: {
+								arn: fourtwo_panel_http_cloudmap.namespace.arn,
+								name: fourtwo_panel_http_cloudmap.namespace.name,
+								id: fourtwo_panel_http_cloudmap.namespace.id,
+								hostedZone: fourtwo_panel_http_cloudmap.namespace.hostedZone,
+							},
+							service: {
+								arn: fourtwo_panel_http_cloudmap.service.arn,
+								name: fourtwo_panel_http_cloudmap.service.name,
+							},
+							instance: {
+								id: fourtwo_panel_http_cloudmap.instance.id,
+								attributes: fourtwo_panel_http_cloudmap.instance.attributes,
+							},
+						},
+					},
+				};
+				return routes;
+			})();
+
 			const exported = {
 				fourtwo_panel_http_imports: {
 					fourtwo: {
@@ -1253,6 +1502,7 @@ export = async () => {
 				fourtwo_panel_http_codebuild,
 				fourtwo_panel_http_codepipeline,
 				fourtwo_panel_http_eventbridge,
+				fourtwo_panel_http_routemap,
 			} satisfies z.infer<typeof FourtwoPanelHttpStackExportsZod> & {
 				fourtwo_panel_http_imports: {
 					fourtwo: {
