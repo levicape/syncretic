@@ -433,6 +433,9 @@ importers:
       verror:
         specifier: catalog:error
         version: 1.10.1
+      yaml:
+        specifier: catalog:core
+        version: 2.7.0
       zod:
         specifier: catalog:core
         version: 3.24.1

@@ -13,7 +13,7 @@
     "i18n": "./src/_i18n",
     "protocols": "./src/_protocols",
     "models": "./src/_models",
-    "server": "module/src/app/PanelHonoApp.mjs",
+    "server": "module/http/PanelHonoApp.mjs",
     "httpcanary": "module/canary/HttpCanary.mjs",
     "port": "64128"
   },

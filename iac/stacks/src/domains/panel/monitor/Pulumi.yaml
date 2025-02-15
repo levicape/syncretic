@@ -1,4 +1,4 @@
-name: paloma-monitor
+name: fourtwo-panel-monitor
 description: | 
   Lambda scheduled canary handlers
 runtime:
