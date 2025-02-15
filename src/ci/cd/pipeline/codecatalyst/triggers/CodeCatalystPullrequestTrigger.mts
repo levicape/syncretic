@@ -1,6 +1,8 @@
 export type CodeCatalystPullrequestTriggerSpec = {
 	Type: "PULLREQUEST";
-	Events: "OPEN" | "CLOSED" | "REVISION";
-	Branches: string[];
-	FilesChanged: string[];
+	Events:
+		| Array<"OPEN" | "CLOSED" | "REVISION">
+		| ReadonlyArray<"OPEN" | "CLOSED" | "REVISION">;
+	Branches: string[] | ReadonlyArray<string>;
+	FilesChanged?: string[] | ReadonlyArray<string>;
 };

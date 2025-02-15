@@ -21,6 +21,7 @@
     "tslib": "catalog:dev",
     "typescript": "catalog:dev",
     "verror": "catalog:error",
+    "yaml": "catalog:core",
     "zod": "catalog:core"
   },
   "devDependencies": {

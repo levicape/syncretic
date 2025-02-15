@@ -38,13 +38,14 @@ import { StringAsset } from "@pulumi/pulumi/asset/asset";
 import { serializeError } from "serialize-error";
 import { stringify } from "yaml";
 import type { z } from "zod";
-import { $deref, type DereferencedOutput } from "../Stack";
-import { PalomaCodestarStackExportsZod } from "../codestar/exports";
-import { PalomaDatalayerStackExportsZod } from "../datalayer/exports";
-import { PalomaNevadaWebStackExportsZod } from "../domains/nevada/web/exports";
-import { PalomaMonitorStackExportsZod } from "./exports";
+import { $deref, type DereferencedOutput } from "../../../Stack";
+import { FourtwoCodestarStackExportsZod } from "../../../codestar/exports";
+import { FourtwoDatalayerStackExportsZod } from "../../../datalayer/exports";
+import { FourtwoPanelHttpStackExportsZod } from "../http/exports";
+import { FourtwoPanelWebStackExportsZod } from "../web/exports";
+import { FourtwoPanelMonitorStackExportsZod } from "./exports";
 
-const WORKSPACE_PACKAGE_NAME = "@levicape/paloma";
+const WORKSPACE_PACKAGE_NAME = "@levicape/fourtwo-panel-io";
 
 const LLRT_ARCH: string | undefined = process.env["LLRT_ARCH"];
 const LLRT_PLATFORM: "node" | "browser" | undefined = LLRT_ARCH
@@ -52,28 +53,25 @@ const LLRT_PLATFORM: "node" | "browser" | undefined = LLRT_ARCH
 	: undefined;
 
 const ENVIRONMENT = (
-	$refs: DereferencedOutput<typeof STACKREF_CONFIG>["paloma"],
+	$refs: DereferencedOutput<typeof STACKREF_CONFIG>["fourtwo"],
 ) => {
-	const { "nevada-web": nevada_web } = $refs;
+	const { "panel-http": panel_http, "panel-web": panel_web } = $refs;
 	return {
-		NEVADA_WEB_S3: nevada_web?.s3?.staticwww?.public,
+		PANEL_HTTP_ROUTEMAP: panel_http?.routemap,
+		PANEL_HTTP_CLOUDMAP_NAMESPACE: panel_http?.cloudmap?.namespace?.name,
+		PANEL_HTTP_CLOUDMAP_SERVICE: panel_http?.cloudmap?.service?.name,
+		PANEL_WEB_S3: panel_web?.s3?.staticwww?.public,
+		PANEL_WEB_S3_ENDPOINT: panel_web?.s3?.staticwww?.public?.websiteEndpoint,
 	} as const;
 };
 
 const OUTPUT_DIRECTORY = `output/esbuild`;
 const CANARY_PATHS = [
 	{
-		name: "execution",
-		description: "Tests basic Paloma state machine execution",
-		packageName: "@levicape/paloma-examples-canaryexecution",
-		handler: `${LLRT_ARCH ? OUTPUT_DIRECTORY : "module"}/canary/harness.LambdaHandler`,
-		environment: ENVIRONMENT,
-	},
-	{
-		name: "promise_activity",
-		description: "Tests Paloma runtime PromiseActivity execution",
-		packageName: "@levicape/paloma-examples-canaryexecution",
-		handler: `${LLRT_ARCH ? OUTPUT_DIRECTORY : "module"}/canary/PromiseActivity.basic`,
+		name: "HttpHandler",
+		description: "Tests basic Fourtwo state machine execution",
+		packageName: "@levicape/fourtwo-panel-io",
+		handler: `${LLRT_ARCH ? OUTPUT_DIRECTORY : "module"}/canary/HttpHandler.handler`,
 		environment: ENVIRONMENT,
 	},
 ] as const;
@@ -83,27 +81,35 @@ const CI = {
 	CI_ACCESS_ROLE: process.env.CI_ACCESS_ROLE ?? "FourtwoAccessRole",
 };
 
-const STACKREF_ROOT = process.env["STACKREF_ROOT"] ?? "paloma";
+const STACKREF_ROOT = process.env["STACKREF_ROOT"] ?? "fourtwo";
 const STACKREF_CONFIG = {
 	[STACKREF_ROOT]: {
 		codestar: {
 			refs: {
 				codedeploy:
-					PalomaCodestarStackExportsZod.shape.paloma_codestar_codedeploy,
-				ecr: PalomaCodestarStackExportsZod.shape.paloma_codestar_ecr,
+					FourtwoCodestarStackExportsZod.shape.fourtwo_codestar_codedeploy,
+				ecr: FourtwoCodestarStackExportsZod.shape.fourtwo_codestar_ecr,
 			},
 		},
 		datalayer: {
 			refs: {
-				props: PalomaDatalayerStackExportsZod.shape.paloma_datalayer_props,
-				iam: PalomaDatalayerStackExportsZod.shape.paloma_datalayer_iam,
+				props: FourtwoDatalayerStackExportsZod.shape.fourtwo_datalayer_props,
+				iam: FourtwoDatalayerStackExportsZod.shape.fourtwo_datalayer_iam,
 				cloudmap:
-					PalomaDatalayerStackExportsZod.shape.paloma_datalayer_cloudmap,
+					FourtwoDatalayerStackExportsZod.shape.fourtwo_datalayer_cloudmap,
 			},
 		},
-		["nevada-web"]: {
+		["panel-http"]: {
 			refs: {
-				s3: PalomaNevadaWebStackExportsZod.shape.paloma_nevada_web_s3,
+				cloudmap:
+					FourtwoPanelHttpStackExportsZod.shape.fourtwo_panel_http_cloudmap,
+				routemap:
+					FourtwoPanelHttpStackExportsZod.shape.fourtwo_panel_http_routemap,
+			},
+		},
+		["panel-web"]: {
+			refs: {
+				s3: FourtwoPanelWebStackExportsZod.shape.fourtwo_panel_web_s3,
 			},
 		},
 	},
@@ -121,7 +127,8 @@ export = async () => {
 	const {
 		codestar: __codestar,
 		datalayer: __datalayer,
-		"nevada-web": __nevada_web,
+		"panel-http": __panel_http,
+		"panel-web": __panel_web,
 	} = dereferenced$;
 
 	// Object Store
@@ -1630,37 +1637,39 @@ export = async () => {
 		eventbridgeRulesOutput,
 	]).apply(
 		([
-			paloma_monitor_s3,
-			paloma_monitor_cloudwatch,
-			paloma_monitor_lambda,
-			paloma_monitor_codebuild,
-			paloma_monitor_codepipeline,
-			paloma_monitor_eventbridge,
+			fourtwo_panel_monitor_s3,
+			fourtwo_panel_monitor_cloudwatch,
+			fourtwo_panel_monitor_lambda,
+			fourtwo_panel_monitor_codebuild,
+			fourtwo_panel_monitor_codepipeline,
+			fourtwo_panel_monitor_eventbridge,
 		]) => {
 			const exported = {
-				paloma_monitor_imports: {
-					paloma: {
+				fourtwo_panel_monitor_imports: {
+					fourtwo: {
 						codestar: __codestar,
 						datalayer: __datalayer,
-						nevada_web: __nevada_web,
+						panel_http: __panel_http,
+						panel_web: __panel_web,
 					},
 				},
-				paloma_monitor_s3,
-				paloma_monitor_cloudwatch,
-				paloma_monitor_lambda,
-				paloma_monitor_codebuild,
-				paloma_monitor_codepipeline,
-				paloma_monitor_eventbridge,
-			} satisfies z.infer<typeof PalomaMonitorStackExportsZod> & {
-				paloma_monitor_imports: {
-					paloma: {
+				fourtwo_panel_monitor_s3,
+				fourtwo_panel_monitor_cloudwatch,
+				fourtwo_panel_monitor_lambda,
+				fourtwo_panel_monitor_codebuild,
+				fourtwo_panel_monitor_codepipeline,
+				fourtwo_panel_monitor_eventbridge,
+			} satisfies z.infer<typeof FourtwoPanelMonitorStackExportsZod> & {
+				fourtwo_panel_monitor_imports: {
+					fourtwo: {
 						codestar: typeof __codestar;
 						datalayer: typeof __datalayer;
-						nevada_web: typeof __nevada_web;
+						panel_http: typeof __panel_http;
+						panel_web: typeof __panel_web;
 					};
 				};
 			};
-			const validate = PalomaMonitorStackExportsZod.safeParse(exported);
+			const validate = FourtwoPanelMonitorStackExportsZod.safeParse(exported);
 			if (!validate.success) {
 				process.stderr.write(
 					`Validation failed: ${JSON.stringify(validate.error, null, 2)}`,
