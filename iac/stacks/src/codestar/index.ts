@@ -14,6 +14,10 @@ export = async () => {
 
 	const ecr = await (async () => {
 		const repository = new ECRRepository(_("binaries"));
+
+		const taggedTtl = context.environment.isProd ? 28 : 9;
+		const untaggedTtl = context.environment.isProd ? 14 : 5;
+
 		new LifecyclePolicy(_("binaries-lifecycle"), {
 			repository: repository.name,
 			policy: repository.repositoryUrl.apply(
@@ -30,6 +34,19 @@ export = async () => {
 										countUnit: "days",
 										countNumber: 14,
 										tagPrefixLists: ["git"],
+									},
+									action: {
+										type: "expire",
+									},
+								},
+								{
+									priority: 2,
+									description: `Expire untagged images older than ${untaggedTtl} days`,
+									selection: {
+										tagStatus: "untagged",
+										countType: "sinceImagePushed",
+										countUnit: "days",
+										countNumber: taggedTtl,
 									},
 									action: {
 										type: "expire",

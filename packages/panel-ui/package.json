@@ -27,7 +27,7 @@
     "react-dom": "catalog:web-react",
     "serialize-error": "catalog:error",
     "sirv": "catalog:http-express",
-    "std-env": "catalog:core",
+    "std-env": "catalog:runtime-env",
     "ulidx": "catalog:id",
     "verror": "catalog:error"
   },

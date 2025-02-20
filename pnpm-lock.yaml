@@ -19,31 +19,6 @@ catalogs:
     enquirer:
       specifier: ^2.4.1
       version: 2.4.1
-  core:
-    fast-xml-parser:
-      specifier: ^4.5.0
-      version: 4.5.1
-    ini:
-      specifier: ^5.0.0
-      version: 5.0.0
-    js-yaml:
-      specifier: ^4.1.0
-      version: 4.1.0
-    jsonc-parser:
-      specifier: ^3.3.1
-      version: 3.3.1
-    pretty-ms:
-      specifier: ^9.2.0
-      version: 9.2.0
-    std-env:
-      specifier: ^3.8.0
-      version: 3.8.0
-    yaml:
-      specifier: ^2.7.0
-      version: 2.7.0
-    zod:
-      specifier: ^3.24.1
-      version: 3.24.1
   database-sql:
     knex:
       specifier: ^3.1.0
@@ -54,11 +29,11 @@ catalogs:
       version: 11.8.1
   default:
     '@levicape/paloma':
-      specifier: 0.3.2-main.9
-      version: 0.3.2-main.9
+      specifier: 0.3.3-main.10
+      version: 0.3.3-main.10
     '@levicape/spork':
-      specifier: 0.5.1-main.8
-      version: 0.5.1-main.8
+      specifier: 0.5.2-main.9
+      version: 0.5.2-main.9
   dev:
     ts-node:
       specifier: ^10.9.2
@@ -89,6 +64,10 @@ catalogs:
     verror:
       specifier: ^1.10.0
       version: 1.10.1
+  format-time:
+    pretty-ms:
+      specifier: ^9.2.0
+      version: 9.2.0
   hono:
     hono:
       specifier: ^4.7.1
@@ -150,10 +129,28 @@ catalogs:
     syncpack:
       specifier: ^13.0.2
       version: 13.0.2
+  parse-ini:
+    ini:
+      specifier: ^5.0.0
+      version: 5.0.0
   parse-json:
     destr:
       specifier: ^2.0.3
       version: 2.0.3
+    jsonc-parser:
+      specifier: ^3.3.1
+      version: 3.3.1
+  parse-xml:
+    fast-xml-parser:
+      specifier: ^4.5.0
+      version: 4.5.1
+  parse-yaml:
+    js-yaml:
+      specifier: ^4.1.0
+      version: 4.1.0
+    yaml:
+      specifier: ^2.7.0
+      version: 2.7.0
   project-nx:
     nx:
       specifier: ^20.4.0
@@ -199,6 +196,14 @@ catalogs:
     '@pulumiverse/time':
       specifier: ^0.1.0
       version: 0.1.0
+  runtime-env:
+    std-env:
+      specifier: ^3.8.0
+      version: 3.8.0
+  schema-zod:
+    zod:
+      specifier: ^3.24.1
+      version: 3.24.1
   test:
     expect:
       specifier: ^29.7.0
@@ -294,13 +299,13 @@ importers:
         specifier: catalog:cli
         version: 2.4.1
       fast-xml-parser:
-        specifier: catalog:core
+        specifier: catalog:parse-xml
         version: 4.5.1
       ini:
-        specifier: catalog:core
+        specifier: catalog:parse-ini
         version: 5.0.0
       js-yaml:
-        specifier: catalog:core
+        specifier: catalog:parse-yaml
         version: 4.1.0
       knex:
         specifier: catalog:database-sql
@@ -315,22 +320,22 @@ importers:
         specifier: catalog:log-pino
         version: 13.0.0
       pretty-ms:
-        specifier: catalog:core
+        specifier: catalog:format-time
         version: 9.2.0
       serialize-error:
         specifier: catalog:error
         version: 12.0.0
       std-env:
-        specifier: catalog:core
+        specifier: catalog:runtime-env
         version: 3.8.0
       verror:
         specifier: catalog:error
         version: 1.10.1
       yaml:
-        specifier: catalog:core
+        specifier: catalog:parse-yaml
         version: 2.7.0
       zod:
-        specifier: catalog:core
+        specifier: catalog:schema-zod
         version: 3.24.1
     devDependencies:
       '@biomejs/biome':
@@ -355,7 +360,7 @@ importers:
         specifier: catalog:test
         version: 29.7.0
       jsonc-parser:
-        specifier: catalog:core
+        specifier: catalog:parse-json
         version: 3.3.1
       nx:
         specifier: catalog:project-nx
@@ -377,7 +382,7 @@ importers:
     dependencies:
       '@levicape/paloma':
         specifier: 'catalog:'
-        version: 0.3.2-main.9(pg@8.13.1)
+        version: 0.3.3-main.10(pg@8.13.1)
     devDependencies:
       typescript:
         specifier: catalog:dev
@@ -434,10 +439,10 @@ importers:
         specifier: catalog:error
         version: 1.10.1
       yaml:
-        specifier: catalog:core
+        specifier: catalog:parse-yaml
         version: 2.7.0
       zod:
-        specifier: catalog:core
+        specifier: catalog:schema-zod
         version: 3.24.1
     devDependencies:
       '@biomejs/biome':
@@ -503,10 +508,10 @@ importers:
         version: 2.2.3
       '@levicape/paloma':
         specifier: 'catalog:'
-        version: 0.3.2-main.9(pg@8.13.1)
+        version: 0.3.3-main.10(pg@8.13.1)
       '@levicape/spork':
         specifier: 'catalog:'
-        version: 0.5.1-main.8(@bufbuild/protobuf@2.2.3)(@hono/node-server@1.13.7(hono@4.7.1))(hono@4.7.1)(jsonwebtoken@9.0.2)(zod@3.24.1)
+        version: 0.5.2-main.9(@bufbuild/protobuf@2.2.3)(@hono/node-server@1.13.7(hono@4.7.1))(hono@4.7.1)(jsonwebtoken@9.0.2)(zod@3.24.1)
       effect:
         specifier: catalog:effect
         version: 3.13.0
@@ -566,7 +571,7 @@ importers:
         specifier: catalog:http-express
         version: 3.0.0
       std-env:
-        specifier: catalog:core
+        specifier: catalog:runtime-env
         version: 3.8.0
       ulidx:
         specifier: catalog:id
@@ -1423,13 +1428,13 @@ packages:
     resolution: {integrity: sha512-rsfF5t3sd5c+3ejUgcy8q0cVG2/BxT064L4Xz+CuKEe014u8T4MtFZiWjWZFpfMXSGKzFYEA6DJYm9CqjmIfZg==}
     engines: {node: '>=14'}
 
-  '@levicape/paloma@0.3.2-main.9':
-    resolution: {integrity: sha512-RyknVb1/eANhETCsKy4E9zA1OhHI7B6lQu7i+by2whPyWZOAvDYlfgk1evNXSs+t0dVZ3abojvj2uPurIUfkLQ==, tarball: https://npm.pkg.github.com/download/@levicape/paloma/0.3.2-main.9/223f589fa939a07170606683d4a2b025daf715d8}
+  '@levicape/paloma@0.3.3-main.10':
+    resolution: {integrity: sha512-vtFxUv2IqI2QrfBD1H5Fbu2VComZOGbq9bhEFsPv7jhLUkwFDyduxghOT6WfFAFgO7NAdwhylT5uzzrIKNzsAA==, tarball: https://npm.pkg.github.com/download/@levicape/paloma/0.3.3-main.10/6d97ff9aa7d4f8592209e5a279f42ea89101abb4}
     engines: {node: 22.12.0}
     hasBin: true
 
-  '@levicape/spork@0.5.1-main.8':
-    resolution: {integrity: sha512-+JupTT3xhLGbMgK9DJru98wnZl4BZpWUIrgWpttIL3UXZFV8OuSf0idOpbIwA5WC8dWIk2kQuv0699o/JJURmw==, tarball: https://npm.pkg.github.com/download/@levicape/spork/0.5.1-main.8/4df5f63566e7f49c2d625b8e4ba42edd3b56753a}
+  '@levicape/spork@0.5.2-main.9':
+    resolution: {integrity: sha512-f4l+X3awzCR/PvTc97y+1+bCZjsGaB6TLV7944+FcPR7VjinkxuESETE0VqqaL3eFJBJN2QdDgZeMnU50xrapQ==, tarball: https://npm.pkg.github.com/download/@levicape/spork/0.5.2-main.9/cb13370c781f418ab71456c858b5d00c32800b0b}
     engines: {node: 22.12.0}
     hasBin: true
     peerDependencies:
@@ -6806,7 +6811,7 @@ snapshots:
     optionalDependencies:
       re2-wasm: 1.0.2
 
-  '@levicape/paloma@0.3.2-main.9(pg@8.13.1)':
+  '@levicape/paloma@0.3.3-main.10(pg@8.13.1)':
     dependencies:
       '@aws-lambda-powertools/logger': 2.14.0
       '@effect/platform': 0.77.0(effect@3.13.0)
@@ -6845,7 +6850,7 @@ snapshots:
       - tedious
       - utf-8-validate
 
-  '@levicape/spork@0.5.1-main.8(@bufbuild/protobuf@2.2.3)(@hono/node-server@1.13.7(hono@4.7.1))(hono@4.7.1)(jsonwebtoken@9.0.2)(zod@3.24.1)':
+  '@levicape/spork@0.5.2-main.9(@bufbuild/protobuf@2.2.3)(@hono/node-server@1.13.7(hono@4.7.1))(hono@4.7.1)(jsonwebtoken@9.0.2)(zod@3.24.1)':
     dependencies:
       '@aws-lambda-powertools/logger': 2.14.0
       '@aws-sdk/client-dynamodb': 3.744.0
@@ -6864,6 +6869,7 @@ snapshots:
       '@stricli/core': 1.1.1
       chokidar: 4.0.3
       consola: 3.4.0
+      dotenv: 16.4.7
       effect: 3.13.0
       hono: 4.7.1
       hono-rate-limiter: 0.4.2(hono@4.7.1)

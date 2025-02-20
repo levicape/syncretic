@@ -309,7 +309,7 @@ Actions:
             - Run: docker save $APPLICATION_IMAGE_NAME | gzip > _images/application.tar.gz
             - Run: du -sh _images/application.tar.gz
             - Run: ls -la _images
-      Pulumi:
+      Preview:
         Identifier: aws/build@v1.0.0
         DependsOn:
           - Image
@@ -397,68 +397,100 @@ Actions:
             - Run: cat .pulumi-ci | grep "export" >> .export-cd
             - Run: cat .export-cd
             - Run: source .export-cd
-            - Run: mkdir _pulumi
-            - Run: /cc/cache/pulumi/bin/pulumi stack init "$APPLICATION_IMAGE_NAME-codestar.$CI_ENVIRONMENT" -C $(pwd)/iac/stacks/src/codestar || true
-            - Run: /cc/cache/pulumi/bin/pulumi stack select "$APPLICATION_IMAGE_NAME-codestar.$CI_ENVIRONMENT" -C $(pwd)/iac/stacks/src/codestar || true
-            - Run: /cc/cache/pulumi/bin/pulumi config set aws:skipMetadataApiCheck false -C $(pwd)/iac/stacks/src/codestar
+            - Run: echo $AWS_PROVIDER_KEY
+            - Run: mkdir -p _pulumi || true
+            - Run: 'echo "Preview onto root: fourtwo"'
+            - Run: 'echo "Preview: Stack: fourtwo-codestar.current. CWD: $(pwd)/iac/stacks/src/codestar. Output: _pulumi/codestar."'
+            - Run: 'echo "name: fourtwo-codestar" >> $(pwd)/iac/stacks/src/codestar/Pulumi.yaml'
+            - Run: cat $(pwd)/iac/stacks/src/codestar/Pulumi.yaml $(pwd)/iac/stacks/src/codestar/Pulumi.*.yaml || true;
+            - Run: /cc/cache/pulumi/bin/pulumi stack init fourtwo-codestar.current -C $(pwd)/iac/stacks/src/codestar || true
+            - Run: /cc/cache/pulumi/bin/pulumi stack select fourtwo-codestar.current -C $(pwd)/iac/stacks/src/codestar || true
+            - Run: /cc/cache/pulumi/bin/pulumi config set --path aws:skipMetadataApiCheck false -C $(pwd)/iac/stacks/src/codestar
             - Run: /cc/cache/pulumi/bin/pulumi config set --path context:stack.environment.isProd false -C $(pwd)/iac/stacks/src/codestar
             - Run: /cc/cache/pulumi/bin/pulumi config set --path context:stack.environment.features aws -C $(pwd)/iac/stacks/src/codestar
-            - Run: /cc/cache/pulumi/bin/pulumi config set --path 'frontend:stack.dns.hostnames[0]' "$CI_ENVIRONMENT.$APPLICATION_IMAGE_NAME.cloud.$FRONTEND_HOSTNAME" -C $(pwd)/iac/stacks/src/codestar
+            - Run: /cc/cache/pulumi/bin/pulumi config set --path 'frontend:stack.dns.hostnames[0]' fourtwo.cloud.$FRONTEND_HOSTNAME -C $(pwd)/iac/stacks/src/codestar
+            - Run: /cc/cache/pulumi/bin/pulumi config set --path 'frontend:stack.dns.hostnames[1]' current.cloud.$FRONTEND_HOSTNAME -C $(pwd)/iac/stacks/src/codestar
+            - Run: /cc/cache/pulumi/bin/pulumi config set --path 'frontend:stack.dns.hostnames[2]' fourtwo-codestar.cloud.$FRONTEND_HOSTNAME -C $(pwd)/iac/stacks/src/codestar
             - Run: /cc/cache/pulumi/bin/pulumi stack change-secrets-provider $AWS_PROVIDER_KEY -C $(pwd)/iac/stacks/src/codestar
-            - Run: /cc/cache/pulumi/bin/pulumi refresh -C $(pwd)/iac/stacks/src/codestar --yes --skip-preview --clear-pending-creates --json --suppress-progress --non-interactive --diff --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-refresh"
-            - Run: /cc/cache/pulumi/bin/pulumi preview -C $(pwd)/iac/stacks/src/codestar  --show-replacement-steps --json --suppress-progress --non-interactive --diff --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-preview"
+            - Run: cat $(pwd)/iac/stacks/src/codestar/Pulumi.yaml $(pwd)/iac/stacks/src/codestar/Pulumi.*.yaml || true;
+            - Run: /cc/cache/pulumi/bin/pulumi refresh --yes --skip-preview --clear-pending-creates --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-refresh" -C $(pwd)/iac/stacks/src/codestar --non-interactive --suppress-progress --diff --json
+            - Run: /cc/cache/pulumi/bin/pulumi preview --show-replacement-steps --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-preview" -C $(pwd)/iac/stacks/src/codestar --non-interactive --suppress-progress --diff --json
             - Run: /cc/cache/pulumi/bin/pulumi stack output -C $(pwd)/iac/stacks/src/codestar --json > $(pwd)/_pulumi/codestar.json
             - Run: cat _pulumi/codestar.json
             - Run: /cc/cache/pulumi/bin/pulumi stack output -C $(pwd)/iac/stacks/src/codestar --shell > $(pwd)/_pulumi/codestar.sh
             - Run: cat _pulumi/codestar.sh
-            - Run: /cc/cache/pulumi/bin/pulumi stack init "$APPLICATION_IMAGE_NAME-datalayer.$CI_ENVIRONMENT" -C $(pwd)/iac/stacks/src/datalayer || true
-            - Run: /cc/cache/pulumi/bin/pulumi stack select "$APPLICATION_IMAGE_NAME-datalayer.$CI_ENVIRONMENT" -C $(pwd)/iac/stacks/src/datalayer || true
-            - Run: /cc/cache/pulumi/bin/pulumi config set aws:skipMetadataApiCheck false -C $(pwd)/iac/stacks/src/datalayer
+            - Run: 'echo "Preview: Stack: fourtwo-datalayer.current. CWD: $(pwd)/iac/stacks/src/datalayer. Output: _pulumi/datalayer."'
+            - Run: 'echo "name: fourtwo-datalayer" >> $(pwd)/iac/stacks/src/datalayer/Pulumi.yaml'
+            - Run: cat $(pwd)/iac/stacks/src/datalayer/Pulumi.yaml $(pwd)/iac/stacks/src/datalayer/Pulumi.*.yaml || true;
+            - Run: /cc/cache/pulumi/bin/pulumi stack init fourtwo-datalayer.current -C $(pwd)/iac/stacks/src/datalayer || true
+            - Run: /cc/cache/pulumi/bin/pulumi stack select fourtwo-datalayer.current -C $(pwd)/iac/stacks/src/datalayer || true
+            - Run: /cc/cache/pulumi/bin/pulumi config set --path aws:skipMetadataApiCheck false -C $(pwd)/iac/stacks/src/datalayer
             - Run: /cc/cache/pulumi/bin/pulumi config set --path context:stack.environment.isProd false -C $(pwd)/iac/stacks/src/datalayer
             - Run: /cc/cache/pulumi/bin/pulumi config set --path context:stack.environment.features aws -C $(pwd)/iac/stacks/src/datalayer
-            - Run: /cc/cache/pulumi/bin/pulumi config set --path 'frontend:stack.dns.hostnames[0]' "$CI_ENVIRONMENT.$APPLICATION_IMAGE_NAME.cloud.$FRONTEND_HOSTNAME" -C $(pwd)/iac/stacks/src/datalayer
+            - Run: /cc/cache/pulumi/bin/pulumi config set --path 'frontend:stack.dns.hostnames[0]' fourtwo.cloud.$FRONTEND_HOSTNAME -C $(pwd)/iac/stacks/src/datalayer
+            - Run: /cc/cache/pulumi/bin/pulumi config set --path 'frontend:stack.dns.hostnames[1]' current.cloud.$FRONTEND_HOSTNAME -C $(pwd)/iac/stacks/src/datalayer
+            - Run: /cc/cache/pulumi/bin/pulumi config set --path 'frontend:stack.dns.hostnames[2]' fourtwo-datalayer.cloud.$FRONTEND_HOSTNAME -C $(pwd)/iac/stacks/src/datalayer
             - Run: /cc/cache/pulumi/bin/pulumi stack change-secrets-provider $AWS_PROVIDER_KEY -C $(pwd)/iac/stacks/src/datalayer
-            - Run: /cc/cache/pulumi/bin/pulumi refresh -C $(pwd)/iac/stacks/src/datalayer --yes --skip-preview --clear-pending-creates --json --suppress-progress --non-interactive --diff --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-refresh"
-            - Run: /cc/cache/pulumi/bin/pulumi preview -C $(pwd)/iac/stacks/src/datalayer  --show-replacement-steps --json --suppress-progress --non-interactive --diff --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-preview"
+            - Run: cat $(pwd)/iac/stacks/src/datalayer/Pulumi.yaml $(pwd)/iac/stacks/src/datalayer/Pulumi.*.yaml || true;
+            - Run: /cc/cache/pulumi/bin/pulumi refresh --yes --skip-preview --clear-pending-creates --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-refresh" -C $(pwd)/iac/stacks/src/datalayer --non-interactive --suppress-progress --diff --json
+            - Run: /cc/cache/pulumi/bin/pulumi preview --show-replacement-steps --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-preview" -C $(pwd)/iac/stacks/src/datalayer --non-interactive --suppress-progress --diff --json
             - Run: /cc/cache/pulumi/bin/pulumi stack output -C $(pwd)/iac/stacks/src/datalayer --json > $(pwd)/_pulumi/datalayer.json
             - Run: cat _pulumi/datalayer.json
             - Run: /cc/cache/pulumi/bin/pulumi stack output -C $(pwd)/iac/stacks/src/datalayer --shell > $(pwd)/_pulumi/datalayer.sh
             - Run: cat _pulumi/datalayer.sh
-            - Run: /cc/cache/pulumi/bin/pulumi stack init "$APPLICATION_IMAGE_NAME-panel-http.$CI_ENVIRONMENT" -C $(pwd)/iac/stacks/src/domains/panel/http || true
-            - Run: /cc/cache/pulumi/bin/pulumi stack select "$APPLICATION_IMAGE_NAME-panel-http.$CI_ENVIRONMENT" -C $(pwd)/iac/stacks/src/domains/panel/http || true
-            - Run: /cc/cache/pulumi/bin/pulumi config set aws:skipMetadataApiCheck false -C $(pwd)/iac/stacks/src/domains/panel/http
+            - Run: 'echo "Preview: Stack: fourtwo-panel-http.current. CWD: $(pwd)/iac/stacks/src/domains/panel/http. Output: _pulumi/domains_panel_http."'
+            - Run: 'echo "name: fourtwo-panel-http" >> $(pwd)/iac/stacks/src/domains/panel/http/Pulumi.yaml'
+            - Run: cat $(pwd)/iac/stacks/src/domains/panel/http/Pulumi.yaml $(pwd)/iac/stacks/src/domains/panel/http/Pulumi.*.yaml || true;
+            - Run: /cc/cache/pulumi/bin/pulumi stack init fourtwo-panel-http.current -C $(pwd)/iac/stacks/src/domains/panel/http || true
+            - Run: /cc/cache/pulumi/bin/pulumi stack select fourtwo-panel-http.current -C $(pwd)/iac/stacks/src/domains/panel/http || true
+            - Run: /cc/cache/pulumi/bin/pulumi config set --path aws:skipMetadataApiCheck false -C $(pwd)/iac/stacks/src/domains/panel/http
             - Run: /cc/cache/pulumi/bin/pulumi config set --path context:stack.environment.isProd false -C $(pwd)/iac/stacks/src/domains/panel/http
             - Run: /cc/cache/pulumi/bin/pulumi config set --path context:stack.environment.features aws -C $(pwd)/iac/stacks/src/domains/panel/http
-            - Run: /cc/cache/pulumi/bin/pulumi config set --path 'frontend:stack.dns.hostnames[0]' "$CI_ENVIRONMENT.$APPLICATION_IMAGE_NAME.cloud.$FRONTEND_HOSTNAME" -C $(pwd)/iac/stacks/src/domains/panel/http
+            - Run: /cc/cache/pulumi/bin/pulumi config set --path 'frontend:stack.dns.hostnames[0]' fourtwo.cloud.$FRONTEND_HOSTNAME -C $(pwd)/iac/stacks/src/domains/panel/http
+            - Run: /cc/cache/pulumi/bin/pulumi config set --path 'frontend:stack.dns.hostnames[1]' current.cloud.$FRONTEND_HOSTNAME -C $(pwd)/iac/stacks/src/domains/panel/http
+            - Run: /cc/cache/pulumi/bin/pulumi config set --path 'frontend:stack.dns.hostnames[2]' fourtwo-panel-http.cloud.$FRONTEND_HOSTNAME -C $(pwd)/iac/stacks/src/domains/panel/http
             - Run: /cc/cache/pulumi/bin/pulumi stack change-secrets-provider $AWS_PROVIDER_KEY -C $(pwd)/iac/stacks/src/domains/panel/http
-            - Run: /cc/cache/pulumi/bin/pulumi refresh -C $(pwd)/iac/stacks/src/domains/panel/http --yes --skip-preview --clear-pending-creates --json --suppress-progress --non-interactive --diff --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-refresh"
-            - Run: /cc/cache/pulumi/bin/pulumi preview -C $(pwd)/iac/stacks/src/domains/panel/http  --show-replacement-steps --json --suppress-progress --non-interactive --diff --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-preview"
+            - Run: cat $(pwd)/iac/stacks/src/domains/panel/http/Pulumi.yaml $(pwd)/iac/stacks/src/domains/panel/http/Pulumi.*.yaml || true;
+            - Run: /cc/cache/pulumi/bin/pulumi refresh --yes --skip-preview --clear-pending-creates --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-refresh" -C $(pwd)/iac/stacks/src/domains/panel/http --non-interactive --suppress-progress --diff --json
+            - Run: /cc/cache/pulumi/bin/pulumi preview --show-replacement-steps --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-preview" -C $(pwd)/iac/stacks/src/domains/panel/http --non-interactive --suppress-progress --diff --json
             - Run: /cc/cache/pulumi/bin/pulumi stack output -C $(pwd)/iac/stacks/src/domains/panel/http --json > $(pwd)/_pulumi/domains_panel_http.json
             - Run: cat _pulumi/domains_panel_http.json
             - Run: /cc/cache/pulumi/bin/pulumi stack output -C $(pwd)/iac/stacks/src/domains/panel/http --shell > $(pwd)/_pulumi/domains_panel_http.sh
             - Run: cat _pulumi/domains_panel_http.sh
-            - Run: /cc/cache/pulumi/bin/pulumi stack init "$APPLICATION_IMAGE_NAME-panel-web.$CI_ENVIRONMENT" -C $(pwd)/iac/stacks/src/domains/panel/web || true
-            - Run: /cc/cache/pulumi/bin/pulumi stack select "$APPLICATION_IMAGE_NAME-panel-web.$CI_ENVIRONMENT" -C $(pwd)/iac/stacks/src/domains/panel/web || true
-            - Run: /cc/cache/pulumi/bin/pulumi config set aws:skipMetadataApiCheck false -C $(pwd)/iac/stacks/src/domains/panel/web
+            - Run: 'echo "Preview: Stack: fourtwo-panel-web.current. CWD: $(pwd)/iac/stacks/src/domains/panel/web. Output: _pulumi/domains_panel_web."'
+            - Run: 'echo "name: fourtwo-panel-web" >> $(pwd)/iac/stacks/src/domains/panel/web/Pulumi.yaml'
+            - Run: cat $(pwd)/iac/stacks/src/domains/panel/web/Pulumi.yaml $(pwd)/iac/stacks/src/domains/panel/web/Pulumi.*.yaml || true;
+            - Run: /cc/cache/pulumi/bin/pulumi stack init fourtwo-panel-web.current -C $(pwd)/iac/stacks/src/domains/panel/web || true
+            - Run: /cc/cache/pulumi/bin/pulumi stack select fourtwo-panel-web.current -C $(pwd)/iac/stacks/src/domains/panel/web || true
+            - Run: /cc/cache/pulumi/bin/pulumi config set --path aws:skipMetadataApiCheck false -C $(pwd)/iac/stacks/src/domains/panel/web
             - Run: /cc/cache/pulumi/bin/pulumi config set --path context:stack.environment.isProd false -C $(pwd)/iac/stacks/src/domains/panel/web
             - Run: /cc/cache/pulumi/bin/pulumi config set --path context:stack.environment.features aws -C $(pwd)/iac/stacks/src/domains/panel/web
-            - Run: /cc/cache/pulumi/bin/pulumi config set --path 'frontend:stack.dns.hostnames[0]' "$CI_ENVIRONMENT.$APPLICATION_IMAGE_NAME.cloud.$FRONTEND_HOSTNAME" -C $(pwd)/iac/stacks/src/domains/panel/web
+            - Run: /cc/cache/pulumi/bin/pulumi config set --path 'frontend:stack.dns.hostnames[0]' fourtwo.cloud.$FRONTEND_HOSTNAME -C $(pwd)/iac/stacks/src/domains/panel/web
+            - Run: /cc/cache/pulumi/bin/pulumi config set --path 'frontend:stack.dns.hostnames[1]' current.cloud.$FRONTEND_HOSTNAME -C $(pwd)/iac/stacks/src/domains/panel/web
+            - Run: /cc/cache/pulumi/bin/pulumi config set --path 'frontend:stack.dns.hostnames[2]' fourtwo-panel-web.cloud.$FRONTEND_HOSTNAME -C $(pwd)/iac/stacks/src/domains/panel/web
             - Run: /cc/cache/pulumi/bin/pulumi stack change-secrets-provider $AWS_PROVIDER_KEY -C $(pwd)/iac/stacks/src/domains/panel/web
-            - Run: /cc/cache/pulumi/bin/pulumi refresh -C $(pwd)/iac/stacks/src/domains/panel/web --yes --skip-preview --clear-pending-creates --json --suppress-progress --non-interactive --diff --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-refresh"
-            - Run: /cc/cache/pulumi/bin/pulumi preview -C $(pwd)/iac/stacks/src/domains/panel/web  --show-replacement-steps --json --suppress-progress --non-interactive --diff --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-preview"
+            - Run: cat $(pwd)/iac/stacks/src/domains/panel/web/Pulumi.yaml $(pwd)/iac/stacks/src/domains/panel/web/Pulumi.*.yaml || true;
+            - Run: /cc/cache/pulumi/bin/pulumi refresh --yes --skip-preview --clear-pending-creates --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-refresh" -C $(pwd)/iac/stacks/src/domains/panel/web --non-interactive --suppress-progress --diff --json
+            - Run: /cc/cache/pulumi/bin/pulumi preview --show-replacement-steps --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-preview" -C $(pwd)/iac/stacks/src/domains/panel/web --non-interactive --suppress-progress --diff --json
             - Run: /cc/cache/pulumi/bin/pulumi stack output -C $(pwd)/iac/stacks/src/domains/panel/web --json > $(pwd)/_pulumi/domains_panel_web.json
             - Run: cat _pulumi/domains_panel_web.json
             - Run: /cc/cache/pulumi/bin/pulumi stack output -C $(pwd)/iac/stacks/src/domains/panel/web --shell > $(pwd)/_pulumi/domains_panel_web.sh
             - Run: cat _pulumi/domains_panel_web.sh
-            - Run: /cc/cache/pulumi/bin/pulumi stack init "$APPLICATION_IMAGE_NAME-panel-monitor.$CI_ENVIRONMENT" -C $(pwd)/iac/stacks/src/domains/panel/monitor || true
-            - Run: /cc/cache/pulumi/bin/pulumi stack select "$APPLICATION_IMAGE_NAME-panel-monitor.$CI_ENVIRONMENT" -C $(pwd)/iac/stacks/src/domains/panel/monitor || true
-            - Run: /cc/cache/pulumi/bin/pulumi config set aws:skipMetadataApiCheck false -C $(pwd)/iac/stacks/src/domains/panel/monitor
+            - Run: 'echo "Preview: Stack: fourtwo-panel-monitor.current. CWD: $(pwd)/iac/stacks/src/domains/panel/monitor. Output: _pulumi/domains_panel_monitor."'
+            - Run: 'echo "name: fourtwo-panel-monitor" >> $(pwd)/iac/stacks/src/domains/panel/monitor/Pulumi.yaml'
+            - Run: cat $(pwd)/iac/stacks/src/domains/panel/monitor/Pulumi.yaml $(pwd)/iac/stacks/src/domains/panel/monitor/Pulumi.*.yaml || true;
+            - Run: /cc/cache/pulumi/bin/pulumi stack init fourtwo-panel-monitor.current -C $(pwd)/iac/stacks/src/domains/panel/monitor || true
+            - Run: /cc/cache/pulumi/bin/pulumi stack select fourtwo-panel-monitor.current -C $(pwd)/iac/stacks/src/domains/panel/monitor || true
+            - Run: /cc/cache/pulumi/bin/pulumi config set --path aws:skipMetadataApiCheck false -C $(pwd)/iac/stacks/src/domains/panel/monitor
             - Run: /cc/cache/pulumi/bin/pulumi config set --path context:stack.environment.isProd false -C $(pwd)/iac/stacks/src/domains/panel/monitor
             - Run: /cc/cache/pulumi/bin/pulumi config set --path context:stack.environment.features aws -C $(pwd)/iac/stacks/src/domains/panel/monitor
-            - Run: /cc/cache/pulumi/bin/pulumi config set --path 'frontend:stack.dns.hostnames[0]' "$CI_ENVIRONMENT.$APPLICATION_IMAGE_NAME.cloud.$FRONTEND_HOSTNAME" -C $(pwd)/iac/stacks/src/domains/panel/monitor
+            - Run: /cc/cache/pulumi/bin/pulumi config set --path 'frontend:stack.dns.hostnames[0]' fourtwo.cloud.$FRONTEND_HOSTNAME -C $(pwd)/iac/stacks/src/domains/panel/monitor
+            - Run: /cc/cache/pulumi/bin/pulumi config set --path 'frontend:stack.dns.hostnames[1]' current.cloud.$FRONTEND_HOSTNAME -C $(pwd)/iac/stacks/src/domains/panel/monitor
+            - Run: /cc/cache/pulumi/bin/pulumi config set --path 'frontend:stack.dns.hostnames[2]' fourtwo-panel-monitor.cloud.$FRONTEND_HOSTNAME -C $(pwd)/iac/stacks/src/domains/panel/monitor
             - Run: /cc/cache/pulumi/bin/pulumi stack change-secrets-provider $AWS_PROVIDER_KEY -C $(pwd)/iac/stacks/src/domains/panel/monitor
-            - Run: /cc/cache/pulumi/bin/pulumi refresh -C $(pwd)/iac/stacks/src/domains/panel/monitor --yes --skip-preview --clear-pending-creates --json --suppress-progress --non-interactive --diff --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-refresh"
-            - Run: /cc/cache/pulumi/bin/pulumi preview -C $(pwd)/iac/stacks/src/domains/panel/monitor  --show-replacement-steps --json --suppress-progress --non-interactive --diff --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-preview"
+            - Run: cat $(pwd)/iac/stacks/src/domains/panel/monitor/Pulumi.yaml $(pwd)/iac/stacks/src/domains/panel/monitor/Pulumi.*.yaml || true;
+            - Run: /cc/cache/pulumi/bin/pulumi refresh --yes --skip-preview --clear-pending-creates --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-refresh" -C $(pwd)/iac/stacks/src/domains/panel/monitor --non-interactive --suppress-progress --diff --json
+            - Run: /cc/cache/pulumi/bin/pulumi preview --show-replacement-steps --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-preview" -C $(pwd)/iac/stacks/src/domains/panel/monitor --non-interactive --suppress-progress --diff --json
             - Run: /cc/cache/pulumi/bin/pulumi stack output -C $(pwd)/iac/stacks/src/domains/panel/monitor --json > $(pwd)/_pulumi/domains_panel_monitor.json
             - Run: cat _pulumi/domains_panel_monitor.json
             - Run: /cc/cache/pulumi/bin/pulumi stack output -C $(pwd)/iac/stacks/src/domains/panel/monitor --shell > $(pwd)/_pulumi/domains_panel_monitor.sh
@@ -469,7 +501,7 @@ Actions:
 ########################################
 #**:_$~- {"$$":"head","filename":"[pr(OPEN,REVISION)(b:main)]CI.yml","source":"iac/workflows/codecatalyst/push/CI.js"}
 #**:_$~- {"$$":"script","generator":"codegen/codecatalyst/GenerateCodeCatalystWorkflow.mts"}
-#**:_$~- {"$$":"body","hashed":"cbc6a068dd708c27b5f5ff505ef2833d22129ee61df38bda4d8137278982ffb8"}
-#**:_$~- {"$$":"footer","started":"2025-02-15T08:56:58.497Z","now":"2025-02-15T08:56:58.505Z","elapsed":"8ms"}
+#**:_$~- {"$$":"body","hashed":"2e0feb53e67cda55b43ff11b74f98e84b2d9c82df5508be0b5313a5e75e15957"}
+#**:_$~- {"$$":"footer","started":"2025-02-20T22:30:36.866Z","now":"2025-02-20T22:30:36.870Z","elapsed":"4ms"}
 # END OF GENERATED FILE
 

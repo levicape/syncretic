@@ -10,15 +10,11 @@ export const FourtwoPanelMonitorStackExportsZod = z.object({
 		}),
 	}),
 	fourtwo_panel_monitor_s3: z.object({
-		artifactStore: z.object({
+		artifacts: z.object({
 			bucket: z.string(),
 			region: z.string(),
 		}),
-		build: z.object({
-			bucket: z.string(),
-			region: z.string(),
-		}),
-		deploy: z.object({
+		pipeline: z.object({
 			bucket: z.string(),
 			region: z.string(),
 		}),

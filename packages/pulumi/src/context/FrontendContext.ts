@@ -33,8 +33,19 @@ export class FrontendContext {
 					args.props.tags = {
 						...args.props.tags,
 						...{
-							"Context__Frontend-Host": hostnames[0].toString(),
-							"Context__Frontend-Hostnames": hostnames.toString(),
+							"Context__Frontend-Host": hostnames[0]?.toString() ?? "",
+							...Object.fromEntries(
+								hostnames
+									.filter(
+										(hostname) =>
+											hostname.length > 0 && hostname !== "localhost",
+									)
+									.filter((hostname) => hostname.length < 256)
+									.map((hostname, index) => [
+										`Context__Frontend-Host-${index}`,
+										hostname,
+									]),
+							),
 						},
 					};
 					return { props: args.props, opts: args.opts };

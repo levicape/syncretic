@@ -69,9 +69,9 @@ const OUTPUT_DIRECTORY = `output/esbuild`;
 const CANARY_PATHS = [
 	{
 		name: "HttpHandler",
-		description: "Tests basic Fourtwo state machine execution",
+		description: "Tests Panel http handlers",
 		packageName: "@levicape/fourtwo-panel-io",
-		handler: `${LLRT_ARCH ? OUTPUT_DIRECTORY : "module"}/canary/HttpHandler.handler`,
+		handler: `${LLRT_ARCH ? OUTPUT_DIRECTORY : "module"}/canary/HttpHandler.healthcheck`,
 		environment: ENVIRONMENT,
 	},
 ] as const;
@@ -124,18 +124,14 @@ export = async () => {
 
 	// Stack references
 	const dereferenced$ = await $deref(STACKREF_CONFIG);
-	const {
-		codestar: __codestar,
-		datalayer: __datalayer,
-		"panel-http": __panel_http,
-		"panel-web": __panel_web,
-	} = dereferenced$;
+	const { codestar: $codestar, datalayer: $datalayer } = dereferenced$;
 
 	// Object Store
 	const s3 = (() => {
 		const bucket = (name: string) => {
 			const bucket = new Bucket(_(name), {
 				acl: "private",
+				forceDestroy: !context.environment.isProd,
 				tags: {
 					Name: _(name),
 					StackRef: STACKREF_ROOT,
@@ -189,9 +185,8 @@ export = async () => {
 			return bucket;
 		};
 		return {
-			artifactStore: bucket("artifact-store"),
-			build: bucket("build"),
-			deploy: bucket("deploy"),
+			pipeline: bucket("pipeline"),
+			artifacts: bucket("artifacts"),
 		};
 	})();
 
@@ -227,14 +222,14 @@ export = async () => {
 		{
 			datalayer,
 			codestar,
-		}: { datalayer: typeof __datalayer; codestar: typeof __codestar },
+		}: { datalayer: typeof $datalayer; codestar: typeof $codestar },
 		cw: typeof cloudwatch,
 	) => {
 		const role = datalayer.iam.roles.lambda.name;
 		const roleArn = datalayer.iam.roles.lambda.arn;
 
 		const loggroup = new LogGroup(_(`${name}-log`), {
-			retentionInDays: context.environment.isProd ? 90 : 14,
+			retentionInDays: context.environment.isProd ? 90 : 30,
 			tags: {
 				Name: _(`${name}-log`),
 				StackRef: STACKREF_ROOT,
@@ -297,7 +292,7 @@ export = async () => {
 		};
 
 		const zip = new BucketObjectv2(_(`${name}-zip`), {
-			bucket: s3.deploy.bucket,
+			bucket: s3.artifacts.bucket,
 			source: new AssetArchive({
 				"index.js": new StringAsset(
 					`export const handler = (${(
@@ -364,7 +359,7 @@ export = async () => {
 				packageType: "Zip",
 				runtime: LLRT_ARCH ? Runtime.CustomAL2023 : Runtime.NodeJS22dX,
 				handler: "index.handler",
-				s3Bucket: s3.deploy.bucket,
+				s3Bucket: s3.artifacts.bucket,
 				s3Key: zip.key,
 				s3ObjectVersion: zip.versionId,
 				vpcConfig: {
@@ -611,7 +606,7 @@ export = async () => {
 								},
 								{
 									name: "S3_DEPLOY_BUCKET",
-									value: s3.deploy.bucket,
+									value: s3.artifacts.bucket,
 									type: "PLAINTEXT",
 								},
 								{
@@ -762,7 +757,7 @@ export = async () => {
 								},
 								{
 									name: "S3_DEPLOY_BUCKET",
-									value: s3.deploy.bucket,
+									value: s3.artifacts.bucket,
 									type: "PLAINTEXT",
 								},
 								{
@@ -882,7 +877,7 @@ export = async () => {
 							const upload = new BucketObjectv2(
 								_(`${artifact.name}-buildspec`),
 								{
-									bucket: s3.build.bucket,
+									bucket: s3.artifacts.bucket,
 									content,
 									key: `${artifact.name}/Buildspec.yml`,
 								},
@@ -995,8 +990,8 @@ export = async () => {
 	};
 
 	const deps = {
-		datalayer: __datalayer,
-		codestar: __codestar,
+		datalayer: $datalayer,
+		codestar: $codestar,
 	} as const;
 
 	const canary = await (async () => {
@@ -1021,7 +1016,7 @@ export = async () => {
 				executionMode: "QUEUED",
 				artifactStores: [
 					{
-						location: s3.artifactStore.bucket,
+						location: s3.pipeline.bucket,
 						type: "S3",
 					},
 				],
@@ -1037,7 +1032,7 @@ export = async () => {
 								provider: "ECR",
 								version: "1",
 								outputArtifacts: ["source_image"],
-								configuration: all([__codestar.ecr.repository.name]).apply(
+								configuration: all([$codestar.ecr.repository.name]).apply(
 									([repositoryName]) => {
 										return {
 											RepositoryName: repositoryName,
@@ -1066,18 +1061,18 @@ export = async () => {
 											codebuild.extractimage.buildspec.artifact,
 										],
 										configuration: all([
-											__codestar.ecr.repository.arn,
-											__codestar.ecr.repository.name,
-											__codestar.ecr.repository.url,
+											$codestar.ecr.repository.arn,
+											$codestar.ecr.repository.name,
+											$codestar.ecr.repository.url,
 											codebuild.extractimage.project.name,
-											s3.deploy.bucket,
+											s3.artifacts.bucket,
 										]).apply(
 											([
 												repositoryArn,
 												repositoryName,
 												repositoryUrl,
 												projectExtractImageName,
-												deployBucketName,
+												artifactBucketName,
 											]) => {
 												return {
 													ProjectName: projectExtractImageName,
@@ -1109,7 +1104,7 @@ export = async () => {
 														},
 														{
 															name: "S3_DEPLOY_BUCKET",
-															value: deployBucketName,
+															value: artifactBucketName,
 															type: "PLAINTEXT",
 														},
 														{
@@ -1140,7 +1135,7 @@ export = async () => {
 										provider: "S3",
 										version: "1",
 										inputArtifacts: [codebuild.extractimage.buildspec.artifact],
-										configuration: all([s3.deploy.bucket]).apply(
+										configuration: all([s3.artifacts.bucket]).apply(
 											([BucketName]) => ({
 												BucketName,
 												Extract: "false",
@@ -1164,7 +1159,7 @@ export = async () => {
 											codebuild.updatelambda.project.name,
 											lambda.name,
 											lambda.alias.name,
-											s3.deploy.bucket,
+											s3.artifacts.bucket,
 										]).apply(
 											([
 												projectName,
@@ -1229,7 +1224,7 @@ export = async () => {
 										version: "1",
 										inputArtifacts: [codebuild.updatelambda.buildspec.artifact],
 										configuration: all([
-											__codestar.codedeploy.application.name,
+											$codestar.codedeploy.application.name,
 											codedeploy.deploymentGroup.deploymentGroupName,
 										]).apply(([applicationName, deploymentGroupName]) => {
 											return {
@@ -1269,7 +1264,7 @@ export = async () => {
 
 	// Eventbridge will trigger on ecr push
 	const eventbridge = (() => {
-		const { name } = __codestar.ecr.repository;
+		const { name } = $codestar.ecr.repository;
 
 		const EcrImageAction = (() => {
 			const rule = new EventRule(_("on-ecr-push"), {
@@ -1647,10 +1642,10 @@ export = async () => {
 			const exported = {
 				fourtwo_panel_monitor_imports: {
 					fourtwo: {
-						codestar: __codestar,
-						datalayer: __datalayer,
-						panel_http: __panel_http,
-						panel_web: __panel_web,
+						codestar: $codestar,
+						datalayer: $datalayer,
+						panel_http: dereferenced$["panel-http"],
+						panel_web: dereferenced$["panel-web"],
 					},
 				},
 				fourtwo_panel_monitor_s3,
@@ -1662,10 +1657,10 @@ export = async () => {
 			} satisfies z.infer<typeof FourtwoPanelMonitorStackExportsZod> & {
 				fourtwo_panel_monitor_imports: {
 					fourtwo: {
-						codestar: typeof __codestar;
-						datalayer: typeof __datalayer;
-						panel_http: typeof __panel_http;
-						panel_web: typeof __panel_web;
+						codestar: typeof $codestar;
+						datalayer: typeof $datalayer;
+						panel_http: (typeof dereferenced$)["panel-http"];
+						panel_web: (typeof dereferenced$)["panel-web"];
 					};
 				};
 			};

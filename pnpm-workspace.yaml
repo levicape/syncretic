@@ -7,14 +7,14 @@ packages:
   - 'protocols/*'
 
 catalog:
-  "@levicape/paloma": "0.3.2-main.9"
-  "@levicape/spork": "0.5.1-main.8"
+  "@levicape/paloma": "0.3.3-main.10"  
+  "@levicape/spork": "0.5.2-main.9"
 
 
 
 
 
-
+  
 
 
 
@@ -50,16 +50,7 @@ catalogs:
   compression:
     "archiver": "^7.0.1"
   core:
-    "fast-xml-parser": "^4.5.0"
-    "ini": "^5.0.0"
-    "jsonc-parser": "^3.3.1"
-    "js-yaml": "^4.1.0"
-    "long": "^5.2.3"
     "pify": "^6.1.0"
-    "pretty-ms": "^9.2.0"
-    "std-env": "^3.8.0"
-    "yaml": "^2.7.0"
-    "zod": "^3.24.1"
   crypto:
     "bcryptjs": "^2.4.3"
     "crypto-js": "^4.2.0"
@@ -91,6 +82,8 @@ catalogs:
   error:
     "serialize-error": "^12.0.0"
     "verror": "^1.10.0"
+  format-time:
+    "pretty-ms": "^9.2.0"
   fs:
     "chokidar": "^4.0.3"
     "fs-extra": "^11.3.0"
@@ -140,10 +133,19 @@ catalogs:
     "syncpack": "^13.0.2"
   parse-csv:
     "csv": "^6.3.11"
+  parse-ini:
+    "ini": "^5.0.0"
   parse-json:
     "destr": "^2.0.3"
+    "jsonc-parser": "^3.3.1"
+    "long": "^5.2.3"
   parse-path:
     "pathe": "^2.0.2"
+  parse-xml:
+    "fast-xml-parser": "^4.5.0"
+  parse-yaml:
+    "js-yaml": "^4.1.0"
+    "yaml": "^2.7.0"
   project-nx:
     "nx": "^20.4.0"
   protobuf:
@@ -162,6 +164,11 @@ catalogs:
     "@pulumi/random": "^4.16.7"
     "@pulumi/synced-folder": "^0.11.1"
     "@pulumiverse/time": "^0.1.0"
+  runtime-env:
+    "dotenv": "^16.4.7"
+    "std-env": "^3.8.0"
+  schema-zod:
+    "zod": "^3.24.1"
   server:
     "@stricjs/cluster": "^2.0.0"
     "@stricjs/utils": "^2.0.7"

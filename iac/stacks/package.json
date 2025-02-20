@@ -21,8 +21,8 @@
     "tslib": "catalog:dev",
     "typescript": "catalog:dev",
     "verror": "catalog:error",
-    "yaml": "catalog:core",
-    "zod": "catalog:core"
+    "yaml": "catalog:parse-yaml",
+    "zod": "catalog:schema-zod"
   },
   "devDependencies": {
     "@biomejs/biome": "catalog:lint",
