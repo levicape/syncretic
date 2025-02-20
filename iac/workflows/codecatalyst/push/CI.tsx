@@ -13,6 +13,7 @@ import {
 	CODECATALYST_CI_MATRIX,
 	type CodeCatalystWorkflowProps,
 } from "../CodeCatalystMatrix.mjs";
+import { CODECATALYST_PULUMI_STACKS } from "../PulumiStacks.mts";
 
 const APPLICATION = "fourtwo";
 const PUSH_IMAGE_ECR_STACK_OUTPUT = "fourtwo_codestar_ecr";
@@ -100,33 +101,6 @@ const OUTPUT_PULUMI_PATH = "_pulumi" as const;
 const OUTPUT_IMAGES = [
 	["application.tar.gz", "$APPLICATION_IMAGE_NAME"],
 ] as const;
-
-type Stack = {
-	stack: string;
-	output: string;
-	name?: string;
-};
-const PULUMI_STACKS: Stack[] = [
-	{
-		stack: "codestar",
-	},
-	{
-		stack: "datalayer",
-	},
-	{
-		stack: "domains/panel/http",
-		name: "panel-http",
-	},
-	{
-		stack: "domains/panel/web",
-		name: "panel-web",
-	},
-	{
-		stack: "domains/panel/monitor",
-		name: "panel-monitor",
-	},
-	// "wwwroot"
-].map((stack) => ({ ...stack, output: stack.stack.replaceAll("/", "_") }));
 
 const input = (name: `_${string}`) => `$CATALYST_SOURCE_DIR${name}/${name}`;
 
@@ -425,7 +399,7 @@ const cicd = <Preview extends boolean, Deploy extends boolean>(
 								: {}),
 							...(matrix.pipeline.preview === true
 								? {
-										Pulumi: (
+										[matrix.pipeline.deploy ? "Deploy" : "Preview"]: (
 											<CodeCatalystBuildX
 												dependsOn={["Image"]}
 												architecture={"arm64"}
@@ -455,106 +429,265 @@ const cicd = <Preview extends boolean, Deploy extends boolean>(
 												environment={{
 													Name: matrix.pipeline.environment.name,
 												}}
-												steps={
-													<>
-														{...PNPM_NODE_INSTALL_STEPS}
-														<CodeCatalystStepX run="pnpm install --prefer-offline --ignore-scripts" />
-														<CodeCatalystStepX run="pnpm build" />
-														<CodeCatalystStepX
-															run={`ls -la $CATALYST_SOURCE_DIR${OUTPUT_IMAGES_PATH}/${OUTPUT_IMAGES_PATH}`}
-														/>
-														{...OUTPUT_IMAGES.map(([file]) => (
+												steps={(() => {
+													const STEP = matrix.pipeline.deploy
+														? "Deploy"
+														: "Preview";
+													const PULUMI_SECRETS_PROVIDER = `$AWS_PROVIDER_KEY`;
+													return (
+														<>
+															{...PNPM_NODE_INSTALL_STEPS}
+															<CodeCatalystStepX run="pnpm install --prefer-offline --ignore-scripts" />
+															{
+																...[<></>] /* Bootstrap fourtwo cli */
+															}
+															<CodeCatalystStepX run="pnpm build" />
 															<CodeCatalystStepX
-																run={`docker load --input $CATALYST_SOURCE_DIR${OUTPUT_IMAGES_PATH}/${OUTPUT_IMAGES_PATH}/${file}`}
+																run={`ls -la $CATALYST_SOURCE_DIR${OUTPUT_IMAGES_PATH}/${OUTPUT_IMAGES_PATH}`}
 															/>
-														))}
-														<CodeCatalystStepX run={"docker images"} />
-														<CodeCatalystStepX
-															run={`aws ssm get-parameter --name ${AwsStateBackendCommandsParameter()}`}
-														/>
-														<CodeCatalystStepX
-															run={[
-																"docker run --rm",
-																"-e CI=true",
-																"-e AWS_EXECUTION_ENV",
-																"-e AWS_CONTAINER_CREDENTIALS_FULL_URI",
-																`--network="host"`,
-																"--entrypoint launcher",
-																"fourtwo",
-																"-- pnpm run dx:cli:mjs aws pulumi ci",
-																"--region $AWS_REGION",
-																"> .pulumi-ci",
-															]
-																.map((x) => x.trim())
-																.join(" ")}
-														/>
-														<CodeCatalystStepX run={"cat .pulumi-ci"} />
-														<CodeCatalystStepX
-															run={`cat .pulumi-ci | grep "export" >> .export-cd`}
-														/>
-														<CodeCatalystStepX run={"cat .export-cd"} />
-														<CodeCatalystStepX run={`source .export-cd`} />
-														<CodeCatalystStepX
-															run={`mkdir ${OUTPUT_PULUMI_PATH}`}
-														/>
-														{...PULUMI_STACKS.flatMap(
-															({ stack, name, output }) => (
-																<>
-																	<CodeCatalystStepX
-																		run={`${PULUMI_CACHE}/bin/pulumi stack init "$APPLICATION_IMAGE_NAME-${name ?? stack}.$CI_ENVIRONMENT" -C $(pwd)/iac/stacks/src/${stack} || true`}
-																	/>
-																	<CodeCatalystStepX
-																		run={`${PULUMI_CACHE}/bin/pulumi stack select "$APPLICATION_IMAGE_NAME-${name ?? stack}.$CI_ENVIRONMENT" -C $(pwd)/iac/stacks/src/${stack} || true`}
-																	/>
-																	<CodeCatalystStepX
-																		run={`${PULUMI_CACHE}/bin/pulumi config set aws:skipMetadataApiCheck false -C $(pwd)/iac/stacks/src/${stack}`}
-																	/>
-																	<CodeCatalystStepX
-																		run={`${PULUMI_CACHE}/bin/pulumi config set --path context:stack.environment.isProd false -C $(pwd)/iac/stacks/src/${stack}`}
-																	/>
-																	<CodeCatalystStepX
-																		run={`${PULUMI_CACHE}/bin/pulumi config set --path context:stack.environment.features aws -C $(pwd)/iac/stacks/src/${stack}`}
-																	/>
-																	<CodeCatalystStepX
-																		run={`${PULUMI_CACHE}/bin/pulumi config set --path 'frontend:stack.dns.hostnames[0]' "$CI_ENVIRONMENT.$APPLICATION_IMAGE_NAME.cloud.$FRONTEND_HOSTNAME" -C $(pwd)/iac/stacks/src/${stack}`}
-																	/>
-																	<CodeCatalystStepX
-																		run={`${PULUMI_CACHE}/bin/pulumi stack change-secrets-provider $AWS_PROVIDER_KEY -C $(pwd)/iac/stacks/src/${stack}`}
-																	/>
-																	<CodeCatalystStepX
-																		run={`${PULUMI_CACHE}/bin/pulumi refresh -C $(pwd)/iac/stacks/src/${stack} --yes --skip-preview --clear-pending-creates --json --suppress-progress --non-interactive --diff --message "${_$_("WorkflowSource.BranchName")}-${_$_("WorkflowSource.CommitId")}-refresh"`}
-																	/>
-																	<CodeCatalystStepX
-																		run={`${PULUMI_CACHE}/bin/pulumi preview -C $(pwd)/iac/stacks/src/${stack}  --show-replacement-steps --json --suppress-progress --non-interactive --diff --message "${_$_("WorkflowSource.BranchName")}-${_$_("WorkflowSource.CommitId")}-preview"`}
-																	/>
-																	{matrix.pipeline.deploy === true ? (
-																		<CodeCatalystStepX
-																			run={`${PULUMI_CACHE}/bin/pulumi up -C $(pwd)/iac/stacks/src/${stack} --yes --suppress-progress --non-interactive --diff --message "${_$_("WorkflowSource.BranchName")}-${_$_("WorkflowSource.CommitId")}-up"`}
-																		/>
-																	) : (
-																		<></>
-																	)}
-																	<CodeCatalystStepX
-																		run={`${PULUMI_CACHE}/bin/pulumi stack output -C $(pwd)/iac/stacks/src/${stack} --json > $(pwd)/${OUTPUT_PULUMI_PATH}/${output}.json`}
-																	/>
-																	<CodeCatalystStepX
-																		run={`cat ${OUTPUT_PULUMI_PATH}/${output}.json`}
-																	/>
-																	<CodeCatalystStepX
-																		run={`${PULUMI_CACHE}/bin/pulumi stack output -C $(pwd)/iac/stacks/src/${stack} --shell > $(pwd)/${OUTPUT_PULUMI_PATH}/${output}.sh`}
-																	/>
-																	<CodeCatalystStepX
-																		run={`cat ${OUTPUT_PULUMI_PATH}/${output}.sh`}
-																	/>
-																</>
-															),
-														)}
+															{...OUTPUT_IMAGES.map(([file]) => (
+																<CodeCatalystStepX
+																	run={`docker load --input $CATALYST_SOURCE_DIR${OUTPUT_IMAGES_PATH}/${OUTPUT_IMAGES_PATH}/${file}`}
+																/>
+															))}
+															<CodeCatalystStepX run={"docker images"} />
+															{
+																...[<></>] /* Configure $AWS_PROVIDER_KEY */
+															}
+															<CodeCatalystStepX
+																run={`aws ssm get-parameter --name ${AwsStateBackendCommandsParameter()}`}
+															/>
+															<CodeCatalystStepX
+																{
+																	...[<></>] /* Run CLI in docker container */
+																}
+																run={[
+																	"docker run --rm",
+																	"-e CI=true",
+																	"-e AWS_EXECUTION_ENV",
+																	"-e AWS_CONTAINER_CREDENTIALS_FULL_URI",
+																	`--network="host"`,
+																	"--entrypoint launcher",
+																	"fourtwo",
+																	"-- pnpm run dx:cli:mjs aws pulumi ci",
+																	"--region $AWS_REGION",
+																	"> .pulumi-ci",
+																]
+																	.map((x) => x.trim())
+																	.join(" ")}
+															/>
+															<CodeCatalystStepX run={"cat .pulumi-ci"} />
+															<CodeCatalystStepX
+																run={`cat .pulumi-ci | grep "export" >> .export-cd`}
+															/>
+															<CodeCatalystStepX run={"cat .export-cd"} />
+															<CodeCatalystStepX run={`source .export-cd`} />
+															<CodeCatalystStepX
+																run={`echo ${PULUMI_SECRETS_PROVIDER}`}
+															/>
+															{
+																...[
+																	<></>,
+																] /* Map over Pulumi stack configuration */
+															}
+															<CodeCatalystStepX
+																run={`mkdir -p ${OUTPUT_PULUMI_PATH} || true`}
+															/>
+															<CodeCatalystStepX
+																run={`echo "${STEP} onto root: ${APPLICATION}"`}
+															/>
+															{...CODECATALYST_PULUMI_STACKS.flatMap(
+																({ stack, name, output, root }) => {
+																	const PULUMI_BINARY = `${PULUMI_CACHE}/bin/pulumi`;
+																	const PULUMI_DEFAULT_ARGS = [
+																		`--non-interactive`,
+																		`--suppress-progress`,
+																		`--diff`,
+																		"--json",
+																	];
+																	const PULUMI_STACK_CWD = `$(pwd)/iac/stacks/src/${stack}`;
+																	const PULUMI_PROJECT = `${root ?? APPLICATION}-${name ?? stack}`;
+																	const PULUMI_STACK_NAME = `${PULUMI_PROJECT}.${matrix.pipeline.environment.name}`;
+																	const PULUMI_STACK_OUTPUT = `${OUTPUT_PULUMI_PATH}/${output}`;
+																	const PULUMI_CONFIGS = {
+																		"aws:skipMetadataApiCheck": false,
+																		"context:stack.environment.isProd": false,
+																		"context:stack.environment.features": "aws",
+																		...Object.fromEntries(
+																			[
+																				root ?? APPLICATION,
+																				matrix.pipeline.environment.name,
+																				PULUMI_PROJECT,
+																			].map((key, i) => {
+																				let subdomain = key;
+																				for (let j = 0; j < i; j++) {
+																					subdomain = `${subdomain}.${key}`;
+																				}
+																				return [
+																					`'frontend:stack.dns.hostnames[${i}]'`,
+																					`${key}.cloud.$FRONTEND_HOSTNAME`,
+																				];
+																			}),
+																		),
+																	};
+																	const PULUMI_MESSAGE = `${_$_("WorkflowSource.BranchName")}-${_$_("WorkflowSource.CommitId")}`;
+																	return (
+																		<>
+																			{
+																				...[<></>] /* Configure stack */
+																			}
+																			<CodeCatalystStepX
+																				run={`echo "${STEP}: Stack: ${PULUMI_STACK_NAME}. CWD: ${PULUMI_STACK_CWD}. Output: ${PULUMI_STACK_OUTPUT}."`}
+																			/>
+																			<CodeCatalystStepX
+																				run={`echo "name: ${PULUMI_PROJECT}" >> ${PULUMI_STACK_CWD}/Pulumi.yaml`}
+																			/>
+																			<CodeCatalystStepX
+																				run={`cat ${[
+																					`Pulumi.yaml`,
+																					`Pulumi.*.yaml`,
+																				]
+																					.map(
+																						(file) =>
+																							`${PULUMI_STACK_CWD}/${file}`,
+																					)
+																					.join(" ")} || true;`}
+																			/>
+																			{["init", "select"].map((command) => (
+																				<CodeCatalystStepX
+																					run={[
+																						PULUMI_BINARY,
+																						"stack",
+																						command,
+																						PULUMI_STACK_NAME,
+																						`-C ${PULUMI_STACK_CWD}`,
+																						"|| true",
+																					].join(" ")}
+																				/>
+																			))}
+																			{...Object.entries(PULUMI_CONFIGS).map(
+																				([key, value]) => (
+																					<CodeCatalystStepX
+																						run={[
+																							PULUMI_BINARY,
+																							"config",
+																							"set",
+																							"--path",
+																							key,
+																							value,
+																							`-C ${PULUMI_STACK_CWD}`,
+																						].join(" ")}
+																					/>
+																				),
+																			)}
+																			{
+																				...[<></>] /* Set state backend */
+																			}
+																			<CodeCatalystStepX
+																				run={[
+																					PULUMI_BINARY,
+																					"stack",
+																					"change-secrets-provider",
+																					PULUMI_SECRETS_PROVIDER,
+																					`-C ${PULUMI_STACK_CWD}`,
+																				].join(" ")}
+																			/>
+																			<CodeCatalystStepX
+																				run={`cat ${[
+																					`Pulumi.yaml`,
+																					`Pulumi.*.yaml`,
+																				]
+																					.map(
+																						(file) =>
+																							`${PULUMI_STACK_CWD}/${file}`,
+																					)
+																					.join(" ")} || true;`}
+																			/>
+																			{
+																				...[<></>] /* Pulumi commands */
+																			}
+																			<CodeCatalystStepX
+																				run={[
+																					PULUMI_BINARY,
+																					"refresh",
+																					[
+																						"--yes",
+																						"--skip-preview",
+																						"--clear-pending-creates",
+																						`--message "${PULUMI_MESSAGE}-refresh"`,
+																					].join(" "),
+																					`-C ${PULUMI_STACK_CWD}`,
+																					...PULUMI_DEFAULT_ARGS,
+																				].join(" ")}
+																			/>
+																			<CodeCatalystStepX
+																				run={[
+																					PULUMI_BINARY,
+																					"preview",
+																					[
+																						"--show-replacement-steps",
+																						`--message "${PULUMI_MESSAGE}-preview"`,
+																					].join(" "),
+																					`-C ${PULUMI_STACK_CWD}`,
+																					...PULUMI_DEFAULT_ARGS,
+																				].join(" ")}
+																			/>
+																			{matrix.pipeline.deploy === true ? (
+																				<CodeCatalystStepX
+																					run={[
+																						PULUMI_BINARY,
+																						"up",
+																						[
+																							"--yes",
+																							`--message "${PULUMI_MESSAGE}-up"`,
+																						].join(" "),
+																						`-C ${PULUMI_STACK_CWD}`,
+																						...PULUMI_DEFAULT_ARGS,
+																					].join(" ")}
+																				/>
+																			) : (
+																				<></>
+																			)}
+																			{
+																				...[<></>] /* Capture outputs */
+																			}
+																			<CodeCatalystStepX
+																				run={[
+																					PULUMI_BINARY,
+																					"stack",
+																					"output",
+																					`-C ${PULUMI_STACK_CWD}`,
+																					"--json",
+																					`> $(pwd)/${PULUMI_STACK_OUTPUT}.json`,
+																				].join(" ")}
+																			/>
+																			<CodeCatalystStepX
+																				run={`cat ${PULUMI_STACK_OUTPUT}.json`}
+																			/>
+																			<CodeCatalystStepX
+																				run={[
+																					PULUMI_BINARY,
+																					"stack",
+																					"output",
+																					`-C ${PULUMI_STACK_CWD}`,
+																					"--shell",
+																					`> $(pwd)/${PULUMI_STACK_OUTPUT}.sh`,
+																				].join(" ")}
+																			/>
+																			<CodeCatalystStepX
+																				run={`cat ${PULUMI_STACK_OUTPUT}.sh`}
+																			/>
+																		</>
+																	);
+																},
+															)}
 
-														<CodeCatalystStepX
-															run={`du -sh ${OUTPUT_PULUMI_PATH}`}
-														/>
-													</>
-												}
+															<CodeCatalystStepX
+																run={`du -sh ${OUTPUT_PULUMI_PATH}`}
+															/>
+														</>
+													);
+												})()}
 											/>
 										),
 									}
@@ -604,16 +737,18 @@ const cicd = <Preview extends boolean, Deploy extends boolean>(
 														<CodeCatalystStepX
 															run={`ls -la ${input(OUTPUT_PULUMI_PATH)}`}
 														/>
-														{...PULUMI_STACKS.flatMap(({ output }) => (
-															<>
-																<CodeCatalystStepX
-																	run={`cat ${input(OUTPUT_PULUMI_PATH)}/${output}.sh`}
-																/>
-																<CodeCatalystStepX
-																	run={`source ${input(OUTPUT_PULUMI_PATH)}/${output}.sh`}
-																/>
-															</>
-														))}
+														{...CODECATALYST_PULUMI_STACKS.flatMap(
+															({ output }) => (
+																<>
+																	<CodeCatalystStepX
+																		run={`cat ${input(OUTPUT_PULUMI_PATH)}/${output}.sh`}
+																	/>
+																	<CodeCatalystStepX
+																		run={`source ${input(OUTPUT_PULUMI_PATH)}/${output}.sh`}
+																	/>
+																</>
+															),
+														)}
 														<CodeCatalystStepX run={"env"} />
 														<CodeCatalystStepX
 															run={`NODE_NO_WARNINGS=1 node -e '(${

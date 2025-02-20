@@ -95,6 +95,7 @@ export = async () => {
 			const { daysToRetain, www } = props;
 			const bucket = new Bucket(_(name), {
 				acl: "private",
+				forceDestroy: !context.environment.isProd,
 				tags: {
 					Name: _(name),
 					StackRef: STACKREF_ROOT,
@@ -206,8 +207,8 @@ export = async () => {
 			};
 		};
 		return {
-			artifactStore: bucket("artifact-store"),
-			build: bucket("build"),
+			pipeline: bucket("pipeline"),
+			artifacts: bucket("artifacts"),
 			staticwww: bucket("staticwww", { www: true }),
 		};
 	})();
@@ -280,7 +281,7 @@ export = async () => {
 		);
 
 		const upload = new BucketObjectv2(_("manifest-upload"), {
-			bucket: s3.build.bucket.bucket,
+			bucket: s3.artifacts.bucket.bucket,
 			content: content.apply((c) => JSON.stringify(c, null, 2)),
 			key: MANIFEST_PATH,
 		});
@@ -356,7 +357,7 @@ export = async () => {
 			);
 
 			const upload = new BucketObjectv2(_("buildspec-upload"), {
-				bucket: s3.build.bucket.bucket,
+				bucket: s3.artifacts.bucket.bucket,
 				content,
 				key: "Buildspec.yml",
 			});
@@ -452,7 +453,7 @@ export = async () => {
 			executionMode: "QUEUED",
 			artifactStores: [
 				{
-					location: s3.artifactStore.bucket.bucket,
+					location: s3.pipeline.bucket.bucket,
 					type: "S3",
 				},
 			],
@@ -620,8 +621,8 @@ export = async () => {
 	})();
 
 	return all([
-		s3.artifactStore.bucket.bucket,
-		s3.build.bucket.bucket,
+		s3.pipeline.bucket.bucket,
+		s3.artifacts.bucket.bucket,
 		s3.staticwww.bucket.arn,
 		s3.staticwww.bucket.bucket,
 		s3.staticwww.bucket.bucketDomainName,
