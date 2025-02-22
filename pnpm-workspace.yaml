@@ -7,15 +7,15 @@ packages:
   - 'protocols/*'
 
 catalog:
-  "@levicape/paloma": "0.3.3-main.10"  
-  "@levicape/spork": "0.5.2-main.9"
+  "@levicape/paloma": "0.3.6-main.15"  
+  "@levicape/spork": "0.6.3-main.15"
+  "@levicape/spork-atlas": "0.6.3-main.15"
 
 
 
 
 
   
-
 
 
 
@@ -72,13 +72,13 @@ catalogs:
     "avsc": "^5.7.7"
   dev:
     "tslib": "^2.8.1"
-    "tsx": "^4.19.2"
+    "tsx": "^4.19.3"
     "ts-node": "^10.9.2"
     "typescript": "^5.7.3"
   effect:
-    "effect": "^3.13.0"
-    "@effect/platform": "^0.77.0"
-    "@effect/platform-node": "^0.73.0"
+    "effect": "^3.13.2"
+    "@effect/platform": "^0.77.2"
+    "@effect/platform-node": "^0.73.2"
   error:
     "serialize-error": "^12.0.0"
     "verror": "^1.10.0"
@@ -119,17 +119,17 @@ catalogs:
   log-consola:
     "consola": "^3.4.0"
   log-loglayer:
-    "@loglayer/transport-aws-lambda-powertools": "^3.0.0"
-    "@loglayer/transport-consola": "^2.0.0"
-    "@loglayer/transport-pino": "^2.0.0"
-    "loglayer": "^6.0.0"
+    "@loglayer/transport-aws-lambda-powertools": "^3.0.1"
+    "@loglayer/transport-consola": "^2.0.1"
+    "@loglayer/transport-pino": "^2.0.1"
+    "loglayer": "^6.1.1"
   log-pino:
     "pino": "^9.6.0"
     "pino-pretty": "^13.0.0"
   package:
     "ci": "^2.3.0"
     "depcheck": "^1.4.7"
-    "publint": "^0.3.5"
+    "publint": "^0.3.6"
     "syncpack": "^13.0.2"
   parse-csv:
     "csv": "^6.3.11"
@@ -147,20 +147,20 @@ catalogs:
     "js-yaml": "^4.1.0"
     "yaml": "^2.7.0"
   project-nx:
-    "nx": "^20.4.0"
+    "nx": "^20.4.6"
   protobuf:
     "@bufbuild/protobuf": "^2.2.3"
     "@bufbuild/buf": "^1.44.0"
     "ts-proto": "^2.6.1"
   pulumi:
-    "@pulumi/aws": "^6.67.0"
+    "@pulumi/aws": "^6.69.0"
     "@pulumi/awsx": "^2.21.0"
-    "@pulumi/aws-native": "^1.24.0"
+    "@pulumi/aws-native": "^1.25.0"
     "@pulumi/command": "^1.0.1"
     "@pulumi/docker": "^4.5.7"
-    "@pulumi/docker-build": "^0.0.9"
+    "@pulumi/docker-build": "^0.0.10"
     "@pulumi/kubernetes": "^4.18.4"
-    "@pulumi/pulumi": "^3.147.0"
+    "@pulumi/pulumi": "^3.152.0"
     "@pulumi/random": "^4.16.7"
     "@pulumi/synced-folder": "^0.11.1"
     "@pulumiverse/time": "^0.1.0"
@@ -168,7 +168,7 @@ catalogs:
     "dotenv": "^16.4.7"
     "std-env": "^3.8.0"
   schema-zod:
-    "zod": "^3.24.1"
+    "zod": "^3.24.2"
   server:
     "@stricjs/cluster": "^2.0.0"
     "@stricjs/utils": "^2.0.7"
@@ -192,7 +192,7 @@ catalogs:
     "@types/jsonwebtoken": "^9.0.8"
     "@types/klaw": "^3.0.6"
     "@types/module-alias": "^2.0.4"
-    "@types/node": "^22.13.4"
+    "@types/node": "^22.13.5"
     "@types/qrcode": "^1.5.5"
     "@types/react": "^19.0.1"
     "@types/react-dom": "^19.0.1"

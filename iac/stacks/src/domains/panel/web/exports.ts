@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { RouteMapZod } from "../../../RouteMap";
 
 export const FourtwoPanelWebStackExportsZod = z.object({
 	fourtwo_panel_web_s3: z.object({
@@ -44,4 +45,5 @@ export const FourtwoPanelWebStackExportsZod = z.object({
 			}),
 		}),
 	}),
+	fourtwo_panel_web_routemap: RouteMapZod.valueSchema,
 });

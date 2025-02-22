@@ -12,11 +12,14 @@
     "server": "./server.ts",
     "serverrender": "./render/server.tsx",
     "staticwwwoutput": "./output/staticwww",
+    "staticwwwcanary": "module/canary/StaticWWW.mjs",
     "webhttpoutput": "./output/webhttp",
     "webhttpmodule": "./server.js"
   },
   "dependencies": {
     "@aws-lambda-powertools/logger": "catalog:log-awspowertools",
+    "@levicape/paloma": "catalog:",
+    "@levicape/spork-atlas": "catalog:",
     "@loglayer/transport-aws-lambda-powertools": "catalog:log-loglayer",
     "@loglayer/transport-consola": "catalog:log-loglayer",
     "consola": "catalog:log-consola",
@@ -47,13 +50,22 @@
     "node": "22"
   },
   "files": [
+    "module",
     "output"
   ],
   "nx": {
     "targets": {
-      "staticwww:build": {
+      "build:module": {
         "dependsOn": [
           "build:tsc"
+        ]
+      },
+      "build:tsc": {
+        "dependsOn": []
+      },
+      "staticwww:build": {
+        "dependsOn": [
+          "build:module"
         ]
       },
       "webhttp:build": {
@@ -103,7 +115,7 @@
       },
       "nx:compile": {
         "dependsOn": [
-          "build:tsc",
+          "build:module",
           "staticwww:build",
           "webhttp:build"
         ]
@@ -118,7 +130,7 @@
   "private": true,
   "scripts": {
     "build": "$npm_package_config_packageexecutor nx nx:compile --verbose",
-    "build:tsc": "$npm_package_config_packageexecutor tsc",
+    "build:tsc": "$npm_package_config_packageexecutor tsc -b --verbose",
     "clean": "$npm_package_config_packageexecutor nx nx:clean --verbose",
     "clean:module": "rm -rf $npm_package_config_outpaths || true",
     "dev": "$npm_package_config_packageexecutor nx webhttp:dev",
@@ -141,7 +153,8 @@
     "prepublish": "$npm_package_config_packageexecutor nx exec -- publint --strict",
     "preview": "$npm_package_config_packageexecutor nx webhttp:preview",
     "staticwww:build": "$npm_package_config_packageexecutor vite build --outDir $npm_package_config_staticwwwoutput --ssrManifest",
-    "staticwww:dev": "$npm_package_config_packageexecutor vite --cors --debug --host --port $PORT",
+    "staticwww:canary": "node $npm_package_config_staticwwwcanary",
+    "staticwww:dev": "$npm_package_config_packageexecutor vite --cors --debug --host --port ${PORT:-64128}",
     "staticwww:preview": "$npm_package_config_packageexecutor vite preview --outDir $npm_package_config_staticwwwoutput --cors --debug --host --port $PORT",
     "test": "$npm_package_config_packageexecutor nx nx:test --verbose",
     "webhttp:build": "SERVER_ENTRYPOINT=$npm_package_config_webhttpoutput/$npm_package_config_webhttpoutput CLIENT_OUTPUT=$npm_package_config_staticwwwoutput $npm_package_config_packageexecutor vite build --outDir $npm_package_config_webhttpoutput --ssr ./src/$npm_package_config_serverrender",

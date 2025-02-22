@@ -7,26 +7,32 @@
     "packagemanager": "pnpm",
     "packageexecutor": "pnpm exec",
     "packagescript": "pnpm run",
+    "binspork": "pnpm exec spork",
+    "binatlas": "node module/canary/Atlas.mjs",
     "outpath": "./module",
     "srcpaths": "./src",
     "lintpaths": "./src",
     "i18n": "./src/_i18n",
     "protocols": "./src/_protocols",
     "models": "./src/_models",
-    "server": "module/http/PanelHonoApp.mjs",
-    "httpcanary": "module/canary/HttpCanary.mjs",
+    "server": "module/http/HonoApp.mjs",
+    "httpcanary": "module/canary/Http.mjs",
     "port": "64128"
   },
   "dependencies": {
     "@bufbuild/protobuf": "catalog:protobuf",
     "@levicape/paloma": "catalog:",
     "@levicape/spork": "catalog:",
+    "@levicape/spork-atlas": "catalog:",
     "effect": "catalog:effect",
     "hono": "catalog:hono",
+    "jsonwebtoken": "catalog:crypto",
+    "loglayer": "catalog:log-loglayer",
     "ts-proto": "catalog:protobuf"
   },
   "devDependencies": {
     "@biomejs/biome": "catalog:lint",
+    "@types/jsonwebtoken": "catalog:types",
     "@types/node": "catalog:types",
     "publint": "catalog:package",
     "ts-proto": "catalog:protobuf",
@@ -42,10 +48,18 @@
   "license": "AGPL-3.0-only",
   "nx": {
     "targets": {
+      "atlas": {
+        "dependsOn": [
+          "build:module"
+        ]
+      },
       "build:module": {
         "dependsOn": [
           "build:tsc"
         ]
+      },
+      "build:tsc": {
+        "dependsOn": []
       },
       "dx:lint": {
         "dependsOn": [
@@ -98,8 +112,9 @@
   "publishConfig": {
     "registry": "https://npm.pkg.github.com/"
   },
-  "repository": "github:levicape/fourtwo",
+  "repository": "github:levicape/paloma",
   "scripts": {
+    "atlas": "$npm_package_config_binatlas",
     "build": "$npm_package_config_packageexecutor nx nx:compile",
     "build:tsc": "$npm_package_config_packageexecutor tsc",
     "clean": "$npm_package_config_packageexecutor nx nx:clean --verbose --no-cloud",
@@ -114,7 +129,7 @@
     "generate:protocols": "NODE_NO_WARNINGS=1 NPM_CONFIG_UPDATE_NOTIFIER=false $npm_package_config_packageexecutor spork code gen --root \"../../protocols\" --command \"$(which $npm_package_config_packagemanager) --silent run build\" --artifact gen --destination $npm_package_config_protocols --clean",
     "http:canary": "node $npm_package_config_httpcanary",
     "http:dev": "rm nohup.out || true; nohup $npm_package_config_packageexecutor tsc -w & echo $! > .pidfile.tsc && LOG_LEVEL=5 pnpm run http:start --watch module; kill $(cat .pidfile.tsc) || true; rm -f .pidfile.tsc || true",
-    "http:start": "$npm_package_config_packageexecutor spork server start $npm_package_config_server --port ${PORT:-64128}",
+    "http:start": "$npm_package_config_binspork server start $npm_package_config_server --port ${PORT:-64128}",
     "lint": "$npm_package_config_packageexecutor biome check $npm_package_config_srcpaths",
     "lint:format": "$npm_package_config_packageexecutor biome check --write $npm_package_config_srcpaths",
     "lint:unsafe": "$npm_package_config_packageexecutor biome check --write --unsafe $npm_package_config_srcpaths",

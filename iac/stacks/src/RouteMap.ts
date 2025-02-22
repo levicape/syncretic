@@ -32,12 +32,14 @@ export type LambdaRouteResource = {
 		};
 	};
 };
-export type NoRouteResource = { [key: symbol]: never };
-export type RouteResource = LambdaRouteResource | NoRouteResource;
+export type StaticRouteResource = {
+	$kind: "StaticRouteResource";
+};
+export type RouteResource = LambdaRouteResource | StaticRouteResource;
 export type Route<T = {}> = {
-	url?: string;
-	cdn?: string;
-	protocol?: RouteProtocol;
+	hostname: string;
+	protocol: RouteProtocol;
+	port?: string;
 } & T;
 
 export type RoutePaths<
@@ -52,46 +54,62 @@ export type RouteMap<
 
 export const RouteMapZod = z.record(
 	z.record(
-		z.object({
-			$kind: z.literal("LambdaRouteResource"),
-			url: z.string().optional(),
-			cdn: z.string().optional(),
-			protocol: z
-				.union([
-					z.literal("http"),
-					z.literal("https"),
-					z.literal("ws"),
-					z.literal("wss"),
-				])
-				.optional(),
-			lambda: z.object({
-				arn: z.string(),
-				name: z.string(),
-				qualifier: z.string().optional(),
-				role: z.object({
+		z
+			.object({
+				$kind: z.literal("LambdaRouteResource"),
+				hostname: z.string().optional(),
+				protocol: z
+					.union([
+						z.literal("http"),
+						z.literal("https"),
+						z.literal("ws"),
+						z.literal("wss"),
+					])
+					.optional(),
+				port: z.string().optional(),
+				lambda: z.object({
 					arn: z.string(),
 					name: z.string(),
+					qualifier: z.string().optional(),
+					role: z.object({
+						arn: z.string(),
+						name: z.string(),
+					}),
 				}),
-			}),
-			cloudmap: z
-				.object({
-					namespace: z.object({
-						arn: z.string(),
-						name: z.string(),
-						id: z.string(),
-						hostedZone: z.string(),
-					}),
-					service: z.object({
-						arn: z.string(),
-						name: z.string(),
-					}),
-					instance: z.object({
-						id: z.string(),
-						attributes: z.record(z.string()).optional(),
-					}),
-				})
-				.optional(),
-		}),
+				cloudmap: z
+					.object({
+						namespace: z.object({
+							arn: z.string(),
+							name: z.string(),
+							id: z.string(),
+							hostedZone: z.string(),
+						}),
+						service: z.object({
+							arn: z.string(),
+							name: z.string(),
+						}),
+						instance: z.object({
+							id: z.string(),
+							attributes: z.record(z.string()).optional(),
+						}),
+					})
+					.optional(),
+			})
+			.or(
+				z.object({
+					$kind: z.literal("StaticRouteResource"),
+					hostname: z.string().optional(),
+					protocol: z
+						.union([
+							z.literal("http"),
+							z.literal("https"),
+							z.literal("ws"),
+							z.literal("wss"),
+						])
+						.optional(),
+					port: z.string().optional(),
+				}),
+			),
 	),
 );
 
@@ -105,9 +123,9 @@ type RouteMapZodTypecheck = RouteMapZodType extends Record<
 
 // @ts-ignore
 const _routeMapZodTypecheck: RouteMapZodTypecheck = true;
+_routeMapZodTypecheck;
 
-// biome-ignore lint/suspicious/noExplicitAny:
-export type ManifestVersion = any;
+export type ManifestVersion = unknown;
 export interface WebsiteManifest {
 	manifest:
 		| {
@@ -123,25 +141,6 @@ export interface WebsiteManifest {
 					website?: Omit<Route, keyof RouteResource>;
 					hostnames: string[];
 				};
-				version: ManifestVersion & { build: string; stage: string };
 		  }
 		| { ok: false };
-}
-
-export interface ComputeManifest {
-	manifest: {
-		ok: true;
-		routes: Record<
-			keyof RouteMap,
-			Record<
-				keyof RouteMap[string],
-				Omit<RouteMap[string][Prefix], keyof RouteResource>
-			>
-		>;
-		frontend: {
-			website?: Omit<Route, keyof RouteResource>;
-			hostnames: string[];
-		};
-		version: ManifestVersion;
-	};
 }

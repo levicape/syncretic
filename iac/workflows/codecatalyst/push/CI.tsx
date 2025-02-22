@@ -131,7 +131,7 @@ const cicd = <Preview extends boolean, Deploy extends boolean>(
 		register("FRONTEND_HOSTNAME", `${APPLICATION}.levicape.cloud`),
 		register("PULUMI_CONFIG_PASSPHRASE", secret("PULUMI_CONFIG_PASSPHRASE")),
 		register("PULUMI_HOME", PULUMI_CACHE),
-		register("PULUMI_VERSION", "3.147.0"),
+		register("PULUMI_VERSION", "3.152.0"),
 	];
 
 	const PYTHON_ENVIRONMENT = [

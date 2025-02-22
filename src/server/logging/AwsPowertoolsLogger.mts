@@ -1,45 +1,51 @@
 import { LogLevel, Logger } from "@aws-lambda-powertools/logger";
 import { PowertoolsTransport } from "@loglayer/transport-aws-lambda-powertools";
-import { Context, Effect, pipe } from "effect";
+import { Config, Context, Effect, pipe } from "effect";
 import { LogLayer } from "loglayer";
 import { serializeError } from "serialize-error";
-import { env } from "std-env";
-import { LoggingConfigMain } from "./LoggingConfig.mjs";
 import { LoggingContext, LogstreamPassthrough } from "./LoggingContext.mjs";
 import {
 	$$_spanId_$$,
 	$$_traceId_$$,
 	LoggingPlugins,
 } from "./LoggingPlugins.mjs";
+import { LoggingConfigMain } from "./config/LoggingConfig.mjs";
+import { LoggingConfigAwsMain } from "./config/LoggingConfigAws.mjs";
+import { LoggingConfigLevicapeMain } from "./config/LoggingConfigLevicape.mjs";
 
 const rootloglayer = pipe(
-	LoggingConfigMain,
-	Effect.flatMap(({ LOG_LEVEL }) =>
-		Effect.sync(() => {
-			const rootId = $$_traceId_$$();
-			const { AWS_CLOUDMAP_SERVICE_NAME, PULUMI__NAME } = env;
-			const serviceName = AWS_CLOUDMAP_SERVICE_NAME ?? PULUMI__NAME;
+	Config.all([
+		LoggingConfigMain,
+		LoggingConfigAwsMain,
+		LoggingConfigLevicapeMain,
+	]),
+	Effect.flatMap(
+		([{ isDebug }, { AWS_CLOUDMAP_SERVICE_NAME }, { PULUMI__NAME }]) =>
+			Effect.sync(() => {
+				const rootId = $$_traceId_$$();
+				const serviceName = AWS_CLOUDMAP_SERVICE_NAME ?? PULUMI__NAME;
+				const logLevel = isDebug ? LogLevel.DEBUG : LogLevel.INFO;
 
-			return new LogLayer({
-				transport: new PowertoolsTransport({
-					logger: new Logger({
-						// TODO: Stack env vars, add to protocol stands
-						...(serviceName !== undefined
-							? {
-									serviceName,
-								}
-							: {}),
-						logLevel: LOG_LEVEL >= 3 ? LogLevel.INFO : LogLevel.DEBUG,
+				return new LogLayer({
+					transport: new PowertoolsTransport({
+						logger: new Logger({
+							// TODO: Stack env vars, add to protocol stands
+							...(serviceName !== undefined
+								? {
+										serviceName,
+									}
+								: {}),
+							logLevel,
+						}),
 					}),
-				}),
-				errorSerializer: serializeError,
-				plugins: LoggingPlugins,
-			}).withContext({
-				_$span: "root",
-				rootId,
-				traceId: rootId,
-			});
-		}),
+					errorSerializer: serializeError,
+					plugins: LoggingPlugins,
+				}).withContext({
+					_$span: "root",
+					rootId,
+					traceId: rootId,
+				});
+			}),
 	),
 );
 

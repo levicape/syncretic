@@ -11,6 +11,12 @@
         "{projectRoot}/module"
       ]
     },
+    "build:esbuild": {
+      "cache": true,
+      "outputs": [
+        "{projectRoot}/output/esbuild"
+      ]
+    },
     "http:build": {
       "cache": true,
       "outputs": [

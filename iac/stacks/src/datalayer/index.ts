@@ -6,11 +6,13 @@ import { MountTarget } from "@pulumi/aws/efs/mountTarget";
 import { Role } from "@pulumi/aws/iam/role";
 import { PrivateDnsNamespace } from "@pulumi/aws/servicediscovery/privateDnsNamespace";
 import { Vpc } from "@pulumi/awsx/ec2/vpc";
-import { all, getStack } from "@pulumi/pulumi";
+import { all } from "@pulumi/pulumi";
 import type { z } from "zod";
 import { FourtwoDatalayerStackExportsZod } from "./exports";
 
 const PACKAGE_NAME = "@levicape/fourtwo";
+const EFS_ROOT_DIRECTORY = "/fourtwo";
+const EFS_MOUNT_PATH = "/mnt/efs";
 
 export = async () => {
 	const context = await Context.fromConfig();
@@ -28,6 +30,7 @@ export = async () => {
 				},
 				tags: {
 					Name: _("vpc"),
+					PackageName: PACKAGE_NAME,
 				},
 			},
 			{
@@ -55,6 +58,10 @@ export = async () => {
 						cidrBlocks: ["0.0.0.0/0"],
 					},
 				],
+				tags: {
+					Name: _("security-group"),
+					PackageName: PACKAGE_NAME,
+				},
 			},
 			{
 				parent: vpc,
@@ -73,6 +80,7 @@ export = async () => {
 			throughputMode: "elastic",
 			tags: {
 				Name: _("efs"),
+				PackageName: PACKAGE_NAME,
 			},
 		});
 
@@ -98,7 +106,7 @@ export = async () => {
 			{
 				fileSystemId: filesystem.id,
 				rootDirectory: {
-					path: "/fourtwo",
+					path: EFS_ROOT_DIRECTORY,
 					creationInfo: {
 						ownerGid: 1000,
 						ownerUid: 1000,
@@ -108,6 +116,10 @@ export = async () => {
 				posixUser: {
 					gid: 1000,
 					uid: 1000,
+				},
+				tags: {
+					Name: _("efs-access-point"),
+					PackageName: PACKAGE_NAME,
 				},
 			},
 			{
@@ -144,15 +156,6 @@ export = async () => {
 			);
 		})();
 
-		//   AwsDynamoDbTable.resourcePolicy(
-		// 	this,
-		// 	`${name}-lambda-data`,
-		// 	[
-		// 	  ["users", accountsTable],
-		// 	],
-		// 	role,
-		//   );
-
 		return {
 			roles: {
 				lambda,
@@ -161,16 +164,17 @@ export = async () => {
 	})();
 
 	const cloudmap = (({ vpc }) => {
-		const cloudMapPrivateDnsNamespace = new PrivateDnsNamespace(
-			_(`cloudmap-ns`),
-			{
-				name: all([vpc.vpcId, efs.filesystem.id]).apply(([vpcid, efsid]) =>
-					_(`cloudmap-ns-${vpcid.slice(-4)}-${efsid.slice(-4)}`),
-				),
-				description: `(${getStack()}) Service mesh DNS namespace for ${PACKAGE_NAME}`,
-				vpc: vpc.vpcId,
+		const cloudMapPrivateDnsNamespace = new PrivateDnsNamespace(_(`pdns`), {
+			name: all([vpc.vpcId, efs.filesystem.id]).apply(([vpcid, efsid]) =>
+				_(`pdns-${vpcid.slice(-4)}-${efsid.slice(-4)}`),
+			),
+			description: `(${PACKAGE_NAME}) Service mesh private DNS namespace`,
+			vpc: vpc.vpcId,
+			tags: {
+				Name: _("pdns"),
+				PackageName: PACKAGE_NAME,
 			},
-		);
+		});
 
 		return {
 			namespace: cloudMapPrivateDnsNamespace,
@@ -194,7 +198,7 @@ export = async () => {
 			]) => {
 				const fileSystemConfig = {
 					arn: accessPointArn,
-					localMountPath: "/mnt/efs",
+					localMountPath: EFS_MOUNT_PATH,
 				};
 
 				const vpcConfig = {
