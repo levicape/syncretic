@@ -1,36 +1,42 @@
 import { ConsolaTransport } from "@loglayer/transport-consola";
 import { createConsola } from "consola";
-import { Context, Effect } from "effect";
+import { Context, Effect, pipe } from "effect";
 import { LogLayer } from "loglayer";
 import { serializeError } from "serialize-error";
-import { env } from "std-env";
 import { LoggingContext, LogstreamPassthrough } from "./LoggingContext.mjs";
 import {
 	$$_spanId_$$,
 	$$_traceId_$$,
 	LoggingPlugins,
 } from "./LoggingPlugins.mjs";
+import { LoggingConfigMain } from "./config/LoggingConfig.mjs";
 
-const rootloglayer = Effect.sync(() => {
-	const rootId = $$_traceId_$$();
-	return new LogLayer({
-		transport: new ConsolaTransport({
-			logger: createConsola({
-				fancy: false,
-				formatOptions: {
-					compact: false,
-				},
-				level: Number(env.LOG_LEVEL ?? "3"),
-			}),
+const rootloglayer = pipe(
+	LoggingConfigMain,
+	Effect.flatMap(({ isDebug, LOG_LEVEL }) =>
+		Effect.sync(() => {
+			const rootId = $$_traceId_$$();
+
+			return new LogLayer({
+				transport: new ConsolaTransport({
+					logger: createConsola({
+						fancy: false,
+						formatOptions: {
+							compact: false,
+						},
+						level: isDebug ? 5 : LOG_LEVEL,
+					}),
+				}),
+				errorSerializer: serializeError,
+				plugins: LoggingPlugins,
+			}).withContext({
+				_$span: "root",
+				rootId,
+				traceId: rootId,
+			});
 		}),
-		errorSerializer: serializeError,
-		plugins: LoggingPlugins,
-	}).withContext({
-		_$span: "root",
-		rootId,
-		traceId: rootId,
-	});
-});
+	),
+);
 
 export const withConsolaLogger = (props: {
 	prefix: string;

@@ -24,7 +24,12 @@ import { BucketWebsiteConfigurationV2 } from "@pulumi/aws/s3/bucketWebsiteConfig
 import { type Output, all } from "@pulumi/pulumi";
 import { stringify } from "yaml";
 import type { z } from "zod";
-import type { WebsiteManifest } from "../../../RouteMap";
+import { AwsCodeBuildContainerRoundRobin } from "../../../RoundRobin";
+import type {
+	Route,
+	StaticRouteResource,
+	WebsiteManifest,
+} from "../../../RouteMap";
 import { $deref, type DereferencedOutput } from "../../../Stack";
 import { FourtwoCodestarStackExportsZod } from "../../../codestar/exports";
 import { FourtwoDatalayerStackExportsZod } from "../../../datalayer/exports";
@@ -64,7 +69,7 @@ const ROUTE_MAP = (
 ) => {
 	const { "panel-http": panel_http } = stackrefs;
 	return {
-		panel_http: panel_http.routemap,
+		...panel_http.routemap,
 	};
 };
 
@@ -76,9 +81,9 @@ export = async () => {
 	const farRole = await getRole({ name: "FourtwoAccessRole" });
 
 	// Stack references
-	const $dereference$ = await $deref(STACKREF_CONFIG);
-	const { codestar, datalayer } = $dereference$;
-	const routemap = ROUTE_MAP($dereference$);
+	const dereferenced$ = await $deref(STACKREF_CONFIG);
+	const { codestar, datalayer } = dereferenced$;
+	const routemap = ROUTE_MAP(dereferenced$);
 
 	// Object Store
 	const s3 = (() => {
@@ -194,7 +199,41 @@ export = async () => {
 							status: "Enabled",
 							id: "ExpireObjects",
 							expiration: {
-								days: daysToRetain,
+								days: context.environment.isProd ? 20 : 10,
+							},
+							filter: {
+								objectSizeGreaterThan: 1,
+							},
+						},
+						{
+							status: "Enabled",
+							id: "DeleteMarkers",
+							expiration: {
+								days: context.environment.isProd ? 8 : 4,
+								expiredObjectDeleteMarker: true,
+							},
+							filter: {
+								objectSizeGreaterThan: 1,
+							},
+						},
+						{
+							status: "Enabled",
+							id: "NonCurrentVersions",
+							noncurrentVersionExpiration: {
+								noncurrentDays: context.environment.isProd ? 13 : 6,
+							},
+							filter: {
+								objectSizeGreaterThan: 1,
+							},
+						},
+						{
+							status: "Enabled",
+							id: "IncompleteMultipartUploads",
+							abortIncompleteMultipartUpload: {
+								daysAfterInitiation: context.environment.isProd ? 3 : 7,
+							},
+							filter: {
+								objectSizeGreaterThan: 1,
 							},
 						},
 					],
@@ -213,86 +252,55 @@ export = async () => {
 		};
 	})();
 
-	let manifest = (() => {
-		const {
-			stage,
-			environment: { isProd },
-			frontend,
-		} = context;
+	// Website Manifest
+	if (routemap) {
+		(() => {
+			const {
+				environment: { isProd },
+				frontend,
+			} = context;
 
-		let content: Output<{ WebsiteComponent: WebsiteManifest }> | undefined;
-		content = all([s3.staticwww.website?.websiteEndpoint ?? ""]).apply(
-			([url]) => {
-				const { dns } = frontend ?? {};
-				const { hostnames } = dns ?? {};
-
-				let allroutes = {
-					...routemap.panel_http,
-				} as const;
-
-				return {
-					WebsiteComponent: {
-						manifest: {
-							ok: true,
-							routes: Object.fromEntries(
-								Object.entries(allroutes).map(([key, value]) => {
-									const { url, cdn, protocol } = value;
-									const { service, instance, namespace } = value.cloudmap ?? {};
-
-									return [
-										key,
-										{
-											url,
-											cdn,
-											protocol,
-											...(instance !== undefined
-												? {
-														cloudmap: {
-															service: service?.name,
-															instance: instance?.id,
-															namespace: namespace?.name,
-															attributes: instance?.attributes ?? {},
-														},
-													}
-												: {}),
-										},
-									];
-								}),
-							),
-							frontend: {
-								...(isProd
-									? {}
-									: {
-											website: {
-												url,
-												protocol: "http",
-											},
-										}),
-								hostnames: hostnames ?? [],
+			let content: Output<{ WebsiteComponent: WebsiteManifest }> | undefined;
+			content = all([s3.staticwww.website?.websiteEndpoint ?? ""]).apply(
+				([url]) => {
+					const { dns } = frontend ?? {};
+					const { hostnames } = dns ?? {};
+					return {
+						WebsiteComponent: {
+							manifest: {
+								ok: true,
+								routes: routemap,
+								frontend: {
+									...(isProd
+										? {}
+										: {
+												website: {
+													hostname: url,
+													protocol: "http",
+												},
+											}),
+									hostnames: hostnames ?? [],
+								},
 							},
-							version: {
-								sequence: Date.now().toString(),
-								stage,
-							},
-						},
-					} satisfies WebsiteManifest,
-				};
-			},
-		);
+						} satisfies WebsiteManifest,
+					};
+				},
+			);
 
-		const upload = new BucketObjectv2(_("manifest-upload"), {
-			bucket: s3.artifacts.bucket.bucket,
-			content: content.apply((c) => JSON.stringify(c, null, 2)),
-			key: MANIFEST_PATH,
-		});
+			const upload = new BucketObjectv2(_("manifest-upload"), {
+				bucket: s3.staticwww.bucket.bucket,
+				content: content.apply((c) => JSON.stringify(c, null, 2)),
+				key: MANIFEST_PATH,
+			});
 
-		return {
-			routemap: {
-				content,
-				upload,
-			},
-		};
-	})();
+			return {
+				routemap: {
+					content,
+					upload,
+				},
+			};
+		})();
+	}
 
 	const codebuild = (() => {
 		const deployStage = "staticwww";
@@ -336,17 +344,17 @@ export = async () => {
 									"--entrypoint",
 									"deploy",
 									`-e DEPLOY_FILTER=${PACKAGE_NAME}`,
-									`-e DEPLOY_OUTPUT=/tmp/web`,
+									`-e DEPLOY_OUTPUT=/tmp/${deployAction}`,
 									"$SOURCE_IMAGE_URI",
 									"> .container",
 								].join(" "),
 								"docker ps -al",
-								"cat .container",
-								"sleep 10s",
-								`docker container logs $(cat .container)`,
-								"sleep 10s",
-								`docker container logs $(cat .container)`,
-								`docker cp $(cat .container):/tmp/web $CODEBUILD_SRC_DIR/.${deployAction}`,
+								...[2, 6, 2].flatMap((i) => [
+									`cat .container`,
+									`sleep ${i}s`,
+									`docker container logs $(cat .container)`,
+								]),
+								`docker cp $(cat .container):/tmp/${deployAction} $CODEBUILD_SRC_DIR/.${deployAction}`,
 								`ls -al $CODEBUILD_SRC_DIR/.${deployAction} || true`,
 								`ls -al $CODEBUILD_SRC_DIR/.${deployAction}/${DEPLOY_DIRECTORY} || true`,
 								`du -sh $CODEBUILD_SRC_DIR/.${deployAction}/${DEPLOY_DIRECTORY} || true`,
@@ -381,7 +389,7 @@ export = async () => {
 					},
 					environment: {
 						type: "ARM_CONTAINER",
-						computeType: "BUILD_GENERAL1_MEDIUM",
+						computeType: AwsCodeBuildContainerRoundRobin.next().value,
 						image: "aws/codebuild/amazonlinux-aarch64-standard:3.0",
 						environmentVariables: [
 							{
@@ -586,7 +594,7 @@ export = async () => {
 	const eventbridge = (() => {
 		const { name } = codestar.ecr.repository;
 
-		const rule = new EventRule(_("on-ecr"), {
+		const rule = new EventRule(_("on-ecr-push"), {
 			description: `(${PACKAGE_NAME}) ECR image deploy pipeline trigger for tag "${name}"`,
 			state: "ENABLED",
 			eventPattern: JSON.stringify({
@@ -654,6 +662,17 @@ export = async () => {
 			eventTargetArn,
 			eventTargetId,
 		]) => {
+			const fourtwo_panel_web_routemap = (() => {
+				const routes: Partial<Record<"/", Route<StaticRouteResource>>> = {
+					["/"]: {
+						$kind: "StaticRouteResource",
+						hostname: webBucketWebsiteEndpoint.replace("http://", ""),
+						protocol: "http",
+					},
+				};
+				return routes;
+			})();
+
 			const exported = {
 				fourtwo_panel_web_imports: {
 					fourtwo: {
@@ -704,6 +723,7 @@ export = async () => {
 						},
 					},
 				},
+				fourtwo_panel_web_routemap,
 			} satisfies z.infer<typeof FourtwoPanelWebStackExportsZod> & {
 				fourtwo_panel_web_imports: {
 					fourtwo: {

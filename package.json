@@ -51,7 +51,6 @@
     "@types/verror": "catalog:types",
     "depcheck": "catalog:package",
     "expect": "catalog:test",
-    "jsonc-parser": "catalog:parse-json",
     "nx": "catalog:project-nx",
     "publint": "catalog:package",
     "syncpack": "catalog:package",
@@ -196,7 +195,7 @@
     "prepublish": "$npm_package_config_packageexecutor nx exec -- publint --strict",
     "test": "$npm_package_config_packageexecutor nx nx:test --verbose",
     "test:module": "echo 'node --test  \"module/**/*.test.js\"'",
-    "xx:workflow": "$npm_package_config_packageexecutor nx run-many -t build,lint,test,prepublish --parallel=1 --verbose --no-cloud"
+    "xx:workflow": "$npm_package_config_packageexecutor nx run-many -t build,lint,test --parallel=1 --verbose --no-cloud && $npm_package_config_packageexecutor nx run-many -t package:deps,prepublish --parallel=1 --verbose --no-cloud"
   },
   "type": "module"
 }

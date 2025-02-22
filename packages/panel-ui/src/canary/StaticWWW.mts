@@ -1,12 +1,15 @@
+import assert from "node:assert";
 import { Canary, PromiseActivity } from "@levicape/paloma";
-import {
-	LoggingContext,
-	RuntimeContext,
-} from "@levicape/paloma/runtime/server/RuntimeContext";
-import { Effect } from "effect";
+import { LoggingContext } from "@levicape/paloma/runtime/server/RuntimeContext";
+import { withStructuredLogging } from "@levicape/paloma/runtime/server/loglayer/LoggingContext";
+import { Context, Effect } from "effect";
+import { PanelWeb } from "./Atlas.mjs";
 
+// @ts-ignore
 const { trace } = await Effect.runPromise(
+	// @ts-ignore
 	Effect.provide(
+		// @ts-ignore
 		Effect.gen(function* () {
 			const logging = yield* LoggingContext;
 			return {
@@ -15,12 +18,18 @@ const { trace } = await Effect.runPromise(
 				}),
 			};
 		}),
-		RuntimeContext,
+		// @ts-ignore
+		Context.empty().pipe(withStructuredLogging({ prefix: "ExecutionPlan" })),
 	),
 );
+trace
+	?.withMetadata({
+		PanelWeb,
+	})
+	.info("Loaded service clients");
 
 export const healthcheck = new Canary(
-	"httpcanary-healthcheck",
+	"http-healthcheck",
 	{},
 	new PromiseActivity(
 		{
@@ -51,15 +60,15 @@ export const healthcheck = new Canary(
 		},
 		async ({ events }) => {
 			trace.warn("Hello world");
-			trace.metadataOnly([
-				{ a: 1, b: "Y" },
-				{ a: "Z", b: 2 },
-			]);
-			fetch("https://jsonplaceholder.typicode.com/todos/1")
-				.then((response) => response.json())
-				.then((json) => {
-					trace.withMetadata({ json }).info("Fetched");
-				});
+			trace.metadataOnly([events, PanelWeb["/"].url()]);
+			{
+				const response = await fetch(PanelWeb["/"].url());
+				const json = await response.text();
+				trace.withMetadata({ json }).info("Fetched");
+				assert(response.ok, `Response not ok: ${response.status}`);
+			}
 		},
 	),
 );
+
+export const handler = healthcheck;

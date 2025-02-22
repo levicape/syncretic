@@ -4,24 +4,24 @@ import { LogLayer } from "loglayer";
 import { pino } from "pino";
 import pretty from "pino-pretty";
 import { serializeError } from "serialize-error";
-import { LoggingConfigMain } from "./LoggingConfig.mjs";
 import { LoggingContext, LogstreamPassthrough } from "./LoggingContext.mjs";
 import {
 	$$_spanId_$$,
 	$$_traceId_$$,
 	LoggingPlugins,
 } from "./LoggingPlugins.mjs";
+import { LoggingConfigMain } from "./config/LoggingConfig.mjs";
 
 const rootloglayer = pipe(
 	LoggingConfigMain,
-	Effect.flatMap(({ LOG_LEVEL, CI }) =>
+	Effect.flatMap(({ isDebug }) =>
 		Effect.sync(() => {
 			const rootId = $$_traceId_$$();
 			return new LogLayer({
 				transport: new PinoTransport({
 					logger: pino(
 						{
-							level: CI !== "" || LOG_LEVEL < 5 ? "debug" : "info",
+							level: isDebug ? "debug" : "info",
 						},
 						pretty({
 							errorLikeObjectKeys: ["err", "error", "$error"],
