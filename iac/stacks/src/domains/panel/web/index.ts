@@ -27,7 +27,7 @@ import type { z } from "zod";
 import { AwsCodeBuildContainerRoundRobin } from "../../../RoundRobin";
 import type {
 	Route,
-	StaticRouteResource,
+	S3RouteResource,
 	WebsiteManifest,
 } from "../../../RouteMap";
 import { $deref, type DereferencedOutput } from "../../../Stack";
@@ -656,11 +656,20 @@ export = async () => {
 			eventTargetId,
 		]) => {
 			const fourtwo_panel_web_routemap = (() => {
-				const routes: Partial<Record<"/", Route<StaticRouteResource>>> = {
+				const routes: Partial<Record<"/", Route<S3RouteResource>>> = {
 					["/"]: {
-						$kind: "StaticRouteResource",
+						$kind: "S3RouteResource",
 						hostname: webBucketWebsiteEndpoint.replace("http://", ""),
 						protocol: "http",
+						bucket: {
+							arn: webBucketArn,
+							name: webBucketName,
+							domainName: webBucketDomainName,
+						},
+						website: {
+							domain: webBucketWebsiteDomain,
+							endpoint: webBucketWebsiteEndpoint,
+						},
 					},
 				};
 				return routes;
