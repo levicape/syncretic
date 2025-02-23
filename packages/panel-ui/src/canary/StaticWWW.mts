@@ -5,23 +5,20 @@ import { withStructuredLogging } from "@levicape/paloma/runtime/server/loglayer/
 import { Context, Effect } from "effect";
 import { PanelWeb } from "./Atlas.mjs";
 
-// @ts-ignore
 const { trace } = await Effect.runPromise(
-	// @ts-ignore
 	Effect.provide(
-		// @ts-ignore
 		Effect.gen(function* () {
 			const logging = yield* LoggingContext;
 			return {
-				trace: (yield* logging.logger).withPrefix("canary").withContext({
+				trace: (yield* logging.logger).withContext({
 					$event: "main",
 				}),
 			};
 		}),
-		// @ts-ignore
-		Context.empty().pipe(withStructuredLogging({ prefix: "ExecutionPlan" })),
+		Context.empty().pipe(withStructuredLogging({ prefix: "Canary" })),
 	),
 );
+
 trace
 	?.withMetadata({
 		PanelWeb,

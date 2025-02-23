@@ -159,3 +159,5 @@ protobuf
 
 *.out
 *.log
+
+*.pidfile*
