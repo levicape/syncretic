@@ -1,6 +1,9 @@
 import { Canary, PromiseActivity } from "@levicape/paloma";
-import { LoggingContext } from "@levicape/paloma/runtime/server/RuntimeContext";
-import { Effect } from "effect";
+import {
+	LoggingContext,
+	withStructuredLogging,
+} from "@levicape/spork/server/logging/LoggingContext";
+import { Context, Effect } from "effect";
 import { hc } from "hono/client";
 import type { PanelHonoApp } from "../http/HonoApp.mjs";
 import { PanelHttp } from "./Atlas.mjs";
@@ -8,9 +11,7 @@ import { PanelHttp } from "./Atlas.mjs";
 const client = hc<PanelHonoApp>(PanelHttp["/~/v1/Fourtwo/Panel"].url());
 const { Panel } = client["~"].v1.Fourtwo;
 const { trace } = await Effect.runPromise(
-	// @ts-ignore
 	Effect.provide(
-		// @ts-ignore
 		Effect.gen(function* () {
 			const logging = yield* LoggingContext;
 			return {
@@ -19,7 +20,6 @@ const { trace } = await Effect.runPromise(
 				}),
 			};
 		}),
-		// @ts-ignore
 		Context.empty().pipe(withStructuredLogging({ prefix: "Canary" })),
 	),
 );

@@ -146,23 +146,16 @@ export = async () => {
 				rules: [
 					{
 						status: "Enabled",
-						id: "ExpireObjects",
+						id: "DeleteMarkers",
 						expiration: {
-							days: context.environment.isProd ? 20 : 10,
-						},
-						filter: {
-							objectSizeGreaterThan: 1,
+							expiredObjectDeleteMarker: true,
 						},
 					},
 					{
 						status: "Enabled",
-						id: "DeleteMarkers",
-						expiration: {
-							days: context.environment.isProd ? 8 : 4,
-							expiredObjectDeleteMarker: true,
-						},
-						filter: {
-							objectSizeGreaterThan: 1,
+						id: "IncompleteMultipartUploads",
+						abortIncompleteMultipartUpload: {
+							daysAfterInitiation: context.environment.isProd ? 3 : 7,
 						},
 					},
 					{
@@ -177,9 +170,9 @@ export = async () => {
 					},
 					{
 						status: "Enabled",
-						id: "IncompleteMultipartUploads",
-						abortIncompleteMultipartUpload: {
-							daysAfterInitiation: context.environment.isProd ? 3 : 7,
+						id: "ExpireObjects",
+						expiration: {
+							days: context.environment.isProd ? 20 : 10,
 						},
 						filter: {
 							objectSizeGreaterThan: 1,
