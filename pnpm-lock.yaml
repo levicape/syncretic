@@ -172,6 +172,9 @@ catalogs:
     '@pulumi/awsx':
       specifier: ^2.21.0
       version: 2.21.0
+    '@pulumi/command':
+      specifier: ^1.0.1
+      version: 1.0.2
     '@pulumi/docker-build':
       specifier: ^0.0.10
       version: 0.0.10
@@ -396,6 +399,9 @@ importers:
       '@pulumi/awsx':
         specifier: catalog:pulumi
         version: 2.21.0(ts-node@10.9.2(@swc/core@1.10.18(@swc/helpers@0.5.15))(@types/node@22.13.5)(typescript@5.7.3))(typescript@5.7.3)
+      '@pulumi/command':
+        specifier: catalog:pulumi
+        version: 1.0.2(ts-node@10.9.2(@swc/core@1.10.18(@swc/helpers@0.5.15))(@types/node@22.13.5)(typescript@5.7.3))(typescript@5.7.3)
       '@pulumi/docker-build':
         specifier: catalog:pulumi
         version: 0.0.10(ts-node@10.9.2(@swc/core@1.10.18(@swc/helpers@0.5.15))(@types/node@22.13.5)(typescript@5.7.3))(typescript@5.7.3)
@@ -1693,6 +1699,9 @@ packages:
 
   '@pulumi/awsx@2.21.0':
     resolution: {integrity: sha512-3kUE1J5r+BS25QqL2tQq7mfuCP1CAzGRHUKl+IIl4fQ1K5crI2W7r/FIHfmWResFlBWu5ekS5IfM9fvUHg5ATA==}
+
+  '@pulumi/command@1.0.2':
+    resolution: {integrity: sha512-1Pge79T3E2bzIAvLXuYI4uczhjpqQYgnpkvLHRag/idyCmhXCV7JP+NOXLA/7RARdr8ftuZL+BEvXpJibju7jA==}
 
   '@pulumi/docker-build@0.0.10':
     resolution: {integrity: sha512-b+IrUIFzMr9fOEkZPTT7GvVjtG3r8uUVjYkHwg+1yuFGXSQ33z+7Pd/qqoe8sPitJepRJSq1WMUJ9vJ9eMpK0w==}
@@ -6483,6 +6492,15 @@ snapshots:
       mime: 2.6.0
     transitivePeerDependencies:
       - aws-crt
+      - bluebird
+      - supports-color
+      - ts-node
+      - typescript
+
+  '@pulumi/command@1.0.2(ts-node@10.9.2(@swc/core@1.10.18(@swc/helpers@0.5.15))(@types/node@22.13.5)(typescript@5.7.3))(typescript@5.7.3)':
+    dependencies:
+      '@pulumi/pulumi': 3.152.0(ts-node@10.9.2(@swc/core@1.10.18(@swc/helpers@0.5.15))(@types/node@22.13.5)(typescript@5.7.3))(typescript@5.7.3)
+    transitivePeerDependencies:
       - bluebird
       - supports-color
       - ts-node

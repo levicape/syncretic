@@ -13,6 +13,7 @@
     "@pulumi/aws": "catalog:pulumi",
     "@pulumi/aws-native": "catalog:pulumi",
     "@pulumi/awsx": "catalog:pulumi",
+    "@pulumi/command": "catalog:pulumi",
     "@pulumi/docker-build": "catalog:pulumi",
     "@pulumi/pulumi": "catalog:pulumi",
     "destr": "catalog:parse-json",

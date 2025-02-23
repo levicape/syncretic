@@ -495,6 +495,26 @@ Actions:
             - Run: cat _pulumi/domains_panel_monitor.json
             - Run: /cc/cache/pulumi/bin/pulumi stack output -C $(pwd)/iac/stacks/src/domains/panel/monitor --shell > $(pwd)/_pulumi/domains_panel_monitor.sh
             - Run: cat _pulumi/domains_panel_monitor.sh
+            - Run: 'echo "Deploy: Stack: fourtwo-panel-wwwroot.current. CWD: $(pwd)/iac/stacks/src/domains/panel/wwwroot. Output: _pulumi/domains_panel_wwwroot."'
+            - Run: 'echo "name: fourtwo-panel-wwwroot" >> $(pwd)/iac/stacks/src/domains/panel/wwwroot/Pulumi.yaml'
+            - Run: cat $(pwd)/iac/stacks/src/domains/panel/wwwroot/Pulumi.yaml $(pwd)/iac/stacks/src/domains/panel/wwwroot/Pulumi.*.yaml || true;
+            - Run: /cc/cache/pulumi/bin/pulumi stack init fourtwo-panel-wwwroot.current -C $(pwd)/iac/stacks/src/domains/panel/wwwroot || true
+            - Run: /cc/cache/pulumi/bin/pulumi stack select fourtwo-panel-wwwroot.current -C $(pwd)/iac/stacks/src/domains/panel/wwwroot || true
+            - Run: /cc/cache/pulumi/bin/pulumi config set --path aws:skipMetadataApiCheck false -C $(pwd)/iac/stacks/src/domains/panel/wwwroot
+            - Run: /cc/cache/pulumi/bin/pulumi config set --path context:stack.environment.isProd false -C $(pwd)/iac/stacks/src/domains/panel/wwwroot
+            - Run: /cc/cache/pulumi/bin/pulumi config set --path context:stack.environment.features aws -C $(pwd)/iac/stacks/src/domains/panel/wwwroot
+            - Run: /cc/cache/pulumi/bin/pulumi config set --path 'frontend:stack.dns.hostnames[0]' fourtwo.cloud.$FRONTEND_HOSTNAME -C $(pwd)/iac/stacks/src/domains/panel/wwwroot
+            - Run: /cc/cache/pulumi/bin/pulumi config set --path 'frontend:stack.dns.hostnames[1]' current.cloud.$FRONTEND_HOSTNAME -C $(pwd)/iac/stacks/src/domains/panel/wwwroot
+            - Run: /cc/cache/pulumi/bin/pulumi config set --path 'frontend:stack.dns.hostnames[2]' fourtwo-panel-wwwroot.cloud.$FRONTEND_HOSTNAME -C $(pwd)/iac/stacks/src/domains/panel/wwwroot
+            - Run: /cc/cache/pulumi/bin/pulumi stack change-secrets-provider $AWS_PROVIDER_KEY -C $(pwd)/iac/stacks/src/domains/panel/wwwroot
+            - Run: cat $(pwd)/iac/stacks/src/domains/panel/wwwroot/Pulumi.yaml $(pwd)/iac/stacks/src/domains/panel/wwwroot/Pulumi.*.yaml || true;
+            - Run: /cc/cache/pulumi/bin/pulumi refresh --yes --skip-preview --clear-pending-creates --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-refresh" -C $(pwd)/iac/stacks/src/domains/panel/wwwroot --non-interactive --suppress-progress --diff --json
+            - Run: /cc/cache/pulumi/bin/pulumi preview --show-replacement-steps --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-preview" -C $(pwd)/iac/stacks/src/domains/panel/wwwroot --non-interactive --suppress-progress --diff --json
+            - Run: /cc/cache/pulumi/bin/pulumi up --yes --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-up" -C $(pwd)/iac/stacks/src/domains/panel/wwwroot --non-interactive --suppress-progress --diff --json
+            - Run: /cc/cache/pulumi/bin/pulumi stack output -C $(pwd)/iac/stacks/src/domains/panel/wwwroot --json > $(pwd)/_pulumi/domains_panel_wwwroot.json
+            - Run: cat _pulumi/domains_panel_wwwroot.json
+            - Run: /cc/cache/pulumi/bin/pulumi stack output -C $(pwd)/iac/stacks/src/domains/panel/wwwroot --shell > $(pwd)/_pulumi/domains_panel_wwwroot.sh
+            - Run: cat _pulumi/domains_panel_wwwroot.sh
             - Run: du -sh _pulumi
   Deployment:
     DependsOn:
@@ -574,6 +594,8 @@ Actions:
             - Run: source $CATALYST_SOURCE_DIR_pulumi/_pulumi/domains_panel_web.sh
             - Run: cat $CATALYST_SOURCE_DIR_pulumi/_pulumi/domains_panel_monitor.sh
             - Run: source $CATALYST_SOURCE_DIR_pulumi/_pulumi/domains_panel_monitor.sh
+            - Run: cat $CATALYST_SOURCE_DIR_pulumi/_pulumi/domains_panel_wwwroot.sh
+            - Run: source $CATALYST_SOURCE_DIR_pulumi/_pulumi/domains_panel_wwwroot.sh
             - Run: env
             - Run: |-
                 NODE_NO_WARNINGS=1 node -e '(function(){let outputs=JSON.parse(process.env["fourtwo_codestar_ecr"]??"");let envs={"_FOURTWO_CODE_REPOSITORY_URL":outputs.repository.url};Object.entries(envs).forEach(([key,value])=>{process.stdout.write(`export ${key}="${value}"
@@ -598,7 +620,7 @@ Actions:
 ########################################
 #**:_$~- {"$$":"head","filename":"CI.yml","source":"iac/workflows/codecatalyst/push/CI.js"}
 #**:_$~- {"$$":"script","generator":"codegen/codecatalyst/GenerateCodeCatalystWorkflow.mts"}
-#**:_$~- {"$$":"body","hashed":"1bf6753d81e0a7a025cc3b483822dc50a1d223c733733d37e2cae628ea229ff2"}
-#**:_$~- {"$$":"footer","started":"2025-02-23T04:33:49.076Z","now":"2025-02-23T04:33:49.085Z","elapsed":"9ms"}
+#**:_$~- {"$$":"body","hashed":"1f46840cb22f17dd0b0752a6eefae10e1ae9beacc85db2cb9df30d9548460ba5"}
+#**:_$~- {"$$":"footer","started":"2025-02-23T12:28:31.997Z","now":"2025-02-23T12:28:32.006Z","elapsed":"9ms"}
 # END OF GENERATED FILE
 

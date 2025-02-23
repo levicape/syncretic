@@ -40,7 +40,8 @@ export const CODECATALYST_PULUMI_STACKS: Array<{
 		stack: "domains/panel/monitor",
 		name: "panel-monitor",
 	},
-	// {
-	// 	stack: "wwwroot",
-	// },
+	{
+		stack: "domains/panel/wwwroot",
+		name: "panel-wwwroot",
+	},
 ].map((stack) => ({ ...stack, output: stack.stack.replaceAll("/", "_") }));

@@ -1,9 +1,17 @@
 import { z } from "zod";
 
 export type RouteProtocol = "http" | "https" | "ws" | "wss";
+
 export type Url = `${RouteProtocol}://${string}`;
+
 export type Service = string;
+
 export type Prefix = `/${"!" | "~" | "-"}/v${number}/${string}`;
+
+export type StaticRouteResource = {
+	$kind: "StaticRouteResource";
+};
+
 export type LambdaRouteResource = {
 	$kind: "LambdaRouteResource";
 	lambda: {
@@ -32,10 +40,25 @@ export type LambdaRouteResource = {
 		};
 	};
 };
-export type StaticRouteResource = {
-	$kind: "StaticRouteResource";
+
+export type S3RouteResource = {
+	$kind: "S3RouteResource";
+	bucket: {
+		arn: string;
+		name: string;
+		domainName: string;
+	};
+	website: {
+		domain: string;
+		endpoint: string;
+	};
 };
-export type RouteResource = LambdaRouteResource | StaticRouteResource;
+
+export type RouteResource =
+	| LambdaRouteResource
+	| StaticRouteResource
+	| S3RouteResource;
+
 export type Route<T = {}> = {
 	hostname: string;
 	protocol: RouteProtocol;
@@ -57,15 +80,13 @@ export const RouteMapZod = z.record(
 		z
 			.object({
 				$kind: z.literal("LambdaRouteResource"),
-				hostname: z.string().optional(),
-				protocol: z
-					.union([
-						z.literal("http"),
-						z.literal("https"),
-						z.literal("ws"),
-						z.literal("wss"),
-					])
-					.optional(),
+				hostname: z.string(),
+				protocol: z.union([
+					z.literal("http"),
+					z.literal("https"),
+					z.literal("ws"),
+					z.literal("wss"),
+				]),
 				port: z.string().optional(),
 				lambda: z.object({
 					arn: z.string(),
@@ -97,33 +118,41 @@ export const RouteMapZod = z.record(
 			})
 			.or(
 				z.object({
-					$kind: z.literal("StaticRouteResource"),
+					$kind: z.literal("S3RouteResource"),
 					hostname: z.string().optional(),
-					protocol: z
-						.union([
-							z.literal("http"),
-							z.literal("https"),
-							z.literal("ws"),
-							z.literal("wss"),
-						])
-						.optional(),
+					protocol: z.union([
+						z.literal("http"),
+						z.literal("https"),
+						z.literal("ws"),
+						z.literal("wss"),
+					]),
+					port: z.string().optional(),
+					bucket: z.object({
+						arn: z.string(),
+						name: z.string(),
+						domainName: z.string(),
+					}),
+					website: z.object({
+						domain: z.string(),
+						endpoint: z.string(),
+					}),
+				}),
+			)
+			.or(
+				z.object({
+					$kind: z.literal("StaticRouteResource"),
+					hostname: z.string(),
+					protocol: z.union([
+						z.literal("http"),
+						z.literal("https"),
+						z.literal("ws"),
+						z.literal("wss"),
+					]),
 					port: z.string().optional(),
 				}),
 			),
 	),
 );
-
-type RouteMapZodType = z.infer<typeof RouteMapZod>;
-type RouteMapZodTypecheck = RouteMapZodType extends Record<
-	string,
-	Record<string, Route<LambdaRouteResource>>
->
-	? true
-	: false;
-
-// @ts-ignore
-const _routeMapZodTypecheck: RouteMapZodTypecheck = true;
-_routeMapZodTypecheck;
 
 export type ManifestVersion = unknown;
 export interface WebsiteManifest {
