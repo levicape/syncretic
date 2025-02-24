@@ -28,6 +28,7 @@
     "hono": "catalog:hono",
     "jsonwebtoken": "catalog:crypto",
     "loglayer": "catalog:log-loglayer",
+    "std-env": "catalog:runtime-env",
     "ts-proto": "catalog:protobuf"
   },
   "devDependencies": {

@@ -90,7 +90,7 @@ const ENVIRONMENT = (
 };
 
 export = async () => {
-	const context = await Context.fromConfig();
+	const context = await Context.fromConfig({});
 	const _ = (name: string) => `${context.prefix}-${name}`;
 	const stage = CI.CI_ENVIRONMENT;
 	const farRole = await getRole({ name: CI.CI_ACCESS_ROLE });

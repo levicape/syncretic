@@ -19,12 +19,6 @@ const { trace } = await Effect.runPromise(
 	),
 );
 
-trace
-	?.withMetadata({
-		PanelWeb,
-	})
-	.info("Loaded service clients");
-
 export const healthcheck = new Canary(
 	"http-healthcheck",
 	{},

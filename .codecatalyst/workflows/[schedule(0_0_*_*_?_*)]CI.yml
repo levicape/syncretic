@@ -398,6 +398,26 @@ Actions:
             - Run: echo $AWS_PROVIDER_KEY
             - Run: mkdir -p _pulumi || true
             - Run: 'echo "Deploy onto root: fourtwo"'
+            - Run: 'echo "Deploy: Stack: fourtwo-application.current. CWD: $(pwd)/iac/stacks/src/application. Output: _pulumi/application."'
+            - Run: 'echo "name: fourtwo-application" >> $(pwd)/iac/stacks/src/application/Pulumi.yaml'
+            - Run: cat $(pwd)/iac/stacks/src/application/Pulumi.yaml $(pwd)/iac/stacks/src/application/Pulumi.*.yaml || true;
+            - Run: /cc/cache/pulumi/bin/pulumi stack init fourtwo-application.current -C $(pwd)/iac/stacks/src/application || true
+            - Run: /cc/cache/pulumi/bin/pulumi stack select fourtwo-application.current -C $(pwd)/iac/stacks/src/application || true
+            - Run: /cc/cache/pulumi/bin/pulumi config set --path aws:skipMetadataApiCheck false -C $(pwd)/iac/stacks/src/application
+            - Run: /cc/cache/pulumi/bin/pulumi config set --path context:stack.environment.isProd false -C $(pwd)/iac/stacks/src/application
+            - Run: /cc/cache/pulumi/bin/pulumi config set --path context:stack.environment.features aws -C $(pwd)/iac/stacks/src/application
+            - Run: /cc/cache/pulumi/bin/pulumi config set --path 'frontend:stack.dns.hostnames[0]' fourtwo.cloud.$FRONTEND_HOSTNAME -C $(pwd)/iac/stacks/src/application
+            - Run: /cc/cache/pulumi/bin/pulumi config set --path 'frontend:stack.dns.hostnames[1]' current.cloud.$FRONTEND_HOSTNAME -C $(pwd)/iac/stacks/src/application
+            - Run: /cc/cache/pulumi/bin/pulumi config set --path 'frontend:stack.dns.hostnames[2]' fourtwo-application.cloud.$FRONTEND_HOSTNAME -C $(pwd)/iac/stacks/src/application
+            - Run: /cc/cache/pulumi/bin/pulumi stack change-secrets-provider $AWS_PROVIDER_KEY -C $(pwd)/iac/stacks/src/application
+            - Run: cat $(pwd)/iac/stacks/src/application/Pulumi.yaml $(pwd)/iac/stacks/src/application/Pulumi.*.yaml || true;
+            - Run: /cc/cache/pulumi/bin/pulumi refresh --yes --skip-preview --clear-pending-creates --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-refresh" -C $(pwd)/iac/stacks/src/application --non-interactive --suppress-progress --diff --json
+            - Run: /cc/cache/pulumi/bin/pulumi preview --show-replacement-steps --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-preview" -C $(pwd)/iac/stacks/src/application --non-interactive --suppress-progress --diff --json
+            - Run: /cc/cache/pulumi/bin/pulumi up --yes --message "${WorkflowSource.BranchName}-${WorkflowSource.CommitId}-up" -C $(pwd)/iac/stacks/src/application --non-interactive --suppress-progress --diff --json
+            - Run: /cc/cache/pulumi/bin/pulumi stack output -C $(pwd)/iac/stacks/src/application --json > $(pwd)/_pulumi/application.json
+            - Run: cat _pulumi/application.json
+            - Run: /cc/cache/pulumi/bin/pulumi stack output -C $(pwd)/iac/stacks/src/application --shell > $(pwd)/_pulumi/application.sh
+            - Run: cat _pulumi/application.sh
             - Run: 'echo "Deploy: Stack: fourtwo-codestar.current. CWD: $(pwd)/iac/stacks/src/codestar. Output: _pulumi/codestar."'
             - Run: 'echo "name: fourtwo-codestar" >> $(pwd)/iac/stacks/src/codestar/Pulumi.yaml'
             - Run: cat $(pwd)/iac/stacks/src/codestar/Pulumi.yaml $(pwd)/iac/stacks/src/codestar/Pulumi.*.yaml || true;
@@ -524,7 +544,7 @@ Actions:
 ########################################
 #**:_$~- {"$$":"head","filename":"[schedule(0_0_*_*_?_*)]CI.yml","source":"iac/workflows/codecatalyst/push/CI.js"}
 #**:_$~- {"$$":"script","generator":"codegen/codecatalyst/GenerateCodeCatalystWorkflow.mts"}
-#**:_$~- {"$$":"body","hashed":"c650047f7e1d1642963edc5d199e230cc817b26f13e8a17072525d598f918602"}
-#**:_$~- {"$$":"footer","started":"2025-02-23T12:28:32.047Z","now":"2025-02-23T12:28:32.051Z","elapsed":"4ms"}
+#**:_$~- {"$$":"body","hashed":"447f2f3143994b1b4db77341ce13726604546a746e26227823cfe2fe32cd0f15"}
+#**:_$~- {"$$":"footer","started":"2025-02-24T16:30:48.146Z","now":"2025-02-24T16:30:48.150Z","elapsed":"4ms"}
 # END OF GENERATED FILE
 

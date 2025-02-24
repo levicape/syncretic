@@ -74,7 +74,7 @@ const ROUTE_MAP = (
 };
 
 export = async () => {
-	const context = await Context.fromConfig();
+	const context = await Context.fromConfig({});
 	const _ = (name?: string) =>
 		name ? `${context.prefix}-${name}` : context.prefix;
 	const stage = process.env.CI_ENVIRONMENT ?? "unknown";
@@ -89,15 +89,17 @@ export = async () => {
 	const s3 = (() => {
 		const bucket = (
 			name: string,
-			props: {
+			props?: {
 				daysToRetain?: number;
 				www?: boolean;
-			} = {
-				daysToRetain: context.environment.isProd ? 30 : 8,
-				www: false,
 			},
 		) => {
-			const { daysToRetain, www } = props;
+			const { daysToRetain, www } = {
+				daysToRetain:
+					props?.www === true ? undefined : context.environment.isProd ? 30 : 8,
+				www: false,
+				...props,
+			};
 			const bucket = new Bucket(_(name), {
 				acl: "private",
 				forceDestroy: !context.environment.isProd,
@@ -127,7 +129,7 @@ export = async () => {
 			});
 
 			let website: BucketWebsiteConfigurationV2 | undefined;
-			if (www) {
+			if (www === true) {
 				const bucketName = bucket.bucket;
 				const publicAccessBlock = new BucketPublicAccessBlock(
 					_(`${name}-public-access`),
@@ -191,7 +193,7 @@ export = async () => {
 				);
 			}
 
-			if (daysToRetain) {
+			if (daysToRetain && daysToRetain > 0) {
 				new BucketLifecycleConfigurationV2(_(`${name}-lifecycle`), {
 					bucket: bucket.bucket,
 					rules: [
@@ -280,11 +282,14 @@ export = async () => {
 				},
 			);
 
-			const upload = new BucketObjectv2(_("manifest-upload"), {
-				bucket: s3.staticwww.bucket.bucket,
-				content: content.apply((c) => JSON.stringify(c, null, 2)),
-				key: MANIFEST_PATH,
-			});
+			let upload: BucketObjectv2 | undefined;
+			if (content) {
+				upload = new BucketObjectv2(_("manifest-upload"), {
+					bucket: s3.staticwww.bucket.bucket,
+					content: content.apply((c) => JSON.stringify(c, null, 2)),
+					key: MANIFEST_PATH,
+				});
+			}
 
 			return {
 				routemap: {

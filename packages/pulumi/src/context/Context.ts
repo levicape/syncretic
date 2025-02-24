@@ -1,5 +1,7 @@
+import { inspect } from "node:util";
 import { getCallerIdentity } from "@pulumi/aws/getCallerIdentity.js";
 import { Config, getProject, getStack } from "@pulumi/pulumi/index.js";
+import { debug } from "@pulumi/pulumi/log/index.js";
 import { registerStackTransformation } from "@pulumi/pulumi/runtime/index.js";
 import type { AwsEnvironment } from "../components/aws/AwsEnvironment.js";
 import { isAwsTaggable } from "../components/aws/AwsTags.js";
@@ -33,6 +35,11 @@ export interface Environment {
 	features: Feature[];
 	aws?: AwsEnvironment;
 }
+export interface ContextFromConfigProps {
+	aws?: {
+		awsApplication?: string;
+	};
+}
 export class Context {
 	static _PREFIX_TAG = "Context__Prefix" as const;
 	private constructor(
@@ -42,10 +49,12 @@ export class Context {
 		readonly frontend?: FrontendContext,
 	) {}
 
-	static async fromConfig(): Promise<Context> {
+	static async fromConfig(props: ContextFromConfigProps): Promise<Context> {
 		const { environment } = new Config(CONFIG_NAMESPACE).requireObject<Stack>(
 			CONFIG_PREFIX,
 		);
+
+		const { awsApplication } = props.aws ?? {};
 
 		if (environment === undefined) {
 			throw new Error(
@@ -112,6 +121,7 @@ export class Context {
 						[Context._PREFIX_TAG]: prefix,
 						Context__Stage: stage,
 						[prefix.replace(/\./g, "_")]: `${args.name}+${args.type}`,
+						...(awsApplication ? { ["awsApplication"]: awsApplication } : {}),
 					},
 				};
 				return { props: args.props, opts: args.opts };
@@ -119,27 +129,32 @@ export class Context {
 			return undefined;
 		});
 
-		console.debug({
-			Context: {
-				config: {
-					env,
-					stage,
-					prefix,
-					now,
+		debug(
+			inspect(
+				{
+					Context: {
+						config: {
+							env,
+							stage,
+							prefix,
+							now,
+						},
+						tags: [
+							"Pulumi__Name",
+							"Pulumi__Type",
+							"Pulumi__Now",
+							"Pulumi__Previous",
+							"Pulumi__Opts-Urn",
+							"Pulumi__Opts-Version",
+							Context._PREFIX_TAG,
+							"Context__Stage",
+							prefix.replace(/\./g, "_"),
+						],
+					},
 				},
-				tags: [
-					"Pulumi__Name",
-					"Pulumi__Type",
-					"Pulumi__Now",
-					"Pulumi__Previous",
-					"Pulumi__Opts-Urn",
-					"Pulumi__Opts-Version",
-					Context._PREFIX_TAG,
-					"Context__Stage",
-					prefix.replace(/\./g, "_"),
-				],
-			},
-		});
+				{ depth: null },
+			),
+		);
 
 		return new Context(env, stage, prefix, await FrontendContext.fromConfig());
 	}

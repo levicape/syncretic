@@ -124,7 +124,7 @@ const STACKREF_CONFIG = {
 const ATLASFILE_PATH = `atlasfile.json`;
 
 export = async () => {
-	const context = await Context.fromConfig();
+	const context = await Context.fromConfig({});
 	const _ = (name?: string) =>
 		name ? `${context.prefix}-${name}` : context.prefix;
 	const stage = CI.CI_ENVIRONMENT;
