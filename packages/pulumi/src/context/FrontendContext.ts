@@ -1,4 +1,6 @@
+import { inspect } from "node:util";
 import { Config } from "@pulumi/pulumi/index.js";
+import { debug } from "@pulumi/pulumi/log/index.js";
 import { registerStackTransformation } from "@pulumi/pulumi/runtime/index.js";
 import { isAwsTaggable } from "../components/aws/AwsTags.js";
 
@@ -20,11 +22,16 @@ export class FrontendContext {
 		if (dns !== undefined) {
 			let { hostnames } = dns;
 			if (hostnames === undefined) {
-				console.debug({
-					FrontendContext: {
-						hostnames: `${CONFIG_NAMESPACE}:${CONFIG_PREFIX}.hostnames is unset. Defaulting to "localhost"`,
-					},
-				});
+				debug(
+					inspect(
+						{
+							FrontendContext: {
+								hostnames: `${CONFIG_NAMESPACE}:${CONFIG_PREFIX}.hostnames is unset. Defaulting to "localhost"`,
+							},
+						},
+						{ depth: null },
+					),
+				);
 				hostnames = ["localhost"];
 			}
 
@@ -53,12 +60,17 @@ export class FrontendContext {
 				return undefined;
 			});
 
-			console.debug({
-				FrontendContext: {
-					hostnames,
-					tags: "Context__Frontend-Host",
-				},
-			});
+			debug(
+				inspect(
+					{
+						FrontendContext: {
+							hostnames,
+							tags: "Context__Frontend-Host",
+						},
+					},
+					{ depth: null },
+				),
+			);
 
 			return new FrontendContext({ hostnames });
 		}

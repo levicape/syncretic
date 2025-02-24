@@ -1,17 +1,19 @@
 #!/usr/bin/env -S node --no-warnings --watch
 
 import { Atlas } from "@levicape/spork-atlas";
+import { env } from "std-env";
 
-const { PANEL_UI, PANEL_HTTP } = process.env;
+const { PANEL_UI, PANEL_HTTP } = env;
 
+export const HTTP_ROOT_PATH = "/~/Fourtwo/Panel";
 export const PanelHttp = Atlas({
 	"/": {
-		$kind: "ComposeRouteResource",
+		$kind: "StaticRouteResource",
 		hostname: `ui:${PANEL_UI}`,
 		protocol: "http",
 	},
-	"/~/v1/Fourtwo/Panel": {
-		$kind: "ComposeRouteResource",
+	[HTTP_ROOT_PATH]: {
+		$kind: "StaticRouteResource",
 		hostname: `http:${PANEL_HTTP}`,
 		protocol: "http",
 	},

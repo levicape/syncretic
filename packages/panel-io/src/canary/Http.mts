@@ -5,11 +5,10 @@ import {
 } from "@levicape/spork/server/logging/LoggingContext";
 import { Context, Effect } from "effect";
 import { hc } from "hono/client";
+import { HTTP_ROOT_PATH, PanelHttp } from "../http/Atlas.mjs";
 import type { PanelHonoApp } from "../http/HonoApp.mjs";
-import { PanelHttp } from "./Atlas.mjs";
 
-const client = hc<PanelHonoApp>(PanelHttp["/~/v1/Fourtwo/Panel"].url());
-const { Panel } = client["~"].v1.Fourtwo;
+const client = hc<PanelHonoApp>(PanelHttp[HTTP_ROOT_PATH].url());
 const { trace } = await Effect.runPromise(
 	Effect.provide(
 		Effect.gen(function* () {
@@ -23,12 +22,6 @@ const { trace } = await Effect.runPromise(
 		Context.empty().pipe(withStructuredLogging({ prefix: "Canary" })),
 	),
 );
-
-trace
-	.withMetadata({
-		Panel,
-	})
-	.info("Loaded service clients");
 
 export const healthcheck = new Canary(
 	"http-healthcheck",
@@ -65,10 +58,10 @@ export const healthcheck = new Canary(
 			trace.metadataOnly([
 				events,
 				{ a: 1, b: "Y" },
-				Panel.ok.$url({}),
+				client["~"].Fourtwo.Panel.ok.$url({}),
 				{ a: "Z", b: 2 },
 			]);
-			const response = await Panel.ok.$get({});
+			const response = await client["~"].Fourtwo.Panel.ok.$get({});
 			const json = await response.json();
 			trace.withMetadata({ json }).info("Fetched");
 		},

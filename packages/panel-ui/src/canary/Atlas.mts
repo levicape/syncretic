@@ -7,12 +7,12 @@ const { PANEL_HTTP, PANEL_UI } = process.env;
 // Import from -io?
 export const PanelWeb = Atlas({
 	"/": {
-		$kind: "ComposeRouteResource",
+		$kind: "StaticRouteResource",
 		hostname: `ui:${PANEL_UI}`,
 		protocol: "http",
 	},
-	"/~/v1/Fourtwo/Panel": {
-		$kind: "ComposeRouteResource",
+	"/~/Fourtwo/Panel": {
+		$kind: "StaticRouteResource",
 		hostname: `http:${PANEL_HTTP}`,
 		protocol: "http",
 	},

@@ -33,14 +33,14 @@ catalogs:
       version: 11.8.1
   default:
     '@levicape/paloma':
-      specifier: 0.3.6-main.15
-      version: 0.3.6-main.15
+      specifier: 0.3.7-main.16
+      version: 0.3.7-main.16
     '@levicape/spork':
-      specifier: 0.6.3-main.15
-      version: 0.6.3-main.15
+      specifier: 0.6.4-main.16
+      version: 0.6.4-main.16
     '@levicape/spork-atlas':
-      specifier: 0.6.3-main.15
-      version: 0.6.3-main.15
+      specifier: 0.6.4-main.16
+      version: 0.6.4-main.16
   dev:
     ts-node:
       specifier: ^10.9.2
@@ -77,7 +77,7 @@ catalogs:
       version: 9.2.0
   hono:
     hono:
-      specifier: ^4.7.1
+      specifier: ^4.7.2
       version: 4.7.2
   http-express:
     express:
@@ -104,17 +104,17 @@ catalogs:
       version: 3.4.0
   log-loglayer:
     '@loglayer/transport-aws-lambda-powertools':
-      specifier: ^3.0.1
-      version: 3.0.1
+      specifier: ^3.0.2
+      version: 3.0.2
     '@loglayer/transport-consola':
-      specifier: ^2.0.1
-      version: 2.0.1
+      specifier: ^2.0.2
+      version: 2.0.2
     '@loglayer/transport-pino':
-      specifier: ^2.0.1
-      version: 2.0.1
+      specifier: ^2.0.2
+      version: 2.0.2
     loglayer:
-      specifier: ^6.1.1
-      version: 6.1.1
+      specifier: ^6.1.3
+      version: 6.1.3
   log-pino:
     pino:
       specifier: ^9.6.0
@@ -207,7 +207,7 @@ catalogs:
       specifier: ^4.0.9
       version: 4.0.9
     '@types/jsonwebtoken':
-      specifier: ^9.0.8
+      specifier: ^9.0.9
       version: 9.0.9
     '@types/node':
       specifier: ^22.13.5
@@ -261,13 +261,13 @@ importers:
         version: 0.73.2(@effect/platform@0.77.2(effect@3.13.2))(effect@3.13.2)
       '@loglayer/transport-aws-lambda-powertools':
         specifier: catalog:log-loglayer
-        version: 3.0.1(@aws-lambda-powertools/logger@2.14.0)
+        version: 3.0.2(@aws-lambda-powertools/logger@2.14.0)
       '@loglayer/transport-consola':
         specifier: catalog:log-loglayer
-        version: 2.0.1(consola@3.4.0)
+        version: 2.0.2(consola@3.4.0)
       '@loglayer/transport-pino':
         specifier: catalog:log-loglayer
-        version: 2.0.1(pino@9.6.0)
+        version: 2.0.2(pino@9.6.0)
       '@stricli/core':
         specifier: catalog:cli
         version: 1.1.1
@@ -300,7 +300,7 @@ importers:
         version: 3.1.0(better-sqlite3@11.8.1)(pg@8.13.3)
       loglayer:
         specifier: catalog:log-loglayer
-        version: 6.1.1
+        version: 6.1.3
       pino:
         specifier: catalog:log-pino
         version: 9.6.0
@@ -367,7 +367,7 @@ importers:
     dependencies:
       '@levicape/paloma':
         specifier: 'catalog:'
-        version: 0.3.6-main.15(pg@8.13.3)
+        version: 0.3.7-main.16(pg@8.13.3)
     devDependencies:
       typescript:
         specifier: catalog:dev
@@ -496,13 +496,13 @@ importers:
         version: 2.2.3
       '@levicape/paloma':
         specifier: 'catalog:'
-        version: 0.3.6-main.15(pg@8.13.3)
+        version: 0.3.7-main.16(pg@8.13.3)
       '@levicape/spork':
         specifier: 'catalog:'
-        version: 0.6.3-main.15
+        version: 0.6.4-main.16
       '@levicape/spork-atlas':
         specifier: 'catalog:'
-        version: 0.6.3-main.15(pg@8.13.3)
+        version: 0.6.4-main.16(pg@8.13.3)
       effect:
         specifier: catalog:effect
         version: 3.13.2
@@ -514,7 +514,10 @@ importers:
         version: 9.0.2
       loglayer:
         specifier: catalog:log-loglayer
-        version: 6.1.1
+        version: 6.1.3
+      std-env:
+        specifier: catalog:runtime-env
+        version: 3.8.0
       ts-proto:
         specifier: catalog:protobuf
         version: 2.6.1
@@ -542,16 +545,16 @@ importers:
         version: 2.14.0
       '@levicape/paloma':
         specifier: 'catalog:'
-        version: 0.3.6-main.15(pg@8.13.3)
+        version: 0.3.7-main.16(pg@8.13.3)
       '@levicape/spork-atlas':
         specifier: 'catalog:'
-        version: 0.6.3-main.15(pg@8.13.3)
+        version: 0.6.4-main.16(pg@8.13.3)
       '@loglayer/transport-aws-lambda-powertools':
         specifier: catalog:log-loglayer
-        version: 3.0.1(@aws-lambda-powertools/logger@2.14.0)
+        version: 3.0.2(@aws-lambda-powertools/logger@2.14.0)
       '@loglayer/transport-consola':
         specifier: catalog:log-loglayer
-        version: 2.0.1(consola@3.4.0)
+        version: 2.0.2(consola@3.4.0)
       consola:
         specifier: catalog:log-consola
         version: 3.4.0
@@ -563,7 +566,7 @@ importers:
         version: 4.21.2
       loglayer:
         specifier: catalog:log-loglayer
-        version: 6.1.1
+        version: 6.1.3
       react:
         specifier: catalog:web-react
         version: 19.0.0
@@ -1303,17 +1306,17 @@ packages:
     engines: {node: 22.12.0}
     hasBin: true
 
-  '@levicape/paloma@0.3.6-main.15':
-    resolution: {integrity: sha512-ZoZ1cofVw/Yi9xH4pW+ckixtg6sXz4o7GgdTgVbgY1odig8QLDYTOHz5UqU6q15mp4vfSPkXiOThsUfh6II9eQ==, tarball: https://npm.pkg.github.com/download/@levicape/paloma/0.3.6-main.15/40a449fd043a6113ccdf50260f6facb7e9002d85}
+  '@levicape/paloma@0.3.7-main.16':
+    resolution: {integrity: sha512-QUJuYC92hpvqqgqKaNU8p3bTXuOG3kHa2rqGnAQs0DzpELwYdJR1/A7WBQP072naxlvtoJsWbs3/kOSwVhNNRg==, tarball: https://npm.pkg.github.com/download/@levicape/paloma/0.3.7-main.16/f2c33b250a23124df6f41519c0b01f36162f8b27}
     engines: {node: 22.12.0}
     hasBin: true
 
-  '@levicape/spork-atlas@0.6.3-main.15':
-    resolution: {integrity: sha512-WBHIPJwjkg/pCQmf9Af9MJ6tWmdie8w56rptTNPpqfnFIlWd1FfaLtFbKx9vkv7mFFOyUunitke6zP723eIoZA==, tarball: https://npm.pkg.github.com/download/@levicape/spork-atlas/0.6.3-main.15/112b7379052b0479837ed9872a614bd6fa69e142}
+  '@levicape/spork-atlas@0.6.4-main.16':
+    resolution: {integrity: sha512-1Y230Xvdbx9rG9+H5saS3qQRe2RqLAIRSS3cgQDlTw1Gouo2DZiH7OLwbap7fzTzi7DiIziDcSnb4PqPl5hGPg==, tarball: https://npm.pkg.github.com/download/@levicape/spork-atlas/0.6.4-main.16/eec72da364043ced35206e034d96f3e6c338e54f}
     engines: {node: '22'}
 
-  '@levicape/spork@0.6.3-main.15':
-    resolution: {integrity: sha512-bsAfNteQxcgAqFJaXSjXaZsD71OmmBc5zKQvrvJK5phaCPJF/ZZ8c4GMzGVdXpPhD2KAnXEvZ7SUEawGSwi27g==, tarball: https://npm.pkg.github.com/download/@levicape/spork/0.6.3-main.15/3877b38e3427a1b2f40103cf40da33b70e379ff7}
+  '@levicape/spork@0.6.4-main.16':
+    resolution: {integrity: sha512-NoB8ctmKDzwpSJXy+WSx1hzFxm75xzNcjzbboZeRMYg10yZOWn3F1nCultXai8yqbZ2imoJCN31XBfUKMlWPjA==, tarball: https://npm.pkg.github.com/download/@levicape/spork/0.6.4-main.16/2bf4c359ce15fc443e3852050b9f3aaf88a893b1}
     engines: {node: 22.12.0}
     hasBin: true
 
@@ -1321,38 +1324,38 @@ packages:
     resolution: {integrity: sha512-XGSsWDweP80Fks16lwkAUIr54ICyBs6PsI4mpfTLQaWgEJRtY9xEV+PeyDpJ+sJEGZxqINlpmAwe/6tS1pP8Ng==}
     engines: {node: '>=10.3.0'}
 
-  '@loglayer/context-manager@1.0.1':
-    resolution: {integrity: sha512-fzwAd+y/pr8gecKB0l+M6RP0QAcn2RhYQL0KFHGfzJwp2/v6M69FSjTNo8iEqg7vnZR20nlRc0KZGEwpkzuIHA==}
+  '@loglayer/context-manager@1.0.2':
+    resolution: {integrity: sha512-arElnl3jEjdOFwLA3OKwd7A5Z00ueSCHO62APTUAsDtC/OwNJTmrKCEimNE7i9GQvwpQLaTb0buE2gHD/ZqT3g==}
     engines: {node: '>=18'}
 
-  '@loglayer/plugin@2.0.1':
-    resolution: {integrity: sha512-OTQFwnPK47uyeTtgbrZTJ1Dl+2kdSEfDIFW9cE/aeDFcgNBbD0cbvB9njomUDb4kmW8IF2tllFgBtohSKyEPnw==}
+  '@loglayer/plugin@2.0.2':
+    resolution: {integrity: sha512-lFfGRmqHiMoCScUJy25m2vBJxEiSBeG/H38qY0jO2E5aS/ez+NcPHWPPVF3FLCyftGPldqxgYeQeIOO6HTitGQ==}
     engines: {node: '>=18'}
 
-  '@loglayer/shared@2.1.0':
-    resolution: {integrity: sha512-ABBySilot2wKIVlxFC3uawmLYUjZ3DpQI0h4+/e570gCYEfw1E6c69Zwrt7NT4eSOYo5X/hAHvm3mibYz+vuTw==}
+  '@loglayer/shared@2.1.1':
+    resolution: {integrity: sha512-6CO5sroYFhDcBgxlmxPugPdt0WIAy3yzfi4sioLr2kxU+TWebF+aHOTgx88J4vTXsojGc6NWl8yduCBlwzX05A==}
     engines: {node: '>=18'}
 
-  '@loglayer/transport-aws-lambda-powertools@3.0.1':
-    resolution: {integrity: sha512-CCLUujTHHczdTqWsRWjxpVJrtHaTDtbjhGlt6/72qjkrY6ZV9Sh2iuwXgEQYA73Gc3ZI6kch2nHv1ESuMB2baw==}
+  '@loglayer/transport-aws-lambda-powertools@3.0.2':
+    resolution: {integrity: sha512-MRqH83PoBaAsz47nI2eMaRR118jS7aMHOUYkA74/PcvRqKxDdz/3Du89FC+ok+pI7IWPF7VbDyuJdVibuUk1ww==}
     engines: {node: '>=18'}
     peerDependencies:
       '@aws-lambda-powertools/logger': '*'
 
-  '@loglayer/transport-consola@2.0.1':
-    resolution: {integrity: sha512-oFlqs/qazOQS1IrgFCK/OJdnH3z2wjWIDlFw2ZU7qNbmcw27hglvQLsDtl3gGpu8/DhtQB3jUydXP4sv/hq7XA==}
+  '@loglayer/transport-consola@2.0.2':
+    resolution: {integrity: sha512-2y9EI3qiT7rv7BYSONqXoEqcDtGgnexEodopjLtOr5lLNHnjy4NLcj0zTcubAPOGEpkyDHC6G5nzHlNqyEXdLQ==}
     engines: {node: '>=18'}
     peerDependencies:
       consola: '*'
 
-  '@loglayer/transport-pino@2.0.1':
-    resolution: {integrity: sha512-TEn16Xjs/h/Te/EnRtpmMyLMEk/6QU4FrJamRl+JO+BFMuWbjIZlWyDU8jaFKf33g31m4QXSf6D1AHr0okxHYg==}
+  '@loglayer/transport-pino@2.0.2':
+    resolution: {integrity: sha512-C1BGVg2f4Z62Qa90VXB/zrU0pO6QXhEe6cqwZiLZmw1F1pcPfX8ErKJPISqejRH9mjPLfc66KS+8DF0qRXUlNg==}
     engines: {node: '>=18'}
     peerDependencies:
       pino: '*'
 
-  '@loglayer/transport@2.0.1':
-    resolution: {integrity: sha512-woJhmHNX44FCnaLEIXrvyX/bf16QIhTsgZ1n9s90BeUd/8Nv/vI47Lv4Enz1zIQidFqKPg3E78ZIPSaxE4oYEQ==}
+  '@loglayer/transport@2.0.2':
+    resolution: {integrity: sha512-UPco5+uKwSm/15E2vP4FFBMZG/7h4BurVPN49g3xzPFJJkaeqbpp8tzKzFhdbepuRylQXSmr8+2WGjlBcqrY1g==}
     engines: {node: '>=18'}
 
   '@napi-rs/wasm-runtime@0.2.4':
@@ -3700,8 +3703,8 @@ packages:
     resolution: {integrity: sha512-i24m8rpwhmPIS4zscNzK6MSEhk0DUWa/8iYQWxhffV8jkI4Phvs3F+quL5xvS0gdQR0FyTCMMH33Y78dDTzzIw==}
     engines: {node: '>=18'}
 
-  loglayer@6.1.1:
-    resolution: {integrity: sha512-ufprK+u/Nk7yg9Qbj9VcA30nailo8ZxK/MwRlU7Hk9nKSOsIwH4aKu00Qxv0Zc6VS223ZSP2+PKSkXyOWnF4TA==}
+  loglayer@6.1.3:
+    resolution: {integrity: sha512-/vAOpwgBUG99lgAATbhf49qjyBFUheOhz9L28Fy36NNiKMls24Oc6zdSVsaQo5Vp2i/5jkYjhFaAEy6yGOMPcA==}
     engines: {node: '>=18'}
 
   long@5.3.1:
@@ -5939,9 +5942,9 @@ snapshots:
       '@aws-lambda-powertools/logger': 2.14.0
       '@effect/platform': 0.77.2(effect@3.13.2)
       '@effect/platform-node': 0.73.2(@effect/platform@0.77.2(effect@3.13.2))(effect@3.13.2)
-      '@loglayer/transport-aws-lambda-powertools': 3.0.1(@aws-lambda-powertools/logger@2.14.0)
-      '@loglayer/transport-consola': 2.0.1(consola@3.4.0)
-      '@loglayer/transport-pino': 2.0.1(pino@9.6.0)
+      '@loglayer/transport-aws-lambda-powertools': 3.0.2(@aws-lambda-powertools/logger@2.14.0)
+      '@loglayer/transport-consola': 2.0.2(consola@3.4.0)
+      '@loglayer/transport-pino': 2.0.2(pino@9.6.0)
       '@stricli/core': 1.1.1
       better-sqlite3: 11.8.1
       consola: 3.4.0
@@ -5952,7 +5955,7 @@ snapshots:
       fs-extra: 11.3.0
       knex: 3.1.0(better-sqlite3@11.8.1)(pg@8.13.3)
       ksuid: 3.0.0
-      loglayer: 6.1.1
+      loglayer: 6.1.3
       pino: 9.6.0
       pino-pretty: 13.0.0
       serialize-error: 12.0.0
@@ -5973,14 +5976,14 @@ snapshots:
       - tedious
       - utf-8-validate
 
-  '@levicape/paloma@0.3.6-main.15(pg@8.13.3)':
+  '@levicape/paloma@0.3.7-main.16(pg@8.13.3)':
     dependencies:
       '@aws-lambda-powertools/logger': 2.14.0
       '@effect/platform': 0.77.2(effect@3.13.2)
       '@effect/platform-node': 0.73.2(@effect/platform@0.77.2(effect@3.13.2))(effect@3.13.2)
-      '@loglayer/transport-aws-lambda-powertools': 3.0.1(@aws-lambda-powertools/logger@2.14.0)
-      '@loglayer/transport-consola': 2.0.1(consola@3.4.0)
-      '@loglayer/transport-pino': 2.0.1(pino@9.6.0)
+      '@loglayer/transport-aws-lambda-powertools': 3.0.2(@aws-lambda-powertools/logger@2.14.0)
+      '@loglayer/transport-consola': 2.0.2(consola@3.4.0)
+      '@loglayer/transport-pino': 2.0.2(pino@9.6.0)
       '@stricli/core': 1.1.1
       better-sqlite3: 11.8.1
       consola: 3.4.0
@@ -5991,7 +5994,7 @@ snapshots:
       fs-extra: 11.3.0
       knex: 3.1.0(better-sqlite3@11.8.1)(pg@8.13.3)
       ksuid: 3.0.0
-      loglayer: 6.1.1
+      loglayer: 6.1.3
       pino: 9.6.0
       pino-pretty: 13.0.0
       serialize-error: 12.0.0
@@ -6012,11 +6015,11 @@ snapshots:
       - tedious
       - utf-8-validate
 
-  '@levicape/spork-atlas@0.6.3-main.15(pg@8.13.3)':
+  '@levicape/spork-atlas@0.6.4-main.16(pg@8.13.3)':
     dependencies:
       '@bufbuild/protobuf': 2.2.3
       '@levicape/paloma': 0.3.4-main.11(pg@8.13.3)
-      '@levicape/spork': 0.6.3-main.15
+      '@levicape/spork': 0.6.4-main.16
       destr: 2.0.3
       fs-extra: 11.3.0
       serialize-error: 12.0.0
@@ -6040,7 +6043,7 @@ snapshots:
       - tedious
       - utf-8-validate
 
-  '@levicape/spork@0.6.3-main.15':
+  '@levicape/spork@0.6.4-main.16':
     dependencies:
       '@aws-lambda-powertools/logger': 2.14.0
       '@aws-sdk/client-dynamodb': 3.751.0
@@ -6053,9 +6056,9 @@ snapshots:
       '@effect/platform-node': 0.73.2(@effect/platform@0.77.2(effect@3.13.2))(effect@3.13.2)
       '@hono/node-server': 1.13.8(hono@4.7.2)
       '@hono/zod-validator': 0.4.3(hono@4.7.2)(zod@3.24.2)
-      '@loglayer/transport-aws-lambda-powertools': 3.0.1(@aws-lambda-powertools/logger@2.14.0)
-      '@loglayer/transport-consola': 2.0.1(consola@3.4.0)
-      '@loglayer/transport-pino': 2.0.1(pino@9.6.0)
+      '@loglayer/transport-aws-lambda-powertools': 3.0.2(@aws-lambda-powertools/logger@2.14.0)
+      '@loglayer/transport-consola': 2.0.2(consola@3.4.0)
+      '@loglayer/transport-pino': 2.0.2(pino@9.6.0)
       '@stricli/core': 1.1.1
       chokidar: 4.0.3
       consola: 3.4.0
@@ -6063,7 +6066,7 @@ snapshots:
       hono: 4.7.2
       hono-rate-limiter: 0.4.2(hono@4.7.2)
       jsonwebtoken: 9.0.2
-      loglayer: 6.1.1
+      loglayer: 6.1.3
       pino: 9.6.0
       pino-pretty: 13.0.0
       serialize-error: 12.0.0
@@ -6082,34 +6085,34 @@ snapshots:
 
   '@logdna/tail-file@2.2.0': {}
 
-  '@loglayer/context-manager@1.0.1':
+  '@loglayer/context-manager@1.0.2':
     dependencies:
-      '@loglayer/shared': 2.1.0
+      '@loglayer/shared': 2.1.1
 
-  '@loglayer/plugin@2.0.1':
+  '@loglayer/plugin@2.0.2':
     dependencies:
-      '@loglayer/shared': 2.1.0
+      '@loglayer/shared': 2.1.1
 
-  '@loglayer/shared@2.1.0': {}
+  '@loglayer/shared@2.1.1': {}
 
-  '@loglayer/transport-aws-lambda-powertools@3.0.1(@aws-lambda-powertools/logger@2.14.0)':
+  '@loglayer/transport-aws-lambda-powertools@3.0.2(@aws-lambda-powertools/logger@2.14.0)':
     dependencies:
       '@aws-lambda-powertools/logger': 2.14.0
-      '@loglayer/transport': 2.0.1
+      '@loglayer/transport': 2.0.2
 
-  '@loglayer/transport-consola@2.0.1(consola@3.4.0)':
+  '@loglayer/transport-consola@2.0.2(consola@3.4.0)':
     dependencies:
-      '@loglayer/transport': 2.0.1
+      '@loglayer/transport': 2.0.2
       consola: 3.4.0
 
-  '@loglayer/transport-pino@2.0.1(pino@9.6.0)':
+  '@loglayer/transport-pino@2.0.2(pino@9.6.0)':
     dependencies:
-      '@loglayer/transport': 2.0.1
+      '@loglayer/transport': 2.0.2
       pino: 9.6.0
 
-  '@loglayer/transport@2.0.1':
+  '@loglayer/transport@2.0.2':
     dependencies:
-      '@loglayer/shared': 2.1.0
+      '@loglayer/shared': 2.1.1
 
   '@napi-rs/wasm-runtime@0.2.4':
     dependencies:
@@ -8584,12 +8587,12 @@ snapshots:
       chalk: 5.4.1
       is-unicode-supported: 1.3.0
 
-  loglayer@6.1.1:
+  loglayer@6.1.3:
     dependencies:
-      '@loglayer/context-manager': 1.0.1
-      '@loglayer/plugin': 2.0.1
-      '@loglayer/shared': 2.1.0
-      '@loglayer/transport': 2.0.1
+      '@loglayer/context-manager': 1.0.2
+      '@loglayer/plugin': 2.0.2
+      '@loglayer/shared': 2.1.1
+      '@loglayer/transport': 2.0.2
 
   long@5.3.1: {}
 

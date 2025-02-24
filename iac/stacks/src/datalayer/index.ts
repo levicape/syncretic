@@ -15,7 +15,7 @@ const EFS_ROOT_DIRECTORY = "/fourtwo";
 const EFS_MOUNT_PATH = "/mnt/efs";
 
 export = async () => {
-	const context = await Context.fromConfig();
+	const context = await Context.fromConfig({});
 	const _ = (name: string) => `${context.prefix}-${name}`;
 	const ec2 = (() => {
 		const vpc = new Vpc(

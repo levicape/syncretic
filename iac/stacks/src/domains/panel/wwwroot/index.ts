@@ -35,7 +35,6 @@ import { $deref, type DereferencedOutput } from "../../../Stack";
 import { FourtwoPanelHttpStackExportsZod } from "../http/exports";
 import { FourtwoPanelWebStackExportsZod } from "../web/exports";
 import { FourtwoPanelWWWRootExportsZod } from "./exports";
-// import { FourtwoPanelMonitorStackExportsZod } from "./exports";
 
 const WORKSPACE_PACKAGE_NAME = "@levicape/fourtwo";
 //
@@ -77,7 +76,7 @@ const STACKREF_CONFIG = {
 } as const;
 
 export = async () => {
-	const context = await Context.fromConfig();
+	const context = await Context.fromConfig({});
 	const _ = (name?: string) =>
 		name ? `${context.prefix}-${name}` : context.prefix;
 	const stage = CI.CI_ENVIRONMENT;

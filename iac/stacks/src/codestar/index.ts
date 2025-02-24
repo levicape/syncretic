@@ -9,7 +9,7 @@ import type { z } from "zod";
 import { FourtwoCodestarStackExportsZod } from "./exports";
 
 export = async () => {
-	const context = await Context.fromConfig();
+	const context = await Context.fromConfig({});
 	const _ = (name: string) => `${context.prefix}-${name}`;
 
 	const ecr = await (async () => {
