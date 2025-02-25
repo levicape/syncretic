@@ -38,6 +38,7 @@ import type { z } from "zod";
 import { AwsCodeBuildContainerRoundRobin } from "../../../RoundRobin";
 import type { LambdaRouteResource, Route } from "../../../RouteMap";
 import { $deref, type DereferencedOutput } from "../../../Stack";
+import { FourtwoApplicationStackExportsZod } from "../../../application/exports";
 import { FourtwoCodestarStackExportsZod } from "../../../codestar/exports";
 import { FourtwoDatalayerStackExportsZod } from "../../../datalayer/exports";
 import type { WWWIntraRoute } from "../../../wwwintra/routes";
@@ -59,6 +60,13 @@ const CI = {
 const STACKREF_ROOT = process.env["STACKREF_ROOT"] ?? "fourtwo";
 const STACKREF_CONFIG = {
 	[STACKREF_ROOT]: {
+		application: {
+			refs: {
+				servicecatalog:
+					FourtwoApplicationStackExportsZod.shape
+						.fourtwo_application_servicecatalog,
+			},
+		},
 		codestar: {
 			refs: {
 				codedeploy:
@@ -90,13 +98,20 @@ const ENVIRONMENT = (
 };
 
 export = async () => {
-	const context = await Context.fromConfig({});
-	const _ = (name: string) => `${context.prefix}-${name}`;
-	const stage = CI.CI_ENVIRONMENT;
-	const farRole = await getRole({ name: CI.CI_ACCESS_ROLE });
 	// Stack references
 	const dereferenced$ = await $deref(STACKREF_CONFIG);
 	const { codestar: __codestar, datalayer: __datalayer } = dereferenced$;
+
+	const context = await Context.fromConfig({
+		aws: {
+			awsApplication: dereferenced$.application.servicecatalog.application.tag,
+		},
+	});
+	const _ = (name: string) => `${context.prefix}-${name}`;
+	context.resourcegroups({ _ });
+
+	const stage = CI.CI_ENVIRONMENT;
+	const farRole = await getRole({ name: CI.CI_ACCESS_ROLE });
 
 	// Object Store
 	const s3 = (() => {

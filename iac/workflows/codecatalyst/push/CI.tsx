@@ -151,28 +151,66 @@ const cicd = <Preview extends boolean, Deploy extends boolean>(
 			{Object.entries(matrix.pipeline.install.npm).flatMap(
 				([name, { scope }]) => [
 					<CodeCatalystStepX
-						run={`npm config set ${scope}:registry=${env(`NPM_REGISTRY_PROTOCOL_${name}`)}://${env(`NPM_REGISTRY_HOST_${name}`)} --location project`}
-					/>,
-					<CodeCatalystStepX
-						run={`npm config set //${env(`NPM_REGISTRY_HOST_${name}`)}/:_authToken=${env(`NODE_AUTH_TOKEN_${name}`)} --location project`}
+						run={[
+							`npm config set ${scope}:registry=${env(`NPM_REGISTRY_PROTOCOL_${name}`)}://${env(`NPM_REGISTRY_HOST_${name}`)} --location project`,
+							`npm config set //${env(`NPM_REGISTRY_HOST_${name}`)}/:_authToken=${env(`NODE_AUTH_TOKEN_${name}`)} --location project`,
+						].join("; ")}
 					/>,
 				],
 			)}
 			{...(
 				<>
-					{["sudo ", ""]
-						.flatMap((su) => [
-							`${su}npm config set prefix=${NPM_GLOBAL_CACHE}`,
-							`${su}corepack -g install $PNPM_VERSION`,
-							`${su}corepack enable pnpm`,
-							`${su}pnpm config set cache-dir ${PNPM_DLX_CACHE}`,
-							`${su}pnpm config set global-dir ${PNPM_GLOBAL_CACHE}`,
-							`${su}pnpm config set store-dir ${PNPM_STORE_CACHE}`,
-							`${su}pnpx n $NODEJS_VERSION`,
-						])
-						.flatMap((run) => (
-							<CodeCatalystStepX run={run} />
-						))}
+					<CodeCatalystStepX
+						run={["sudo ", ""]
+							.flatMap((su) => [
+								`${su}npm config set prefix=${NPM_GLOBAL_CACHE}`,
+								`${su}corepack -g install $PNPM_VERSION`,
+								`${su}corepack enable pnpm`,
+								`${su}pnpm config set cache-dir ${PNPM_DLX_CACHE}`,
+								`${su}pnpm config set global-dir ${PNPM_GLOBAL_CACHE}`,
+								`${su}pnpm config set store-dir ${PNPM_STORE_CACHE}`,
+								`${su}pnpx n $NODEJS_VERSION`,
+							])
+							.map(
+								(c) =>
+									`echo '' && echo '>>>>>>>>>>>>>' && echo '${c}' && echo '' && ${c}`,
+							)
+							.join(";")}
+					/>
+					<CodeCatalystStepX
+						run={["sudo ", ""]
+							.flatMap((su) => [
+								`${su}npm config set prefix=${NPM_GLOBAL_CACHE}`,
+								`${su}corepack -g install $PNPM_VERSION`,
+								`${su}corepack enable pnpm`,
+								`${su}pnpm config set cache-dir ${PNPM_DLX_CACHE}`,
+								`${su}pnpm config set global-dir ${PNPM_GLOBAL_CACHE}`,
+								`${su}pnpm config set store-dir ${PNPM_STORE_CACHE}`,
+								`${su}pnpx n $NODEJS_VERSION`,
+							])
+							.map(
+								(c) =>
+									`echo '' && echo '>>>>>>>>>>>>>' && echo '${c}' && echo '' && ${c}`,
+							)
+							.join(";")}
+					/>
+					<CodeCatalystStepX
+						run={["sudo ", ""]
+							.flatMap((su) => [
+								`${su}npm config set prefix=${NPM_GLOBAL_CACHE}`,
+								`${su}corepack -g install $PNPM_VERSION`,
+								`${su}corepack enable pnpm`,
+								`${su}pnpm config set cache-dir ${PNPM_DLX_CACHE}`,
+								`${su}pnpm config set global-dir ${PNPM_GLOBAL_CACHE}`,
+								`${su}pnpm config set store-dir ${PNPM_STORE_CACHE}`,
+								`${su}pnpx n $NODEJS_VERSION`,
+							])
+							.map(
+								(c) =>
+									`echo '' && echo '>>>>>>>>>>>>>' && echo '${c}' && echo '' && ${c}`,
+							)
+							.join("; ")}
+					/>
 				</>
 			)}
 		</>
@@ -518,6 +556,10 @@ const cicd = <Preview extends boolean, Deploy extends boolean>(
 	  if [[ -n "$line" ]]; then
 		key="\${line%%=*}"
 		value="\${line#*=}"
+      	
+		# Expand variables in value
+		eval "value=\"$value\""
+		
 		if [[ -n "$key" && -n "$value" ]]; then
 		  echo "Setting $key to $value"
 		  $binary config set --path "$key" "$value" -C "$stack_cwd"

@@ -31,6 +31,7 @@ import type {
 	WebsiteManifest,
 } from "../../../RouteMap";
 import { $deref, type DereferencedOutput } from "../../../Stack";
+import { FourtwoApplicationStackExportsZod } from "../../../application/exports";
 import { FourtwoCodestarStackExportsZod } from "../../../codestar/exports";
 import { FourtwoDatalayerStackExportsZod } from "../../../datalayer/exports";
 import { FourtwoPanelHttpStackExportsZod } from "../http/exports";
@@ -43,6 +44,13 @@ const MANIFEST_PATH = "/_web/routemap.json" as const;
 const STACKREF_ROOT = process.env["STACKREF_ROOT"] ?? "fourtwo";
 const STACKREF_CONFIG = {
 	[STACKREF_ROOT]: {
+		application: {
+			refs: {
+				servicecatalog:
+					FourtwoApplicationStackExportsZod.shape
+						.fourtwo_application_servicecatalog,
+			},
+		},
 		codestar: {
 			refs: {
 				codedeploy:
@@ -74,15 +82,22 @@ const ROUTE_MAP = (
 };
 
 export = async () => {
-	const context = await Context.fromConfig({});
-	const _ = (name?: string) =>
-		name ? `${context.prefix}-${name}` : context.prefix;
-	const stage = process.env.CI_ENVIRONMENT ?? "unknown";
-	const farRole = await getRole({ name: "FourtwoAccessRole" });
-
 	// Stack references
 	const dereferenced$ = await $deref(STACKREF_CONFIG);
 	const { codestar, datalayer } = dereferenced$;
+
+	const context = await Context.fromConfig({
+		aws: {
+			awsApplication: dereferenced$.application.servicecatalog.application.tag,
+		},
+	});
+	const _ = (name?: string) =>
+		name ? `${context.prefix}-${name}` : context.prefix;
+	context.resourcegroups({ _ });
+
+	const stage = process.env.CI_ENVIRONMENT ?? "unknown";
+	const farRole = await getRole({ name: "FourtwoAccessRole" });
+
 	const routemap = ROUTE_MAP(dereferenced$);
 
 	// Object Store

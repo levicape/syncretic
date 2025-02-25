@@ -1,5 +1,6 @@
 import { inspect } from "node:util";
 import { getCallerIdentity } from "@pulumi/aws/getCallerIdentity.js";
+import { Group } from "@pulumi/aws/resourcegroups/group.js";
 import { Config, getProject, getStack } from "@pulumi/pulumi/index.js";
 import { debug } from "@pulumi/pulumi/log/index.js";
 import { registerStackTransformation } from "@pulumi/pulumi/runtime/index.js";
@@ -48,6 +49,36 @@ export class Context {
 		readonly prefix: string,
 		readonly frontend?: FrontendContext,
 	) {}
+
+	public resourcegroups(props: {
+		_: (name: string) => string;
+	}) {
+		const _ = props._;
+		const group = (
+			name: string,
+			props: {
+				resourceQuery: {
+					type: string;
+					query: string;
+				};
+			},
+		) => {
+			return {
+				group: new Group(_(name), props),
+			};
+		};
+		return {
+			stack: group("resources", {
+				resourceQuery: {
+					type: "TAG_FILTERS_1_0",
+					query: JSON.stringify({
+						ResourceTypeFilters: ["AWS::AllSupported"],
+						TagFilters: [{ Key: Context._PREFIX_TAG, Values: [this.prefix] }],
+					}),
+				},
+			}),
+		};
+	}
 
 	static async fromConfig(props: ContextFromConfigProps): Promise<Context> {
 		const { environment } = new Config(CONFIG_NAMESPACE).requireObject<Stack>(

@@ -40,6 +40,7 @@ import { stringify } from "yaml";
 import type { z } from "zod";
 import { AwsCodeBuildContainerRoundRobin } from "../../../RoundRobin";
 import { $deref, type DereferencedOutput } from "../../../Stack";
+import { FourtwoApplicationStackExportsZod } from "../../../application/exports";
 import { FourtwoCodestarStackExportsZod } from "../../../codestar/exports";
 import { FourtwoDatalayerStackExportsZod } from "../../../datalayer/exports";
 import { FourtwoPanelHttpStackExportsZod } from "../http/exports";
@@ -88,6 +89,13 @@ const CI = {
 const STACKREF_ROOT = process.env["STACKREF_ROOT"] ?? "fourtwo";
 const STACKREF_CONFIG = {
 	[STACKREF_ROOT]: {
+		application: {
+			refs: {
+				servicecatalog:
+					FourtwoApplicationStackExportsZod.shape
+						.fourtwo_application_servicecatalog,
+			},
+		},
 		codestar: {
 			refs: {
 				codedeploy:
@@ -124,15 +132,25 @@ const STACKREF_CONFIG = {
 const ATLASFILE_PATH = `atlasfile.json`;
 
 export = async () => {
-	const context = await Context.fromConfig({});
-	const _ = (name?: string) =>
-		name ? `${context.prefix}-${name}` : context.prefix;
-	const stage = CI.CI_ENVIRONMENT;
-	const farRole = await getRole({ name: CI.CI_ACCESS_ROLE });
-
 	// Stack references
 	const dereferenced$ = await $deref(STACKREF_CONFIG);
-	const { codestar: $codestar, datalayer: $datalayer } = dereferenced$;
+	const {
+		codestar: $codestar,
+		datalayer: $datalayer,
+		application: $application,
+	} = dereferenced$;
+
+	const context = await Context.fromConfig({
+		aws: {
+			awsApplication: $application.servicecatalog.application.tag,
+		},
+	});
+	const _ = (name?: string) =>
+		name ? `${context.prefix}-${name}` : context.prefix;
+	context.resourcegroups({ _ });
+
+	const stage = CI.CI_ENVIRONMENT;
+	const farRole = await getRole({ name: CI.CI_ACCESS_ROLE });
 
 	// Object Store
 	const s3 = (() => {

@@ -6,11 +6,33 @@ import { getLifecyclePolicyDocument } from "@pulumi/aws/ecr/getLifecyclePolicyDo
 import { RepositoryPolicy } from "@pulumi/aws/ecr/repositoryPolicy";
 import { all } from "@pulumi/pulumi/output";
 import type { z } from "zod";
+import { $deref } from "../Stack";
+import { FourtwoApplicationStackExportsZod } from "../application/exports";
 import { FourtwoCodestarStackExportsZod } from "./exports";
 
+const STACKREF_ROOT = process.env["STACKREF_ROOT"] ?? "fourtwo";
+const STACKREF_CONFIG = {
+	[STACKREF_ROOT]: {
+		application: {
+			refs: {
+				servicecatalog:
+					FourtwoApplicationStackExportsZod.shape
+						.fourtwo_application_servicecatalog,
+			},
+		},
+	},
+};
+
 export = async () => {
-	const context = await Context.fromConfig({});
+	// Stack references
+	const dereferenced$ = await $deref(STACKREF_CONFIG);
+	const context = await Context.fromConfig({
+		aws: {
+			awsApplication: dereferenced$.application.servicecatalog.application.tag,
+		},
+	});
 	const _ = (name: string) => `${context.prefix}-${name}`;
+	context.resourcegroups({ _ });
 
 	const ecr = await (async () => {
 		const repository = new ECRRepository(_("binaries"));
