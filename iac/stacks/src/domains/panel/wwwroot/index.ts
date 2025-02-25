@@ -32,6 +32,7 @@ import {
 } from "../../../Cloudfront";
 import { AwsCodeBuildContainerRoundRobin } from "../../../RoundRobin";
 import { $deref, type DereferencedOutput } from "../../../Stack";
+import { FourtwoApplicationStackExportsZod } from "../../../application/exports";
 import { FourtwoPanelHttpStackExportsZod } from "../http/exports";
 import { FourtwoPanelWebStackExportsZod } from "../web/exports";
 import { FourtwoPanelWWWRootExportsZod } from "./exports";
@@ -57,6 +58,13 @@ const CI = {
 const STACKREF_ROOT = process.env["STACKREF_ROOT"] ?? "fourtwo";
 const STACKREF_CONFIG = {
 	[STACKREF_ROOT]: {
+		application: {
+			refs: {
+				servicecatalog:
+					FourtwoApplicationStackExportsZod.shape
+						.fourtwo_application_servicecatalog,
+			},
+		},
 		["panel-http"]: {
 			refs: {
 				cloudmap:
@@ -76,15 +84,20 @@ const STACKREF_CONFIG = {
 } as const;
 
 export = async () => {
-	const context = await Context.fromConfig({});
-	const _ = (name?: string) =>
-		name ? `${context.prefix}-${name}` : context.prefix;
-	const stage = CI.CI_ENVIRONMENT;
-	const farRole = await getRole({ name: CI.CI_ACCESS_ROLE });
-
 	// Stack references
 	const dereferenced$ = await $deref(STACKREF_CONFIG);
 	const routes = ROUTE_MAP(dereferenced$);
+
+	const context = await Context.fromConfig({
+		aws: {
+			awsApplication: dereferenced$.application.servicecatalog.application.tag,
+		},
+	});
+	const _ = (name?: string) =>
+		name ? `${context.prefix}-${name}` : context.prefix;
+	context.resourcegroups({ _ });
+
+	const farRole = await getRole({ name: CI.CI_ACCESS_ROLE });
 
 	////////
 	// Origins

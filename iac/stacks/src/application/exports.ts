@@ -6,23 +6,25 @@ export const FourtwoApplicationStackExportsZod = z.object({
 			arn: z.string(),
 			id: z.string(),
 			name: z.string(),
+			tag: z.string(),
 		}),
 	}),
-	fourtwo_application_costexplorer: z.record(
+	fourtwo_application_resourcegroups: z.record(
 		z.object({
-			$kind: z.literal("tag"),
-			tag: z.object({
-				status: z.string(),
-				key: z.string(),
-				type: z.string().optional(),
+			group: z.object({
+				arn: z.string(),
+				id: z.string(),
+				name: z.string(),
 			}),
 		}),
 	),
-	// fourtwo_application_resourcegroups: z.record(
-	// 	z.object({
-	// 		arn: z.string(),
-	// 		name: z.string(),
-	// 		id: z.string(),
-	// 	}),
-	// ),
+	fourtwo_application_sns: z.record(
+		z.object({
+			topic: z.object({
+				arn: z.string(),
+				name: z.string(),
+				id: z.string(),
+			}),
+		}),
+	),
 });

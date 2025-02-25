@@ -7,6 +7,7 @@ type NotificationType = "ACTUAL" | "FORECASTED";
 type BudgetFactoryProps<
 	TU extends TimeUnit = TimeUnit extends "DAILY" ? never : TimeUnit,
 > = {
+	subscriberSnsTopicArns: string[];
 	timeUnit: TU;
 	limitAmount: `${number}`;
 	threshold: number;
@@ -16,12 +17,19 @@ export class BudgetFactory {
 	static of = (
 		name: string,
 		context: Context,
-		{ timeUnit, limitAmount, threshold, notificationType }: BudgetFactoryProps,
-		{ parent }: ComponentResourceOptions,
+		{
+			timeUnit,
+			limitAmount,
+			threshold,
+			notificationType,
+			subscriberSnsTopicArns,
+		}: BudgetFactoryProps,
+		componentOpts?: ComponentResourceOptions,
 	): Budget => {
 		const { prefix } = context;
+		const { parent } = componentOpts ?? {};
 		return new Budget(
-			`${name}-Budget`,
+			name,
 			{
 				budgetType: "COST",
 				limitUnit: "USD",
@@ -39,26 +47,18 @@ export class BudgetFactory {
 						threshold: Math.max(threshold - 2, 1),
 						thresholdType: "ABSOLUTE_VALUE",
 						notificationType,
-						subscriberEmailAddresses: [
-							"pedro+goland@evermagica.com",
-							"omegatitan+goland@gmail.com",
-						],
+						subscriberSnsTopicArns,
 					},
 					{
 						comparisonOperator: "GREATER_THAN",
 						threshold: Math.max(threshold, 1),
 						notificationType,
 						thresholdType: "ABSOLUTE_VALUE",
-						subscriberEmailAddresses: [
-							"pedro+goland@evermagica.com",
-							"omegatitan+goland@gmail.com",
-						],
+						subscriberSnsTopicArns,
 					},
 				],
 			},
 			{ parent },
 		);
 	};
-
-	private _uid = Date.now().toString();
 }
