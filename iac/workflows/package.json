@@ -38,7 +38,7 @@
     "ft:gha:dispatch:cd": "$npm_package_config_packagemanager run dx:bin github workflows gen \"'$npm_package_config_ghapath/workflow_dispatch/CD.js'\" --output --write",
     "ft:gha:dispatch:runner:publish:npm": "$npm_package_config_packagemanager run dx:bin github workflows gen \"'$npm_package_config_ghapath/workflow_dispatch/Publish to npm.js'\" --output",
     "ft:gha:push:main": "$npm_package_config_packagemanager run dx:bin github workflows gen \"'$npm_package_config_ghapath/push/CI.js'\" --output --write",
-    "ft:gha:release:released": "$npm_package_config_packagemanager run dx:bin github workflows gen \"'$npm_package_config_ghapath/release/Publish tagged module to npm.js'\" --output --write"
+    "ft:gha:release:released": "$npm_package_config_packagemanager run dx:bin github workflows gen \"'$npm_package_config_ghapath/release/Publish to Github.js'\" --output --write"
   },
   "type": "module"
 }

@@ -10,6 +10,7 @@ import {
 } from "../../../server/logging/LoggingContext.mjs";
 import type {
 	GithubOnPushSpec,
+	GithubOnScheduleSpec,
 	GithubPullRequestSpec,
 	GithubWorkflowBuilder,
 } from "../../cd/pipeline/github/GithubWorkflowBuilder.mjs";
@@ -156,8 +157,12 @@ export const GenerateGithubWorkflow = async function* () {
 
 			if (name === "schedule") {
 				named += `[schedule`;
-				let schedule = (value as string).replaceAll(" ", "_");
-				named += `(${schedule})`;
+				let schedule = value as GithubOnScheduleSpec;
+				if (!Array.isArray(schedule) || schedule.length === 0) {
+					throw new VError("Schedule workflows must have at least one element");
+				}
+				let text = schedule.find(() => true)?.cron.replaceAll(" ", "_");
+				named += `(${text ?? "cron"})`;
 				named += `]`;
 			}
 
@@ -185,6 +190,9 @@ export const GenerateGithubWorkflow = async function* () {
 		filename = `${named} - ${basename(source, extname(source))} - [${rendered.name}].yml`;
 	}
 
+	console.warn({
+		rendered: rendered.on,
+	});
 	const yaml = stringify(rendered, {
 		collectionStyle: "block",
 		aliasDuplicateObjects: false,

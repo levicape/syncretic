@@ -1,0 +1,231 @@
+########################################
+# THIS FILE WAS AUTOMATICALLY GENERATED, DO NOT MODIFY
+########################################
+name: "@levicape"
+on:
+  release:
+    types:
+      - released
+env:
+  NPM_REGISTRY_PROTOCOL: https
+  NPM_REGISTRY_HOST: npm.pkg.github.com
+jobs:
+  publish_fourtwo:
+    name: "@levicape/fourtwo: Compile and publish to Github"
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+    steps:
+      - name: Verify registry URL
+        continue-on-error: true
+        run: |-
+          echo "NPM_REGISTRY_URL: ${{ env.NPM_REGISTRY_PROTOCOL }}://${{ env.NPM_REGISTRY_HOST }}";
+          curl -v --insecure ${{ env.NPM_REGISTRY_PROTOCOL }}://${{ env.NPM_REGISTRY_HOST }};
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+      - name: Setup Node 22.12.0
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.12.0
+          registry-url: ${{ env.NPM_REGISTRY_PROTOCOL }}://${{ env.NPM_REGISTRY_HOST }}
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+          scope: "@levicape"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - id: cache-npm
+        name: Cache node modules
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-build-npm-node-modules-${{ hashFiles('**/pnpm-lock.json') }}
+          restore-keys: ${{ runner.os }}-build-npm-node-modules-
+      - name: Get pnpm store directory
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV;
+      - id: cache-pnpm-store
+        name: Cache pnpm files
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.json') }}
+          restore-keys: ${{ runner.os }}-pnpm-store-
+      - if: ${{ steps.cache-npm.outputs.cache-hit != 'true' }}
+        name: List Dependencies
+        continue-on-error: true
+        run: pnpm list;
+      - name: Install Dependencies
+        run: pnpm install;
+      - name: "Run package.json: build"
+        run: pnpm run build;
+      - name: "Run package.json: lint"
+        run: pnpm run lint;
+      - name: "Run package.json: test"
+        run: pnpm run test;
+      - name: "Run package.json: prepublish"
+        run: pnpm run prepublish;
+      - name: Increment version
+        env:
+          RELEVANT_SHA: ${{ github.event.release.target_commitish || github.sha }}
+        run: |-
+          export PREID=$RELEVANT_SHA;
+          export PREID=${PREID:0:10};
+          export ARGS="--git-tag-version=false --commit-hooks=false";
+          npm version ${{ github.event.release.tag_name }}-$PREID.${{ github.run_number }} $ARGS --allow-same-version;
+      - if: success()
+        name: Publish to npm
+        continue-on-error: true
+        run: pnpm publish --no-git-checks;
+  publish_fourtwo-pulumi:
+    name: "@levicape/fourtwo-pulumi: Compile and publish to Github"
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+    defaults:
+      run:
+        working-directory: packages/pulumi
+    steps:
+      - name: Verify registry URL
+        continue-on-error: true
+        run: |-
+          echo "NPM_REGISTRY_URL: ${{ env.NPM_REGISTRY_PROTOCOL }}://${{ env.NPM_REGISTRY_HOST }}";
+          curl -v --insecure ${{ env.NPM_REGISTRY_PROTOCOL }}://${{ env.NPM_REGISTRY_HOST }};
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+      - name: Setup Node 22.12.0
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.12.0
+          registry-url: ${{ env.NPM_REGISTRY_PROTOCOL }}://${{ env.NPM_REGISTRY_HOST }}
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+          scope: "@levicape"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - id: cache-npm
+        name: Cache node modules
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-build-npm-node-modules-${{ hashFiles('**/pnpm-lock.json') }}
+          restore-keys: ${{ runner.os }}-build-npm-node-modules-
+      - name: Get pnpm store directory
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV;
+      - id: cache-pnpm-store
+        name: Cache pnpm files
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.json') }}
+          restore-keys: ${{ runner.os }}-pnpm-store-
+      - if: ${{ steps.cache-npm.outputs.cache-hit != 'true' }}
+        name: List Dependencies
+        continue-on-error: true
+        run: pnpm list;
+      - name: Install Dependencies
+        run: pnpm install;
+      - name: "Run package.json: build"
+        run: pnpm run build;
+      - name: "Run package.json: lint"
+        run: pnpm run lint;
+      - name: "Run package.json: test"
+        run: pnpm run test;
+      - name: "Run package.json: prepublish"
+        run: pnpm run prepublish;
+      - name: Increment version
+        env:
+          RELEVANT_SHA: ${{ github.event.release.target_commitish || github.sha }}
+        run: |-
+          export PREID=$RELEVANT_SHA;
+          export PREID=${PREID:0:10};
+          export ARGS="--git-tag-version=false --commit-hooks=false";
+          npm version ${{ github.event.release.tag_name }}-$PREID.${{ github.run_number }} $ARGS --allow-same-version;
+      - if: success()
+        name: Publish to npm
+        continue-on-error: true
+        run: pnpm publish --no-git-checks;
+  publish_fourtwo-builders:
+    name: "@levicape/fourtwo-builders: Compile and publish to Github"
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+    defaults:
+      run:
+        working-directory: packages/builders
+    steps:
+      - name: Verify registry URL
+        continue-on-error: true
+        run: |-
+          echo "NPM_REGISTRY_URL: ${{ env.NPM_REGISTRY_PROTOCOL }}://${{ env.NPM_REGISTRY_HOST }}";
+          curl -v --insecure ${{ env.NPM_REGISTRY_PROTOCOL }}://${{ env.NPM_REGISTRY_HOST }};
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+      - name: Setup Node 22.12.0
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.12.0
+          registry-url: ${{ env.NPM_REGISTRY_PROTOCOL }}://${{ env.NPM_REGISTRY_HOST }}
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+          scope: "@levicape"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - id: cache-npm
+        name: Cache node modules
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-build-npm-node-modules-${{ hashFiles('**/pnpm-lock.json') }}
+          restore-keys: ${{ runner.os }}-build-npm-node-modules-
+      - name: Get pnpm store directory
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV;
+      - id: cache-pnpm-store
+        name: Cache pnpm files
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.json') }}
+          restore-keys: ${{ runner.os }}-pnpm-store-
+      - if: ${{ steps.cache-npm.outputs.cache-hit != 'true' }}
+        name: List Dependencies
+        continue-on-error: true
+        run: pnpm list;
+      - name: Install Dependencies
+        run: pnpm install;
+      - name: "Run package.json: build"
+        run: pnpm run build;
+      - name: "Run package.json: lint"
+        run: pnpm run lint;
+      - name: "Run package.json: test"
+        run: pnpm run test;
+      - name: "Run package.json: prepublish"
+        run: pnpm run prepublish;
+      - name: Increment version
+        env:
+          RELEVANT_SHA: ${{ github.event.release.target_commitish || github.sha }}
+        run: |-
+          export PREID=$RELEVANT_SHA;
+          export PREID=${PREID:0:10};
+          export ARGS="--git-tag-version=false --commit-hooks=false";
+          npm version ${{ github.event.release.tag_name }}-$PREID.${{ github.run_number }} $ARGS --allow-same-version;
+      - if: success()
+        name: Publish to npm
+        continue-on-error: true
+        run: pnpm publish --no-git-checks;
+
+########################################
+########################################
+#**:_$~- {"$$":"head","filename":"[release(released)] - Publish to Github - [@levicape].yml","source":"iac/workflows/github/release/Publish to Github.js"}
+#**:_$~- {"$$":"script","generator":"codegen/github/GenerateGithubWorkflow.mts"}
+#**:_$~- {"$$":"body","hashed":"45b8bf2c760278468adc944ebe18c7360bb020ce5259b274e3270d443417c616"}
+#**:_$~- {"$$":"footer","started":"2025-03-08T19:46:49.480Z","now":"2025-03-08T19:46:49.488Z","elapsed":"8ms"}
+# END OF GENERATED FILE
+
