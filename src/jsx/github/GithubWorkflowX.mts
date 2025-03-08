@@ -14,6 +14,7 @@ export type GithubWorkflowXProps<Uses extends string, With extends string> = {
 	concurrency?: number;
 	packages?: "read" | "write";
 	contents?: "read" | "write";
+	["id-token"]?: "read" | "write";
 };
 
 export const GithubWorkflowX = <
@@ -28,14 +29,15 @@ export const GithubWorkflowX = <
 	concurrency,
 	packages,
 	contents,
+	["id-token"]: idToken,
 }: GithubWorkflowXProps<Uses, With>): GithubWorkflowBuilder<Uses, With> => {
 	const factory = new GithubWorkflowBuilder<Uses, With>(name);
 	defaults && factory.setDefaults(defaults);
 	concurrency && factory.setConcurrency(concurrency);
 	factory.setOn(on);
 
-	if (packages || contents) {
-		factory.setPermissions({ packages, contents });
+	if (packages || contents || idToken) {
+		factory.setPermissions({ packages, contents, ["id-token"]: idToken });
 	}
 
 	if (children) {

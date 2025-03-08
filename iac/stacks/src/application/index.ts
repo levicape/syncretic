@@ -1,11 +1,13 @@
-import { Context } from "@levicape/fourtwo-pulumi";
-import { Budget } from "@pulumi/aws/budgets/budget";
-import { Group } from "@pulumi/aws/resourcegroups";
-import { AppregistryApplication } from "@pulumi/aws/servicecatalog";
-import { Topic } from "@pulumi/aws/sns/topic";
-import { type Input, all } from "@pulumi/pulumi";
+import { inspect } from "node:util";
+import { Context } from "@levicape/fourtwo-pulumi/commonjs/context/Context.cjs";
+import { Budget } from "@pulumi/aws/budgets/budget.js";
+import { Group } from "@pulumi/aws/resourcegroups/group.js";
+import { AppregistryApplication } from "@pulumi/aws/servicecatalog/appregistryapplication.js";
+import { Topic } from "@pulumi/aws/sns/topic.js";
+import { type Input, all } from "@pulumi/pulumi/index.js";
+import { error, warn } from "@pulumi/pulumi/log/index";
 import type { z } from "zod";
-import { FourtwoApplicationStackExportsZod } from "./exports";
+import { FourtwoApplicationStackExportsZod } from "./exports.ts";
 
 export = async () => {
 	const context = await Context.fromConfig({});
@@ -65,6 +67,8 @@ export = async () => {
 		};
 		return {
 			billing: topic("billing"),
+			catalog: topic("catalog"),
+			changes: topic("changes"),
 			operations: topic("operations"),
 		};
 	})();
@@ -128,10 +132,10 @@ export = async () => {
 				notificationType: "ACTUAL",
 				subscriberSnsTopicArns: [sns.billing.arn],
 			}),
-			daily_forecasted: budget("daily-forecasted", {
-				limitAmount: "9",
-				timeUnit: "DAILY",
-				threshold: 2,
+			monthly_forecasted: budget("monthly-forecasted", {
+				limitAmount: "29",
+				timeUnit: "MONTHLY",
+				threshold: 13,
 				notificationType: "FORECASTED",
 				subscriberSnsTopicArns: [sns.billing.arn],
 			}),
@@ -166,22 +170,24 @@ export = async () => {
 	const resourcegroupsOutput = all(
 		Object.entries(resourcegroups).map(([name, group]) => {
 			return all([
-				name,
 				group.group.arn,
 				group.group.name,
 				group.group.id,
 				group.group.resourceQuery,
-			]).apply(([_name, groupArn, groupName, groupId]) => {
-				return {
-					arn: groupArn,
-					name: groupName,
-					id: groupId,
-				};
+			]).apply(([groupArn, groupName, groupId]) => {
+				return [
+					name,
+					{
+						arn: groupArn,
+						name: groupName,
+						id: groupId,
+					},
+				] as const;
 			});
 		}),
 	).apply((groups) => {
 		return Object.fromEntries(
-			Object.entries(groups).map(([name, group]) => {
+			groups.map(([name, group]) => {
 				return [
 					name,
 					{
@@ -198,19 +204,22 @@ export = async () => {
 
 	const snsOutput = all(
 		Object.entries(sns).map(([name, topic]) => {
-			return all([name, topic.arn, topic.name, topic.id]).apply(
-				([_name, topicArn, topicName, topicId]) => {
-					return {
-						arn: topicArn,
-						name: topicName,
-						id: topicId,
-					};
+			return all([topic.arn, topic.name, topic.id]).apply(
+				([topicArn, topicName, topicId]) => {
+					return [
+						name,
+						{
+							arn: topicArn,
+							name: topicName,
+							id: topicId,
+						},
+					] as const;
 				},
 			);
 		}),
 	).apply((topics) => {
 		return Object.fromEntries(
-			Object.entries(topics).map(([name, topic]) => {
+			topics.map(([name, topic]) => {
 				return [
 					name,
 					{
@@ -235,9 +244,8 @@ export = async () => {
 
 			const validate = FourtwoApplicationStackExportsZod.safeParse(exported);
 			if (!validate.success) {
-				process.stderr.write(
-					`Validation failed: ${JSON.stringify(validate.error, null, 2)}`,
-				);
+				error(`Validation failed: ${JSON.stringify(validate.error, null, 2)}`);
+				warn(inspect(exported, { depth: null }));
 			}
 			return exported;
 		},

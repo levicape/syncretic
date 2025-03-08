@@ -18,3 +18,5 @@ ignores:
 - "ts-proto"
 - "ulid"
 - "verror"
+########## ui
+- "@cloudscape-design/*"

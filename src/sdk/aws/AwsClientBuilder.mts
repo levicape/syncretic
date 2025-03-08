@@ -5,7 +5,11 @@ import { parse as parseIni } from "ini";
 import VError from "verror";
 import { z } from "zod";
 
+import { AwsClient } from "aws4fetch";
+import { env } from "std-env";
 import { AwsEnvironment } from "./AwsEnvironment.mjs";
+import { AwsSso } from "./clients/AwsSso.mjs";
+import { getSSOCredentialProvider } from "./credentials/sso/AwsSsoCredentials.mjs";
 
 export type AWSCredentials = {
 	accessKeyId: string;
@@ -18,11 +22,12 @@ export type AWSCredentials = {
 	| { $kind: "profile"; profile: string }
 	| { $kind: "environment" }
 	| { $kind: "ecr" }
+	| { $kind: "sso" }
 );
 
 export class AwsClientBuilder {
 	static containerCredentials = async () => {
-		const envs = AwsEnvironment.parse(process.env);
+		const envs = AwsEnvironment.parse(env);
 		if (envs.AWS_CONTAINER_CREDENTIALS_FULL_URI) {
 			const parsed = new URL(envs.AWS_CONTAINER_CREDENTIALS_FULL_URI);
 			parsed.hostname = parsed.hostname.replace(/^\[(.+)\]$/, "$1");
@@ -52,41 +57,67 @@ export class AwsClientBuilder {
 		return undefined;
 	};
 
+	static getSSOCredentials = async () => {
+		const credentials = await getSSOCredentialProvider({})();
+		return {
+			$kind: "sso",
+			accessKeyId: credentials.accessKeyId,
+			secretAccessKey: credentials.secretAccessKey,
+			sessionToken: credentials.sessionToken,
+			expiration: credentials.expiration,
+		} as AWSCredentials;
+	};
+
 	static getAWSCredentials = async (
 		profileOverride?: string,
 		pathOverride?: string,
 	): Promise<AWSCredentials> => {
-		const { AWS_ACCESS_KEY_ID, AWS_EXECUTION_ENV, AWS_SECRET_ACCESS_KEY } =
-			process.env;
+		const awsCredentialsPath =
+			pathOverride ||
+			env.AWS_CREDENTIALS_PATH ||
+			resolve(homedir(), "./.aws/credentials");
+		const awsCredentialsProfile =
+			profileOverride ||
+			env.AWS_PROFILE ||
+			env.AWS_DEFAULT_PROFILE ||
+			"default";
+
+		// Process Resolver
+		const {
+			AWS_ACCESS_KEY_ID,
+			AWS_EXECUTION_ENV,
+			AWS_SECRET_ACCESS_KEY,
+			AWS_SESSION_TOKEN,
+		} = env;
+
 		if (AWS_ACCESS_KEY_ID && AWS_SECRET_ACCESS_KEY) {
 			return {
 				$kind: "environment",
 				accessKeyId: AWS_ACCESS_KEY_ID,
 				secretAccessKey: AWS_SECRET_ACCESS_KEY,
+				sessionToken: AWS_SESSION_TOKEN,
 			};
 		}
 
 		if (AWS_EXECUTION_ENV !== undefined) {
+			// Container Resolver
 			const containerCredentials =
 				await AwsClientBuilder.containerCredentials();
+
 			if (containerCredentials) {
 				return containerCredentials;
 			}
 		}
-
-		const awsCredentialsPath =
-			pathOverride ||
-			process.env.AWS_CREDENTIALS_PATH ||
-			resolve(homedir(), "./.aws/credentials");
-		const awsCredentialsProfile =
-			profileOverride ||
-			process.env.AWS_PROFILE ||
-			process.env.AWS_DEFAULT_PROFILE ||
-			"default";
 		const rawData = await readFile(awsCredentialsPath, "utf8");
 		const credentialsData = parseIni(rawData);
 
 		if (!credentialsData || !credentialsData[awsCredentialsProfile]) {
+			// SSO Resolver
+			const ssoCredentials = await AwsClientBuilder.getSSOCredentials();
+			if (ssoCredentials) {
+				return ssoCredentials;
+			}
+
 			throw new VError(
 				`Failed getting credentials: No profile found for profile: ${awsCredentialsProfile}. 
 				Available profiles: ${Object.keys(credentialsData).join(", ")}`,

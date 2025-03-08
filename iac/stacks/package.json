@@ -16,6 +16,7 @@
     "@pulumi/command": "catalog:pulumi",
     "@pulumi/docker-build": "catalog:pulumi",
     "@pulumi/pulumi": "catalog:pulumi",
+    "@pulumi/random": "catalog:pulumi",
     "destr": "catalog:parse-json",
     "serialize-error": "catalog:error",
     "ts-node": "catalog:dev",
@@ -34,14 +35,13 @@
   "nx": {
     "targets": {
       "nx:compile": {
-        "dependsOn": [
-          "@levicape/fourtwo-pulumi:nx:compile",
-          "@levicape/fourtwo-builders:nx:compile"
-        ]
+        "dependsOn": []
       },
       "dx:precommit": {
         "dependsOn": [
-          "dx:prepublish"
+          "dx:prepublish",
+          "@levicape/fourtwo-pulumi:build:module",
+          "@levicape/fourtwo-builders:build:module"
         ]
       }
     }

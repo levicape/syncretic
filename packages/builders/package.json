@@ -1,5 +1,6 @@
 {
   "name": "@levicape/fourtwo-builders",
+  "description": "This package reexports builder classes from the @levicape/fourtwo package in a .cjs barrel file and was created to bridge the gap when importing these classes in a default Pulumi typescript project. Use only if you are having difficulty with importing @levicape/fourtwo classes.",
   "version": "0.0.0-local.0",
   "author": "Pedro Cardona",
   "config": {
@@ -26,7 +27,9 @@
   "engines": {
     "node": "^22"
   },
-  "exports": "./commonjs/index.js",
+  "exports": {
+    "./*": "./*"
+  },
   "files": [
     "commonjs"
   ],
@@ -122,5 +125,5 @@
     "test": "$npm_package_config_packageexecutor nx nx:test"
   },
   "type": "commonjs",
-  "types": "./commonjs/index.d.ts"
+  "types": "./commonjs/index.d.cts"
 }

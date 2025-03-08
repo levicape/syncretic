@@ -1,0 +1,233 @@
+########################################
+# THIS FILE WAS AUTOMATICALLY GENERATED, DO NOT MODIFY
+########################################
+name: "Dispatch: Delete"
+on:
+  workflow_dispatch:
+    {}
+env:
+  NPM_REGISTRY_PROTOCOL: https
+  NPM_REGISTRY_HOST: npm.pkg.github.com
+  NODE_NO_WARNINGS: "1"
+  NPM_CONFIG_UPDATE_NOTIFIER: "false"
+  FRONTEND_HOSTNAME: at.levicape.cloud
+  PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
+  APPLICATION_IMAGE_NAME: fourtwo
+  CI_ENVIRONMENT: elm_pst_4
+  AWS_PAGER: ""
+  AWS_REGION: us-west-2
+  AWS_PROFILE: elm_pst_4
+jobs:
+  delete:
+    name: Delete Pulumi Stacks
+    runs-on: act-darwin-a64-atoko
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+      - name: Setup Node 22.13.0
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.13.0
+          registry-url: ${{ env.NPM_REGISTRY_PROTOCOL }}://${{ env.NPM_REGISTRY_HOST }}
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+          scope: "@levicape"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - id: cache-npm
+        name: Cache node modules
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-build-npm-node-modules-${{ hashFiles('**/pnpm-lock.json') }}
+          restore-keys: ${{ runner.os }}-build-npm-node-modules-
+      - name: Get pnpm store directory
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV;
+      - id: cache-pnpm-store
+        name: Cache pnpm files
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.json') }}
+          restore-keys: ${{ runner.os }}-pnpm-store-
+      - name: Set NPM Registry to Verdaccio:9200
+        run: pnpm set registry http://localhost:9200/;
+      - if: ${{ steps.cache-npm.outputs.cache-hit != 'true' }}
+        name: List Dependencies
+        continue-on-error: true
+        run: pnpm list;
+      - name: Install Dependencies
+        run: pnpm install;
+      - name: Reset Nx Cache
+        run: pnpm exec nx reset || true;
+      - name: Build image
+        run: pnpm exec nx pack:build iac-images-application --verbose;
+      - name: Verify AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Setup Pulumi state backend
+        run: STRUCTURED_LOGGING=quiet pnpm dx:cli:bin aws pulumi ci --region $AWS_REGION > .pulumi-ci;
+      - name: Display Pulumi CI output
+        run: cat .pulumi-ci;
+      - name: Extract exports from Pulumi CI
+        run: cat .pulumi-ci | grep "export" > .export-cd;
+      - name: Load environment variables
+        run: cat .export-cd;
+      - name: Create Pulumi Helper Functions
+        run: |-
+          cat > .pulumi-helper.sh << 'EOF'
+          configure_stack() {
+            local step="$1"
+            local stack_name="$2"
+            local stack_cwd="$3"
+            local project="$4"
+            local output="$5"
+
+            echo "${step}: Stack: ${stack_name}. CWD: ${stack_cwd}. Output: ${output}."
+            echo "name: ${project}" >> "${stack_cwd}/Pulumi.yaml"
+            cat "${stack_cwd}"/Pulumi.{yaml,"*".yaml} || true
+          }
+
+          setup_stack() {
+            local stack_name="$1"
+            local stack_cwd="$2"
+            
+            echo "Setting up stack: ${stack_name}. CWD: ${stack_cwd}."
+            for cmd in init select; do
+              pulumi stack ${cmd} ${stack_name} -C ${stack_cwd} || true
+            done
+          }
+
+          configure_stack_settings() {
+            local stack_cwd="$1"
+            local configs="$2"
+            
+            echo "Configuring stack settings"
+            
+            while IFS= read -r line; do
+              if [[ -n "$line" ]]; then
+                key="${line%%=*}"
+                value="${line#*=}"
+                
+                # Expand variables in value
+                eval "value="$value""
+                
+                if [[ -n "$key" && -n "$value" ]]; then
+                  echo "Setting $key to $value"
+                  pulumi config set --path "$key" "$value" -C "$stack_cwd"
+                fi
+              fi
+            done <<< "$configs"
+          }
+
+          refresh_and_preview() {
+            local message="$1"
+            local stack_cwd="$2"
+            shift 2
+            local default_args="$@"
+
+            pulumi refresh --yes --skip-preview --clear-pending-creates --message "${message}-refresh" -C "${stack_cwd}" ${default_args}
+            pulumi preview --show-replacement-steps --message "${message}-preview" -C "${stack_cwd}" ${default_args} || true
+          }
+
+          deploy_stack() {
+            local message="$1"
+            local stack_cwd="$2"
+            shift 2
+            local default_args="$@"
+
+            pulumi up --yes --message "${message}-up" -C "${stack_cwd}" ${default_args}
+          }
+
+          remove_stack() {
+          	local message="$1"
+          	local stack_cwd="$2"
+          	shift 2
+          	local default_args="$@"
+            
+          	pulumi down --yes --message "${message}-down" -C "${stack_cwd}" ${default_args}
+            }
+            
+          capture_outputs() {
+            local stack_cwd="$1"
+            local output="$2"
+
+            pulumi stack output -C "${stack_cwd}" --json > "$(pwd)/${output}.json"
+            cat "${output}.json"
+            pulumi stack output -C "${stack_cwd}" --shell > "$(pwd)/${output}.sh"
+            cat "${output}.sh"
+            ls _pulumi
+            chmod +x "$(pwd)/${output}.sh"
+            echo "Output captured in ${output}.sh"
+          }
+          EOF
+          chmod +x .pulumi-helper.sh
+          source .pulumi-helper.sh;
+      - name: Deploy fourtwo stacks
+        run: |-
+          mkdir -p _pulumi;
+          source .export-cd;
+          pnpm build:tsc;
+          pnpm -C packages/builders build:tsc;
+          pnpm -C packages/pulumi build:tsc;
+          source .pulumi-helper.sh;
+          configure_stack "Delete" "fourtwo-application.elm_pst_4" "$(pwd)/iac/stacks/src/application" "fourtwo-application" "_pulumi/application";
+          setup_stack "fourtwo-application.elm_pst_4" "$(pwd)/iac/stacks/src/application";
+          configure_stack_settings "$(pwd)/iac/stacks/src/application" 'aws:skipMetadataApiCheck=false
+          context:stack.environment.isProd=false
+          context:stack.environment.features=aws';
+          remove_stack "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/application" --non-interactive --suppress-progress --diff --json;
+          configure_stack "Delete" "fourtwo-codestar.elm_pst_4" "$(pwd)/iac/stacks/src/codestar" "fourtwo-codestar" "_pulumi/codestar";
+          setup_stack "fourtwo-codestar.elm_pst_4" "$(pwd)/iac/stacks/src/codestar";
+          configure_stack_settings "$(pwd)/iac/stacks/src/codestar" 'aws:skipMetadataApiCheck=false
+          context:stack.environment.isProd=false
+          context:stack.environment.features=aws';
+          remove_stack "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/codestar" --non-interactive --suppress-progress --diff --json;
+          configure_stack "Delete" "fourtwo-datalayer.elm_pst_4" "$(pwd)/iac/stacks/src/datalayer" "fourtwo-datalayer" "_pulumi/datalayer";
+          setup_stack "fourtwo-datalayer.elm_pst_4" "$(pwd)/iac/stacks/src/datalayer";
+          configure_stack_settings "$(pwd)/iac/stacks/src/datalayer" 'aws:skipMetadataApiCheck=false
+          context:stack.environment.isProd=false
+          context:stack.environment.features=aws';
+          remove_stack "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/datalayer" --non-interactive --suppress-progress --diff --json;
+          configure_stack "Delete" "fourtwo-panel-http.elm_pst_4" "$(pwd)/iac/stacks/src/domains/panel/http" "fourtwo-panel-http" "_pulumi/domains_panel_http";
+          setup_stack "fourtwo-panel-http.elm_pst_4" "$(pwd)/iac/stacks/src/domains/panel/http";
+          configure_stack_settings "$(pwd)/iac/stacks/src/domains/panel/http" 'aws:skipMetadataApiCheck=false
+          context:stack.environment.isProd=false
+          context:stack.environment.features=aws';
+          remove_stack "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/domains/panel/http" --non-interactive --suppress-progress --diff --json;
+          configure_stack "Delete" "fourtwo-panel-web.elm_pst_4" "$(pwd)/iac/stacks/src/domains/panel/web" "fourtwo-panel-web" "_pulumi/domains_panel_web";
+          setup_stack "fourtwo-panel-web.elm_pst_4" "$(pwd)/iac/stacks/src/domains/panel/web";
+          configure_stack_settings "$(pwd)/iac/stacks/src/domains/panel/web" 'aws:skipMetadataApiCheck=false
+          context:stack.environment.isProd=false
+          context:stack.environment.features=aws';
+          remove_stack "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/domains/panel/web" --non-interactive --suppress-progress --diff --json;
+          configure_stack "Delete" "fourtwo-panel-monitor.elm_pst_4" "$(pwd)/iac/stacks/src/domains/panel/monitor" "fourtwo-panel-monitor" "_pulumi/domains_panel_monitor";
+          setup_stack "fourtwo-panel-monitor.elm_pst_4" "$(pwd)/iac/stacks/src/domains/panel/monitor";
+          configure_stack_settings "$(pwd)/iac/stacks/src/domains/panel/monitor" 'aws:skipMetadataApiCheck=false
+          context:stack.environment.isProd=false
+          context:stack.environment.features=aws';
+          remove_stack "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/domains/panel/monitor" --non-interactive --suppress-progress --diff --json;
+          configure_stack "Delete" "fourtwo-panel-wwwroot.elm_pst_4" "$(pwd)/iac/stacks/src/domains/panel/wwwroot" "fourtwo-panel-wwwroot" "_pulumi/domains_panel_wwwroot";
+          setup_stack "fourtwo-panel-wwwroot.elm_pst_4" "$(pwd)/iac/stacks/src/domains/panel/wwwroot";
+          configure_stack_settings "$(pwd)/iac/stacks/src/domains/panel/wwwroot" 'aws:skipMetadataApiCheck=false
+          context:stack.environment.isProd=false
+          context:stack.environment.features=aws';
+          remove_stack "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/domains/panel/wwwroot" --non-interactive --suppress-progress --diff --json;
+      - name: Cleanup
+        run: |-
+          rm -f .pulumi-ci .export-cd .pulumi-helper.sh .ci-env;
+          rm -rf _pulumi;
+          pnpm store prune || true;
+          corepack cache clean || true;
+
+########################################
+########################################
+#**:_$~- {"$$":"head","filename":"[wd][dispatch] - CD - [Dispatch: Delete].yml","source":"iac/workflows/github/workflow_dispatch/CD.js"}
+#**:_$~- {"$$":"script","generator":"codegen/github/GenerateGithubWorkflow.mts"}
+#**:_$~- {"$$":"body","hashed":"b437272582f12e811622ca3535a8ca6d0194020d220565656c7f98bb41d32add"}
+#**:_$~- {"$$":"footer","started":"2025-03-08T18:44:12.469Z","now":"2025-03-08T18:44:12.473Z","elapsed":"4ms"}
+# END OF GENERATED FILE
+

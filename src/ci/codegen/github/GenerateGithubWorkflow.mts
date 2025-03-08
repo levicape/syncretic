@@ -182,7 +182,7 @@ export const GenerateGithubWorkflow = async function* () {
 				named += `[wc]`;
 			}
 		});
-		filename = `${named}${basename(source, extname(source))}.yml`;
+		filename = `${named} - ${basename(source, extname(source))} - [${rendered.name}].yml`;
 	}
 
 	const yaml = stringify(rendered, {

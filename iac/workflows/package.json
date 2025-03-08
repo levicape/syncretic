@@ -14,7 +14,6 @@
     "targets": {
       "nx:sync": {
         "dependsOn": [
-          "nx:sync:cc",
           "nx:sync:gha"
         ]
       },
@@ -27,7 +26,7 @@
         "dependsOn": [
           "ft:gha:push:main",
           "ft:gha:release:released",
-          "ft:gha:dispatch:runner:publish:npm"
+          "ft:gha:dispatch:cd"
         ]
       }
     }
@@ -36,6 +35,7 @@
   "scripts": {
     "dx:bin": "$npm_package_config_packageexecutor $npm_package_config_binpath",
     "ft:cc:push:main": "$npm_package_config_packagemanager run dx:bin aws codecatalyst workflows generate \"'$npm_package_config_ccpath/push/CI.js'\" --output --write",
+    "ft:gha:dispatch:cd": "$npm_package_config_packagemanager run dx:bin github workflows gen \"'$npm_package_config_ghapath/workflow_dispatch/CD.js'\" --output --write",
     "ft:gha:dispatch:runner:publish:npm": "$npm_package_config_packagemanager run dx:bin github workflows gen \"'$npm_package_config_ghapath/workflow_dispatch/Publish to npm.js'\" --output",
     "ft:gha:push:main": "$npm_package_config_packagemanager run dx:bin github workflows gen \"'$npm_package_config_ghapath/push/CI.js'\" --output --write",
     "ft:gha:release:released": "$npm_package_config_packagemanager run dx:bin github workflows gen \"'$npm_package_config_ghapath/release/Publish tagged module to npm.js'\" --output --write"

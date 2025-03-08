@@ -4,9 +4,9 @@ import { Group } from "@pulumi/aws/resourcegroups/group.js";
 import { Config, getProject, getStack } from "@pulumi/pulumi/index.js";
 import { debug } from "@pulumi/pulumi/log/index.js";
 import { registerStackTransformation } from "@pulumi/pulumi/runtime/index.js";
-import type { AwsEnvironment } from "../components/aws/AwsEnvironment.js";
-import { isAwsTaggable } from "../components/aws/AwsTags.js";
-import { FrontendContext } from "./FrontendContext.js";
+import type { AwsEnvironment } from "../components/aws/AwsEnvironment.cjs";
+import { isAwsTaggable } from "../components/aws/AwsTags.cjs";
+import { FrontendContext } from "./FrontendContext.cjs";
 
 const CONFIG_NAMESPACE = `context`;
 const CONFIG_PREFIX = `stack`;

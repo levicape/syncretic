@@ -18,6 +18,8 @@
   },
   "dependencies": {
     "@aws-lambda-powertools/logger": "catalog:log-awspowertools",
+    "@cloudscape-design/components": "catalog:web-cloudscape",
+    "@cloudscape-design/global-styles": "catalog:web-cloudscape",
     "@levicape/paloma": "catalog:",
     "@levicape/spork-atlas": "catalog:",
     "@loglayer/transport-aws-lambda-powertools": "catalog:log-loglayer",

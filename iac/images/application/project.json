@@ -11,10 +11,11 @@
 					"DOCKER_CACHE": "/cc/cache/docker",
 					"PAKETO_BUILDER": "heroku/builder:24",
 					"PAKETO_BUILDPACK": "heroku/python,heroku/nodejs,heroku/procfile",
-					"PAKETO_ENVFILE": "iac/images/application/.env"
+					"PAKETO_ENVFILE": "iac/images/application/.env",
+					"PAKETO_PLATFORM": "linux/arm64"
 				},
 				"commands": [
-					"pnpm exec nx run --verbose iac-images:cli:pack build $DEFAULT_IMAGE_NAME --buildpack $PAKETO_BUILDPACK --builder $PAKETO_BUILDER --default-process $DEFAULT_PROCESS --env-file $PAKETO_ENVFILE --network $DOCKER_NETWORK --cache 'type=build;format=bind;source=$DOCKER_CACHE;type=launch;format=volume;' $PAKETO_BUILD_ARGS"
+					"pnpm exec nx run --verbose iac-images:cli:pack build $DEFAULT_IMAGE_NAME  --platform $PAKETO_PLATFORM $PAKETO_BUILD_ARGS --buildpack $PAKETO_BUILDPACK --builder $PAKETO_BUILDER --default-process $DEFAULT_PROCESS --env-file $PAKETO_ENVFILE --network $DOCKER_NETWORK --cache 'type=build;format=bind;source=$DOCKER_CACHE;type=launch;format=volume;'"
 				]
 			}
 		}

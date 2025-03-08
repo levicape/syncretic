@@ -41,9 +41,7 @@ export default (): GithubWorkflowBuilder<string, string> => (
 	<GithubWorkflowX
 		name="on Push: Test Package"
 		on={{
-			push: {
-				branches: ["main"],
-			},
+			push: {},
 		}}
 		env={{
 			...register("NPM_REGISTRY_PROTOCOL", "https"),
@@ -65,7 +63,7 @@ export default (): GithubWorkflowBuilder<string, string> => (
 									<GithubStepX
 										name="Compile"
 										run={[
-											"pnpm exec nx run-many -t compile --parallel=1 --verbose --no-cloud",
+											"pnpm exec nx run-many -t build --parallel=1 --verbose --no-cloud",
 										]}
 									/>
 									<GithubStepX

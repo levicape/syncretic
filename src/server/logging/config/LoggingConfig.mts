@@ -15,10 +15,10 @@ export class LoggingConfig {
 		 */
 		readonly CI: string | undefined,
 		/**
-		 * Structured logger to use. Defaults to `pino`.
+		 * Structured logger to use. Defaults to `pino`. To disable structured logging, set to `quiet`.
 		 * @defaultValue `pino`
 		 */
-		readonly STRUCTURED_LOGGING: "awspowertools" | "consola" | "pino",
+		readonly STRUCTURED_LOGGING: "awspowertools" | "consola" | "pino" | "quiet",
 	) {}
 
 	get isDebug() {
@@ -47,6 +47,7 @@ export const LoggingConfigMain = Config.map(
 			"awspowertools",
 			"consola",
 			"pino",
+			"quiet",
 		)("STRUCTURED_LOGGING").pipe(
 			Config.withDefault("pino"),
 			Config.withDescription("Structured logger to use. Defaults to pino."),

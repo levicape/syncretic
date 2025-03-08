@@ -6,8 +6,8 @@ import {
 	CodeBuildBuildspecResourceLambdaPhaseBuilder,
 	CodeDeployAppspecBuilder,
 	CodeDeployAppspecResourceBuilder,
-} from "@levicape/fourtwo-builders";
-import { Context } from "@levicape/fourtwo-pulumi";
+} from "@levicape/fourtwo-builders/commonjs/index.cjs";
+import { Context } from "@levicape/fourtwo-pulumi/commonjs/context/Context.cjs";
 import { Version } from "@pulumi/aws-native/lambda";
 import { EventRule, EventTarget } from "@pulumi/aws/cloudwatch";
 import { LogGroup } from "@pulumi/aws/cloudwatch/logGroup";
@@ -30,19 +30,24 @@ import { BucketPublicAccessBlock } from "@pulumi/aws/s3/bucketPublicAccessBlock"
 import { BucketVersioningV2 } from "@pulumi/aws/s3/bucketVersioningV2";
 import { Instance } from "@pulumi/aws/servicediscovery/instance";
 import { Service } from "@pulumi/aws/servicediscovery/service";
-import { Output, all, getStack, log } from "@pulumi/pulumi";
+import { Output, all, getStack, interpolate, log } from "@pulumi/pulumi";
 import { AssetArchive, StringAsset } from "@pulumi/pulumi/asset";
+import { error, warn } from "@pulumi/pulumi/log";
+import { RandomId } from "@pulumi/random/RandomId";
 import { serializeError } from "serialize-error";
 import { stringify } from "yaml";
 import type { z } from "zod";
 import { AwsCodeBuildContainerRoundRobin } from "../../../RoundRobin";
 import type { LambdaRouteResource, Route } from "../../../RouteMap";
 import { $deref, type DereferencedOutput } from "../../../Stack";
-import { FourtwoApplicationStackExportsZod } from "../../../application/exports";
+import {
+	FourtwoApplicationRoot,
+	FourtwoApplicationStackExportsZod,
+} from "../../../application/exports";
 import { FourtwoCodestarStackExportsZod } from "../../../codestar/exports";
 import { FourtwoDatalayerStackExportsZod } from "../../../datalayer/exports";
 import type { WWWIntraRoute } from "../../../wwwintra/routes";
-import { FourtwoPanelHttpStackExportsZod } from "./exports";
+import type { FourtwoPanelHttpStackExportsZod } from "./exports";
 
 const PACKAGE_NAME = "@levicape/fourtwo-panel-io" as const;
 const DESCRIPTION = "Provides AWS account data to Panel UI" as const;
@@ -57,7 +62,7 @@ const CI = {
 	CI_ENVIRONMENT: process.env.CI_ENVIRONMENT ?? "unknown",
 	CI_ACCESS_ROLE: process.env.CI_ACCESS_ROLE ?? "FourtwoAccessRole",
 };
-const STACKREF_ROOT = process.env["STACKREF_ROOT"] ?? "fourtwo";
+const STACKREF_ROOT = process.env["STACKREF_ROOT"] ?? FourtwoApplicationRoot;
 const STACKREF_CONFIG = {
 	[STACKREF_ROOT]: {
 		application: {
@@ -116,27 +121,56 @@ export = async () => {
 	// Object Store
 	const s3 = (() => {
 		const bucket = (name: string) => {
-			const bucket = new Bucket(_(name), {
-				acl: "private",
-				forceDestroy: !context.environment.isProd,
-				tags: {
-					Name: _(name),
-					StackRef: STACKREF_ROOT,
-					PackageName: PACKAGE_NAME,
-					Key: name,
-				},
+			const randomid = new RandomId(_(`${name}-id`), {
+				byteLength: 4,
 			});
 
-			new BucketServerSideEncryptionConfigurationV2(_(`${name}-encryption`), {
-				bucket: bucket.bucket,
-				rules: [
-					{
-						applyServerSideEncryptionByDefault: {
-							sseAlgorithm: "AES256",
-						},
+			const urlsafe = _(name).replace(/[^a-zA-Z0-9]/g, "-");
+			const bucket = new Bucket(
+				_(name),
+				{
+					bucket: interpolate`${urlsafe}-${randomid.hex}`,
+					acl: "private",
+					forceDestroy: !context.environment.isProd,
+					tags: {
+						Name: _(name),
+						StackRef: STACKREF_ROOT,
+						PackageName: PACKAGE_NAME,
+						Key: name,
 					},
-				],
-			});
+				},
+				{
+					ignoreChanges: [
+						"acl",
+						"lifecycleRules",
+						"loggings",
+						"policy",
+						"serverSideEncryptionConfiguration",
+						"versioning",
+						"website",
+						"websiteDomain",
+						"websiteEndpoint",
+					],
+				},
+			);
+
+			new BucketServerSideEncryptionConfigurationV2(
+				_(`${name}-encryption`),
+				{
+					bucket: bucket.bucket,
+					rules: [
+						{
+							applyServerSideEncryptionByDefault: {
+								sseAlgorithm: "AES256",
+							},
+						},
+					],
+				},
+				{
+					deletedWith: bucket,
+				},
+			);
+
 			new BucketVersioningV2(
 				_(`${name}-versioning`),
 
@@ -146,55 +180,69 @@ export = async () => {
 						status: "Enabled",
 					},
 				},
-				{ parent: this },
+				{
+					deletedWith: bucket,
+				},
 			);
-			new BucketPublicAccessBlock(_(`${name}-public-access-block`), {
-				bucket: bucket.bucket,
-				blockPublicAcls: true,
-				blockPublicPolicy: true,
-				ignorePublicAcls: true,
-				restrictPublicBuckets: true,
-			});
+			new BucketPublicAccessBlock(
+				_(`${name}-public-access-block`),
+				{
+					bucket: bucket.bucket,
+					blockPublicAcls: true,
+					blockPublicPolicy: true,
+					ignorePublicAcls: true,
+					restrictPublicBuckets: true,
+				},
+				{
+					deletedWith: bucket,
+				},
+			);
 
-			new BucketLifecycleConfigurationV2(_(`${name}-lifecycle`), {
-				bucket: bucket.bucket,
-				rules: [
-					{
-						status: "Enabled",
-						id: "DeleteMarkers",
-						expiration: {
-							expiredObjectDeleteMarker: true,
+			new BucketLifecycleConfigurationV2(
+				_(`${name}-lifecycle`),
+				{
+					bucket: bucket.bucket,
+					rules: [
+						{
+							status: "Enabled",
+							id: "DeleteMarkers",
+							expiration: {
+								expiredObjectDeleteMarker: true,
+							},
 						},
-					},
-					{
-						status: "Enabled",
-						id: "IncompleteMultipartUploads",
-						abortIncompleteMultipartUpload: {
-							daysAfterInitiation: context.environment.isProd ? 3 : 7,
+						{
+							status: "Enabled",
+							id: "IncompleteMultipartUploads",
+							abortIncompleteMultipartUpload: {
+								daysAfterInitiation: context.environment.isProd ? 3 : 7,
+							},
 						},
-					},
-					{
-						status: "Enabled",
-						id: "NonCurrentVersions",
-						noncurrentVersionExpiration: {
-							noncurrentDays: context.environment.isProd ? 13 : 6,
+						{
+							status: "Enabled",
+							id: "NonCurrentVersions",
+							noncurrentVersionExpiration: {
+								noncurrentDays: context.environment.isProd ? 13 : 6,
+							},
+							filter: {
+								objectSizeGreaterThan: 1,
+							},
 						},
-						filter: {
-							objectSizeGreaterThan: 1,
+						{
+							status: "Enabled",
+							id: "ExpireObjects",
+							expiration: {
+								days: context.environment.isProd ? 20 : 10,
+							},
+							filter: {
+								objectSizeGreaterThan: 1,
+							},
 						},
-					},
-					{
-						status: "Enabled",
-						id: "ExpireObjects",
-						expiration: {
-							days: context.environment.isProd ? 20 : 10,
-						},
-						filter: {
-							objectSizeGreaterThan: 1,
-						},
-					},
-				],
-			});
+					],
+				},
+				{
+					deletedWith: bucket,
+				},
+			);
 
 			return bucket;
 		};
@@ -1022,9 +1070,14 @@ export = async () => {
 	})();
 
 	const codepipeline = (() => {
+		const randomid = new RandomId(_("deploy-id"), {
+			byteLength: 4,
+		});
+		const pipelineName = _("deploy").replace(/[^a-zA-Z0-9_]/g, "-");
 		const pipeline = new Pipeline(
 			_("deploy"),
 			{
+				name: interpolate`${pipelineName}-${randomid.hex}`,
 				pipelineType: "V2",
 				roleArn: farRole.arn,
 				executionMode: "QUEUED",
@@ -1544,7 +1597,7 @@ export = async () => {
 
 			const exported = {
 				fourtwo_panel_http_imports: {
-					fourtwo: {
+					[FourtwoApplicationRoot]: {
 						codestar: __codestar,
 						datalayer: __datalayer,
 					},
@@ -1559,19 +1612,18 @@ export = async () => {
 				fourtwo_panel_http_routemap,
 			} satisfies z.infer<typeof FourtwoPanelHttpStackExportsZod> & {
 				fourtwo_panel_http_imports: {
-					fourtwo: {
+					[FourtwoApplicationRoot]: {
 						codestar: typeof __codestar;
 						datalayer: typeof __datalayer;
 					};
 				};
 			};
-			const validate = FourtwoPanelHttpStackExportsZod.safeParse(exported);
-			if (!validate.success) {
-				process.stderr.write(
-					`Validation failed: ${JSON.stringify(validate.error, null, 2)}`,
-				);
-			}
 
+			const validate = FourtwoApplicationStackExportsZod.safeParse(exported);
+			if (!validate.success) {
+				error(`Validation failed: ${JSON.stringify(validate.error, null, 2)}`);
+				warn(inspect(exported, { depth: null }));
+			}
 			return exported;
 		},
 	);

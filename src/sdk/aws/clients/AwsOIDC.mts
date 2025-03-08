@@ -1,5 +1,6 @@
 import type { AwsClient } from "aws4fetch";
 import { XMLParser } from "fast-xml-parser";
+import VError from "verror";
 import { z } from "zod";
 
 export class AwsOIDC {
@@ -56,7 +57,9 @@ export class AwsOIDC {
 				},
 				{ depth: null },
 			);
-			throw new Error(`Failed to create OIDC provider: ${response.statusText}`);
+			throw new VError(
+				`Failed to create OIDC provider: ${response.statusText}`,
+			);
 		}
 
 		return z
@@ -69,5 +72,59 @@ export class AwsOIDC {
 			})
 			.parse(this.parser.parse(await response.text()))
 			.CreateOpenIDConnectProviderResponse;
+	}
+
+	async CreateToken({
+		clientId,
+		clientSecret,
+		grantType,
+		refreshToken,
+	}: {
+		clientId: string;
+		clientSecret: string;
+		grantType: "refresh_token";
+		refreshToken: string;
+	}) {
+		const response = await this.client.fetch(
+			`https://oidc.aws.amazon.com/oidc/token?grant_type=${grantType}&refresh_token=${refreshToken}`,
+			{
+				method: "POST",
+				headers: {
+					Authorization: `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString("base64")}`,
+					"Content-Type": "application/x-www-form-urlencoded",
+				},
+			},
+		);
+
+		if (response.status !== 200) {
+			console.dir(
+				{
+					OIDC: {
+						status: response.status,
+						statusText: response.statusText,
+						body: await response.text(),
+					},
+					parms: {
+						clientId,
+						clientSecret,
+						grantType,
+						refreshToken,
+					},
+				},
+				{ depth: null },
+			);
+			throw new VError(`Failed to create OIDC token: ${response.statusText}`);
+		}
+
+		return z
+			.object({
+				expires_in: z.number(),
+				token_type: z.string(),
+				refresh_token: z.string(),
+				scope: z.string(),
+				id_token: z.string(),
+				access_token: z.string(),
+			})
+			.parse(this.parser.parse(await response.text()));
 	}
 }

@@ -1,4 +1,5 @@
-import { Context } from "@levicape/fourtwo-pulumi";
+import { inspect } from "node:util";
+import { Context } from "@levicape/fourtwo-pulumi/commonjs/context/Context.cjs";
 import { SecurityGroup } from "@pulumi/aws/ec2/securityGroup";
 import { AccessPoint } from "@pulumi/aws/efs/accessPoint";
 import { FileSystem } from "@pulumi/aws/efs/fileSystem";
@@ -7,10 +8,11 @@ import { Role } from "@pulumi/aws/iam/role";
 import { PrivateDnsNamespace } from "@pulumi/aws/servicediscovery/privateDnsNamespace";
 import { Vpc } from "@pulumi/awsx/ec2/vpc";
 import { all } from "@pulumi/pulumi";
+import { error, warn } from "@pulumi/pulumi/log";
 import type { z } from "zod";
 import { $deref } from "../Stack";
 import { FourtwoApplicationStackExportsZod } from "../application/exports";
-import { FourtwoDatalayerStackExportsZod } from "./exports";
+import type { FourtwoDatalayerStackExportsZod } from "./exports";
 
 const PACKAGE_NAME = "@levicape/fourtwo";
 const EFS_ROOT_DIRECTORY = "/fourtwo";
@@ -321,11 +323,10 @@ export = async () => {
 				},
 			} satisfies z.infer<typeof FourtwoDatalayerStackExportsZod>;
 
-			const validate = FourtwoDatalayerStackExportsZod.safeParse(exported);
+			const validate = FourtwoApplicationStackExportsZod.safeParse(exported);
 			if (!validate.success) {
-				process.stderr.write(
-					`Validation failed: ${JSON.stringify(validate.error, null, 2)}`,
-				);
+				error(`Validation failed: ${JSON.stringify(validate.error, null, 2)}`);
+				warn(inspect(exported, { depth: null }));
 			}
 			return exported;
 		},
