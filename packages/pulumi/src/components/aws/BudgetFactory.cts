@@ -1,6 +1,6 @@
 import { Budget } from "@pulumi/aws/budgets/index.js";
 import type { ComponentResourceOptions } from "@pulumi/pulumi/index.js";
-import { Context } from "../../context/Context.js";
+import { Context } from "../../context/Context.cjs";
 
 type TimeUnit = "MONTHLY" | "DAILY";
 type NotificationType = "ACTUAL" | "FORECASTED";

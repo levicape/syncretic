@@ -2,7 +2,7 @@ import { inspect } from "node:util";
 import { Config } from "@pulumi/pulumi/index.js";
 import { debug } from "@pulumi/pulumi/log/index.js";
 import { registerStackTransformation } from "@pulumi/pulumi/runtime/index.js";
-import { isAwsTaggable } from "../components/aws/AwsTags.js";
+import { isAwsTaggable } from "../components/aws/AwsTags.cjs";
 
 const CONFIG_NAMESPACE = `frontend`;
 const CONFIG_PREFIX = `stack`;

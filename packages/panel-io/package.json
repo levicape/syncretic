@@ -8,7 +8,7 @@
     "packageexecutor": "pnpm exec",
     "packagescript": "pnpm run",
     "binspork": "pnpm exec spork",
-    "binatlas": "node module/canary/Atlas.mjs",
+    "binatlas": "node module/http/Atlas.mjs",
     "outpath": "./module",
     "srcpaths": "./src",
     "lintpaths": "./src",

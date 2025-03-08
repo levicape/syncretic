@@ -1,6 +1,5 @@
 import { inspect } from "node:util";
-import { StackReference, getStack } from "@pulumi/pulumi";
-import { log } from "@pulumi/pulumi";
+import { StackReference, getStack, log } from "@pulumi/pulumi";
 import { destr } from "destr";
 import { deserializeError, serializeError } from "serialize-error";
 import { VError } from "verror";

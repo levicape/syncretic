@@ -4,6 +4,7 @@ import { env } from "std-env";
 import { withAwsPowertoolsLogger } from "./AwsPowertoolsLogger.mjs";
 import { withConsolaLogger } from "./ConsolaLogger.mjs";
 import { withPinoLogger } from "./PinoLogger.mjs";
+import { withQuietLogger } from "./QuietLogger.mjs";
 import type { LoggingConfig } from "./config/LoggingConfig.mjs";
 import type { LoggingConfigAws } from "./config/LoggingConfigAws.mjs";
 
@@ -61,15 +62,20 @@ export const withStructuredLogging = (props: LoggingContextProps) => {
 		return withConsolaLogger(props);
 	}
 
+	if (STRUCTURED_LOGGING === "quiet") {
+		return withQuietLogger(props);
+	}
+
 	return withPinoLogger(props);
 };
 
 export * from "./AwsPowertoolsLogger.mjs";
+export * from "./config/LoggingConfig.mjs";
+export * from "./config/LoggingConfigAws.mjs";
 export * from "./ConsolaLogger.mjs";
 export * from "./LoggingPlugins.mjs";
 export * from "./PinoLogger.mjs";
-export * from "./config/LoggingConfig.mjs";
-export * from "./config/LoggingConfigAws.mjs";
 export * from "./plugins/DurationPlugin.mjs";
 export * from "./plugins/OtelLogPlugin.mjs";
 export * from "./plugins/UnixtimeLogPlugin.mjs";
+export * from "./QuietLogger.mjs";

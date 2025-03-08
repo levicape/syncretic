@@ -16,7 +16,7 @@ import {
 	output,
 } from "@pulumi/pulumi";
 
-import { AwsState } from "../aws/AwsState.js";
+import { AwsState } from "../aws/AwsState.cjs";
 
 export class PulumiStateAws extends ComponentResource<{
 	identity?: GetCallerIdentityResult;

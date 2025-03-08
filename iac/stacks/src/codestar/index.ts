@@ -1,14 +1,16 @@
-import { Context } from "@levicape/fourtwo-pulumi";
+import { inspect } from "node:util";
+import { Context } from "@levicape/fourtwo-pulumi/commonjs/context/Context.cjs";
 import { Application } from "@pulumi/aws/codedeploy";
 import { DeploymentConfig } from "@pulumi/aws/codedeploy/deploymentConfig";
 import { Repository as ECRRepository, LifecyclePolicy } from "@pulumi/aws/ecr";
 import { getLifecyclePolicyDocument } from "@pulumi/aws/ecr/getLifecyclePolicyDocument";
 import { RepositoryPolicy } from "@pulumi/aws/ecr/repositoryPolicy";
+import { error, warn } from "@pulumi/pulumi/log/index";
 import { all } from "@pulumi/pulumi/output";
 import type { z } from "zod";
 import { $deref } from "../Stack";
-import { FourtwoApplicationStackExportsZod } from "../application/exports";
-import { FourtwoCodestarStackExportsZod } from "./exports";
+import { FourtwoApplicationStackExportsZod } from "../application/exports.ts";
+import type { FourtwoCodestarStackExportsZod } from "./exports.ts";
 
 const STACKREF_ROOT = process.env["STACKREF_ROOT"] ?? "fourtwo";
 const STACKREF_CONFIG = {
@@ -175,13 +177,11 @@ export = async () => {
 				},
 			} satisfies z.infer<typeof FourtwoCodestarStackExportsZod>;
 
-			const validate = FourtwoCodestarStackExportsZod.safeParse(exported);
+			const validate = FourtwoApplicationStackExportsZod.safeParse(exported);
 			if (!validate.success) {
-				process.stderr.write(
-					`Validation failed: ${JSON.stringify(validate.error, null, 2)}`,
-				);
+				error(`Validation failed: ${JSON.stringify(validate.error, null, 2)}`);
+				warn(inspect(exported, { depth: null }));
 			}
-
 			return exported;
 		},
 	);

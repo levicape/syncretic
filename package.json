@@ -58,7 +58,7 @@
     "typescript": "catalog:dev"
   },
   "engines": {
-    "node": "22.12.0"
+    "node": "22.13.0"
   },
   "exports": {
     "./*": "./module/*.mjs",
@@ -145,7 +145,7 @@
       }
     }
   },
-  "packageManager": "pnpm@9.15.4+sha512.b2dc20e2fc72b3e18848459b37359a32064663e5627a51e4c74b2c29dd8e8e0491483c3abb40789cfd578bf362fb6ba8261b05f0387d76792ed6e23ea3b1b6a0",
+  "packageManager": "pnpm@9.15.7+sha512.ed98f9c748442673c46964b70345bd2282c9b305e8eae539b34ab31d6ef24ef8dd59d8b55f27466f705500b009d9c113471cf87e544f3d5036b297330c26e996",
   "pnpm": {
     "supportedArchitectures": {
       "os": [

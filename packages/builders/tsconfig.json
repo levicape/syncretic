@@ -2,11 +2,11 @@
 	"compilerOptions": {
 		"strict": true,
 		"outDir": "commonjs",
-		"target": "es2020",
-		"module": "commonjs",
-		"moduleResolution": "node",
+		"target": "es2022",
+		"module": "ESNext",
+		"moduleResolution": "bundler",
 		"lib": ["ES2023", "DOM"],
-		"experimentalDecorators": true,
+		"experimentalDecorators": false,
 		"pretty": true,
 		"noFallthroughCasesInSwitch": true,
 		"noImplicitReturns": true,
@@ -17,11 +17,13 @@
 		"declaration": true /* Generate .d.ts files from TypeScript and JavaScript files in your project. */,
 		"declarationMap": true /* Create sourcemaps for d.ts files. */,
 		"rootDir": "./src" /* Specify the root path for debuggers to find the reference source code. */,
-		"downlevelIteration": true /* Emit more compliant, but verbose and less performant JavaScript for iteration. */,
 		"inlineSourceMap": true /* Include sourcemap files inside the emitted JavaScript. */,
 		"inlineSources": true /* Include source code in the sourcemaps inside the emitted JavaScript. */,
 		"esModuleInterop": true,
-		"strictPropertyInitialization": false
+		// opted-out /* This is a reexport package, the tslib helpers need to be inlined. */ // "importHelpers": true, 
+		"skipLibCheck": true,
+		"allowSyntheticDefaultImports": true,
+		"strictPropertyInitialization": true
 	},
 	"include": ["src/**/*"]
 }

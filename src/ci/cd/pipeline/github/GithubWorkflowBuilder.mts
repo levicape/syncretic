@@ -81,6 +81,7 @@ export type GithubOn = {
 export type GithubWorkflowPermissions = {
 	packages?: "read" | "write";
 	contents?: "read" | "write";
+	["id-token"]?: "read" | "write";
 };
 
 export type GithubWorkflowDefaults = {

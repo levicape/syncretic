@@ -105,7 +105,7 @@ export default (
 
 		return (
 			<GithubWorkflowX
-				name={`on Release: [released] Publish ${packageScope}/(${names}) to Github`}
+				name={`${packageScope}`}
 				on={{
 					release: {
 						types: ["released"],

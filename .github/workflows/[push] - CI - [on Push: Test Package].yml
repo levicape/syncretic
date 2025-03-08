@@ -4,8 +4,7 @@
 name: "on Push: Test Package"
 on:
   push:
-    branches:
-      - main
+    {}
 env:
   NPM_REGISTRY_PROTOCOL: https
   NPM_REGISTRY_HOST: npm.pkg.github.com
@@ -51,7 +50,7 @@ jobs:
       - name: Install Dependencies
         run: pnpm install;
       - name: Compile
-        run: pnpm exec nx run-many -t compile --parallel=1 --verbose --no-cloud;
+        run: pnpm exec nx run-many -t build --parallel=1 --verbose --no-cloud;
       - name: Lint
         run: pnpm exec nx run-many -t lint --parallel=1 --verbose --no-cloud;
       - name: Test
@@ -103,9 +102,9 @@ jobs:
 
 ########################################
 ########################################
-#**:_$~- {"$$":"head","filename":"[push(b:main)]CI.yml","source":"iac/workflows/github/push/CI.js"}
+#**:_$~- {"$$":"head","filename":"[push] - CI - [on Push: Test Package].yml","source":"iac/workflows/github/push/CI.js"}
 #**:_$~- {"$$":"script","generator":"codegen/github/GenerateGithubWorkflow.mts"}
-#**:_$~- {"$$":"body","hashed":"3b053ef8d251dcaedef59686ab70989a7cb1ac2f69dd833b76e76e096a031cb6"}
-#**:_$~- {"$$":"footer","started":"2025-02-03T09:27:54.902Z","now":"2025-02-03T09:27:54.909Z","elapsed":"7ms"}
+#**:_$~- {"$$":"body","hashed":"27b1b096d6800c50cc9432f911d8a47f452d5b9c1d807a7cd2d8d38799db85ad"}
+#**:_$~- {"$$":"footer","started":"2025-03-07T20:33:19.416Z","now":"2025-03-07T20:33:19.425Z","elapsed":"9ms"}
 # END OF GENERATED FILE
 
