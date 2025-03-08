@@ -26,7 +26,7 @@ export type GithubOnReleaseSpec = {
 	types: "released"[];
 };
 
-export type GithubOnScheduleSpec = string;
+export type GithubOnScheduleSpec = Array<{ cron: string }>;
 
 export type GithubOnWorkflowCallSpec = {
 	inputs?: Record<
@@ -150,15 +150,25 @@ export class GithubWorkflowBuilder<Uses extends string, With extends string> {
 			throw new VError("No on added to workflow");
 		}
 
+		if (this.on.schedule !== undefined) {
+			// Check at least one schedule is defined
+			if (!Array.isArray(this.on.schedule) || this.on.schedule.length === 0) {
+				throw new VError("Schedule workflows must have at least one element");
+			}
+			console.warn({
+				message: "Schedule workflows are not supported yet",
+				on: this.on.schedule,
+			});
+		}
 		return {
 			name: this.name,
 			on: this.on,
+			...(Object.keys(this.defaults).length > 0
+				? { defaults: this.defaults }
+				: {}),
 			...(this.concurrency ? { concurrency: this.concurrency } : {}),
 			...(Object.keys(this.permissions).length > 0
 				? { permissions: this.permissions }
-				: {}),
-			...(Object.keys(this.defaults).length > 0
-				? { defaults: this.defaults }
 				: {}),
 			...(Object.keys(this.env).length > 0 ? { env: this.env } : {}),
 			jobs: this.jobs.reduce(

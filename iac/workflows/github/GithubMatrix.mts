@@ -29,7 +29,11 @@ export const GITHUB_CI_MATRIX = [
 		name: "on Schedule: Preview, Deploy",
 		region: "us-west-2",
 		triggers: {
-			schedule: "0 0 * * ? *",
+			schedule: [
+				{
+					cron: "0 0 * * *",
+				},
+			],
 		} satisfies GithubOn,
 		pipeline: {
 			install: undefined as unknown as GithubWorkflowProps<

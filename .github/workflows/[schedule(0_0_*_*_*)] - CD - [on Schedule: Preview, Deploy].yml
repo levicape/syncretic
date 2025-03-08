@@ -3,7 +3,8 @@
 ########################################
 name: "on Schedule: Preview, Deploy"
 on:
-  schedule: 0 0 * * ? *
+  schedule:
+    - cron: 0 0 * * *
 env:
   NPM_REGISTRY_PROTOCOL: https
   NPM_REGISTRY_HOST: npm.pkg.github.com
@@ -238,9 +239,9 @@ jobs:
 
 ########################################
 ########################################
-#**:_$~- {"$$":"head","filename":"[schedule(0_0_*_*_?_*)] - CD - [on Schedule: Preview, Deploy].yml","source":"iac/workflows/github/workflow_dispatch/CD.js"}
+#**:_$~- {"$$":"head","filename":"[schedule(0_0_*_*_*)] - CD - [on Schedule: Preview, Deploy].yml","source":"iac/workflows/github/workflow_dispatch/CD.js"}
 #**:_$~- {"$$":"script","generator":"codegen/github/GenerateGithubWorkflow.mts"}
-#**:_$~- {"$$":"body","hashed":"049eaa80589369bd32fdd73275e947a1ddbdfae14a4c93557825d7809e08a26a"}
-#**:_$~- {"$$":"footer","started":"2025-03-08T18:44:12.461Z","now":"2025-03-08T18:44:12.464Z","elapsed":"3ms"}
+#**:_$~- {"$$":"body","hashed":"d552178dbe9b011621e38bce82f5eaa4d9be317ae4f411f91c3e8e25420d5499"}
+#**:_$~- {"$$":"footer","started":"2025-03-08T19:47:37.633Z","now":"2025-03-08T19:47:37.636Z","elapsed":"3ms"}
 # END OF GENERATED FILE
 
