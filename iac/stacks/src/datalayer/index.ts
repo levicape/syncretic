@@ -11,14 +11,17 @@ import { all } from "@pulumi/pulumi";
 import { error, warn } from "@pulumi/pulumi/log";
 import type { z } from "zod";
 import { $deref } from "../Stack";
-import { FourtwoApplicationStackExportsZod } from "../application/exports";
+import {
+	FourtwoApplicationRoot,
+	FourtwoApplicationStackExportsZod,
+} from "../application/exports";
 import type { FourtwoDatalayerStackExportsZod } from "./exports";
 
 const PACKAGE_NAME = "@levicape/fourtwo";
 const EFS_ROOT_DIRECTORY = "/fourtwo";
 const EFS_MOUNT_PATH = "/mnt/efs";
 
-const STACKREF_ROOT = process.env["STACKREF_ROOT"] ?? "fourtwo";
+const STACKREF_ROOT = process.env["STACKREF_ROOT"] ?? FourtwoApplicationRoot;
 const STACKREF_CONFIG = {
 	[STACKREF_ROOT]: {
 		application: {

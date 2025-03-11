@@ -52,8 +52,8 @@ jobs:
           path: ${{ env.STORE_PATH }}
           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.json') }}
           restore-keys: ${{ runner.os }}-pnpm-store-
-      - name: Set NPM Registry to Verdaccio:9200
-        run: pnpm set registry http://localhost:9200/;
+      - name: Set NPM Registry to Verdaccio:31313
+        run: pnpm set registry http://localhost:31313/;
       - if: ${{ steps.cache-npm.outputs.cache-hit != 'true' }}
         name: List Dependencies
         continue-on-error: true
@@ -190,6 +190,14 @@ jobs:
           refresh_and_preview "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/codestar" --non-interactive --suppress-progress --diff --json;
           deploy_stack "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/codestar" --non-interactive --suppress-progress --diff --json;
           capture_outputs "$(pwd)/iac/stacks/src/codestar" "_pulumi/codestar";
+          configure_stack "Deploy" "fourtwo-cognito.elm_pst_4" "$(pwd)/iac/stacks/src/cognito" "fourtwo-cognito" "_pulumi/cognito";
+          setup_stack "fourtwo-cognito.elm_pst_4" "$(pwd)/iac/stacks/src/cognito";
+          configure_stack_settings "$(pwd)/iac/stacks/src/cognito" 'aws:skipMetadataApiCheck=false
+          context:stack.environment.isProd=false
+          context:stack.environment.features=aws';
+          refresh_and_preview "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/cognito" --non-interactive --suppress-progress --diff --json;
+          deploy_stack "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/cognito" --non-interactive --suppress-progress --diff --json;
+          capture_outputs "$(pwd)/iac/stacks/src/cognito" "_pulumi/cognito";
           configure_stack "Deploy" "fourtwo-datalayer.elm_pst_4" "$(pwd)/iac/stacks/src/datalayer" "fourtwo-datalayer" "_pulumi/datalayer";
           setup_stack "fourtwo-datalayer.elm_pst_4" "$(pwd)/iac/stacks/src/datalayer";
           configure_stack_settings "$(pwd)/iac/stacks/src/datalayer" 'aws:skipMetadataApiCheck=false
@@ -237,6 +245,8 @@ jobs:
           source _pulumi/application.sh;
           cat _pulumi/codestar.sh;
           source _pulumi/codestar.sh;
+          cat _pulumi/cognito.sh;
+          source _pulumi/cognito.sh;
           cat _pulumi/datalayer.sh;
           source _pulumi/datalayer.sh;
           cat _pulumi/domains_panel_http.sh;
@@ -264,6 +274,8 @@ jobs:
           source _pulumi/application.sh;
           cat _pulumi/codestar.sh;
           source _pulumi/codestar.sh;
+          cat _pulumi/cognito.sh;
+          source _pulumi/cognito.sh;
           cat _pulumi/datalayer.sh;
           source _pulumi/datalayer.sh;
           cat _pulumi/domains_panel_http.sh;
@@ -289,13 +301,12 @@ jobs:
           rm -f .pulumi-ci .export-cd .pulumi-helper.sh .ci-env;
           rm -rf _pulumi;
           pnpm store prune || true;
-          corepack cache clean || true;
 
 ########################################
 ########################################
 #**:_$~- {"$$":"head","filename":"[wd][dispatch] - CD - [Dispatch: Preview, Deploy, Push].yml","source":"iac/workflows/github/workflow_dispatch/CD.js"}
 #**:_$~- {"$$":"script","generator":"codegen/github/GenerateGithubWorkflow.mts"}
-#**:_$~- {"$$":"body","hashed":"50913bbc5181213c6cef00ecfbb874518237b9a936b65b81b311460adda3e065"}
-#**:_$~- {"$$":"footer","started":"2025-03-08T19:46:49.398Z","now":"2025-03-08T19:46:49.407Z","elapsed":"9ms"}
+#**:_$~- {"$$":"body","hashed":"a9b74fbfde96812ecd75da3f462334272e04011872b38ec471727ba3a5d3ff4c"}
+#**:_$~- {"$$":"footer","started":"2025-03-11T03:34:07.911Z","now":"2025-03-11T03:34:07.918Z","elapsed":"7ms"}
 # END OF GENERATED FILE
 

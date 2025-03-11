@@ -20,6 +20,7 @@ import { BucketPublicAccessBlock } from "@pulumi/aws/s3/bucketPublicAccessBlock"
 import { BucketServerSideEncryptionConfigurationV2 } from "@pulumi/aws/s3/bucketServerSideEncryptionConfigurationV2";
 import { BucketVersioningV2 } from "@pulumi/aws/s3/bucketVersioningV2";
 import { CannedAcl } from "@pulumi/aws/types/enums/s3";
+import { Command } from "@pulumi/command/local";
 import { Output, all, interpolate } from "@pulumi/pulumi";
 import { error, warn } from "@pulumi/pulumi/log";
 import { RandomId } from "@pulumi/random/RandomId";
@@ -63,7 +64,7 @@ const CI = {
 	CI_ACCESS_ROLE: process.env.CI_ACCESS_ROLE ?? "FourtwoAccessRole",
 };
 
-const STACKREF_ROOT = process.env["STACKREF_ROOT"] ?? "fourtwo";
+const STACKREF_ROOT = process.env["STACKREF_ROOT"] ?? FourtwoApplicationRoot;
 const STACKREF_CONFIG = {
 	[STACKREF_ROOT]: {
 		application: {
@@ -736,6 +737,20 @@ function handler(event) {
 			},
 		};
 	})();
+	//////
+	//// Trigger Codebuild project
+	new Command(
+		_("invalidate-command"),
+		{
+			create: interpolate`aws codebuild start-build --project-name ${codebuild.project.name}`,
+		},
+		{
+			deleteBeforeReplace: true,
+			replaceOnChanges: ["*"],
+			dependsOn: [codebuild.project, codebuild.spec.buildspec.upload, cache],
+		},
+	);
+	//
 
 	////////
 	//// Outputs
