@@ -9,6 +9,13 @@ import {
 } from "@levicape/fourtwo-builders/commonjs/index.cjs";
 import { Context } from "@levicape/fourtwo-pulumi/commonjs/context/Context.cjs";
 import { Version } from "@pulumi/aws-native/lambda";
+import {
+	ConfigurationProfile,
+	Deployment,
+	DeploymentStrategy,
+	Environment,
+	HostedConfigurationVersion,
+} from "@pulumi/aws/appconfig";
 import { EventRule, EventTarget } from "@pulumi/aws/cloudwatch";
 import { LogGroup } from "@pulumi/aws/cloudwatch/logGroup";
 import { Project } from "@pulumi/aws/codebuild";
@@ -74,6 +81,8 @@ const STACKREF_CONFIG = {
 		},
 		codestar: {
 			refs: {
+				appconfig:
+					FourtwoCodestarStackExportsZod.shape.fourtwo_codestar_appconfig,
 				codedeploy:
 					FourtwoCodestarStackExportsZod.shape.fourtwo_codestar_codedeploy,
 				ecr: FourtwoCodestarStackExportsZod.shape.fourtwo_codestar_ecr,
@@ -91,6 +100,29 @@ const STACKREF_CONFIG = {
 		},
 	},
 };
+
+const HANDLER_TYPE = "httphandler" as const;
+
+const ROUTE_MAP = (
+	_$refs: DereferencedOutput<typeof STACKREF_CONFIG>[typeof STACKREF_ROOT],
+) => {
+	return {};
+};
+
+const ATLASFILE_PATHS: Record<
+	string,
+	{
+		content: (
+			_$refs: DereferencedOutput<typeof STACKREF_CONFIG>[typeof STACKREF_ROOT],
+		) => Record<string, unknown>;
+		path: string;
+	}
+> = {
+	routes: {
+		content: ROUTE_MAP,
+		path: "atlas.routes.json",
+	},
+} as const;
 
 const ENVIRONMENT = (
 	$refs: DereferencedOutput<typeof STACKREF_CONFIG>[typeof STACKREF_ROOT],
@@ -246,6 +278,7 @@ export = async () => {
 
 			return bucket;
 		};
+
 		return {
 			pipeline: bucket("pipeline"),
 			artifacts: bucket("artifacts"),
@@ -270,6 +303,43 @@ export = async () => {
 		return {
 			build: loggroup("build"),
 			function: loggroup("function"),
+		};
+	})();
+
+	// Configuration
+	const appconfig = (() => {
+		const environment = new Environment(
+			_("environment"),
+			{
+				applicationId: __codestar.appconfig.application.id,
+				description: `(${PACKAGE_NAME}) "${DESCRIPTION}" in #${stage}`,
+				tags: {
+					Name: _("environment"),
+					StackRef: STACKREF_ROOT,
+					PackageName: PACKAGE_NAME,
+				},
+			},
+			{
+				dependsOn: [s3.artifacts],
+			},
+		);
+
+		const strategy = new DeploymentStrategy(_("strategy"), {
+			description: `(${PACKAGE_NAME}) "${DESCRIPTION}" in #${stage}`,
+			deploymentDurationInMinutes: context.environment.isProd ? 12 : 2,
+			finalBakeTimeInMinutes: context.environment.isProd ? 16 : 3,
+			growthFactor: 10,
+			replicateTo: "NONE",
+			tags: {
+				Name: _("strategy"),
+				StackRef: STACKREF_ROOT,
+				PackageName: PACKAGE_NAME,
+			},
+		});
+
+		return {
+			environment,
+			strategy,
 		};
 	})();
 
@@ -325,11 +395,6 @@ export = async () => {
 			});
 		});
 
-		const cloudmapEnvironment = {
-			AWS_CLOUDMAP_NAMESPACE_ID: datalayer.cloudmap.namespace.id,
-			AWS_CLOUDMAP_NAMESPACE_NAME: datalayer.cloudmap.namespace.name,
-		};
-
 		const zip = new BucketObjectv2(_("zip"), {
 			bucket: s3.artifacts.bucket,
 			source: new AssetArchive({
@@ -383,6 +448,133 @@ export = async () => {
 			},
 		});
 
+		const ref$Environment = {
+			AWS_CLOUDMAP_NAMESPACE_ID: datalayer.cloudmap.namespace.id,
+			AWS_CLOUDMAP_NAMESPACE_NAME: datalayer.cloudmap.namespace.name,
+			AWS_APPCONFIG_HOST: "http://localhost:2772",
+			AWS_APPCONFIG_APPLICATION: __codestar.appconfig.application.name,
+			AWS_APPCONFIG_ENVIRONMENT: appconfig.environment.name,
+		};
+
+		const atlasfile = (
+			kind: string,
+			{ path, content }: (typeof ATLASFILE_PATHS)["routes"],
+		) => {
+			const stringcontent = JSON.stringify(content(dereferenced$));
+			const object = new BucketObjectv2(_(`${kind}-atlas`), {
+				bucket: s3.artifacts.bucket,
+				source: new StringAsset(stringcontent),
+				contentType: "application/json",
+				key: `${path}`,
+				tags: {
+					Name: _(`atlas-${kind}`),
+					StackRef: STACKREF_ROOT,
+					PackageName: PACKAGE_NAME,
+				},
+			});
+
+			const configuration = new ConfigurationProfile(
+				_(`${kind}-config`),
+				{
+					applicationId: codestar.appconfig.application.id,
+					description: `(${PACKAGE_NAME}) "${kind}" atlasfile in #${stage}`,
+					locationUri: "hosted",
+					tags: {
+						Name: _(`${kind}-config`),
+						StackRef: STACKREF_ROOT,
+						PackageName: PACKAGE_NAME,
+					},
+				},
+				{
+					dependsOn: [object],
+				},
+			);
+
+			const version = new HostedConfigurationVersion(
+				_(`${kind}-config-version`),
+				{
+					applicationId: codestar.appconfig.application.id,
+					configurationProfileId: configuration.configurationProfileId,
+					description: `(${PACKAGE_NAME}) "${kind}" atlasfile in #${stage}`,
+					content: stringcontent,
+					contentType: "application/json",
+				},
+				{
+					dependsOn: [object, configuration],
+				},
+			);
+
+			const deployment = new Deployment(
+				_(`${kind}-config-deployment`),
+				{
+					applicationId: codestar.appconfig.application.id,
+					environmentId: appconfig.environment.environmentId,
+					configurationProfileId: configuration.configurationProfileId,
+					deploymentStrategyId: appconfig.strategy.id,
+					configurationVersion: version.versionNumber.apply((v) => String(v)),
+					description: `(${PACKAGE_NAME}) "${kind}" atlasfile in #${stage}`,
+					tags: {
+						Name: _(`${kind}-config-deployment`),
+						StackRef: STACKREF_ROOT,
+						PackageName: PACKAGE_NAME,
+					},
+				},
+				{
+					dependsOn: [
+						object,
+						configuration,
+						appconfig.environment,
+						appconfig.strategy,
+						version,
+					],
+				},
+			);
+
+			return {
+				object,
+				content,
+				version,
+				configuration,
+				deployment,
+			};
+		};
+
+		const atlas = Object.fromEntries(
+			Object.entries(ATLASFILE_PATHS).map(([named, { path, content }]) => [
+				named,
+				atlasfile(named, { path, content }),
+			]),
+		);
+		const appconfigEnvironment = all([
+			codestar.appconfig.application.name,
+			appconfig.environment.name,
+		]).apply(([applicationName, environmentName]) => {
+			return {
+				AWS_APPCONFIG_HOST: "http://localhost:2772",
+				AWS_APPCONFIG_APPLICATION: applicationName,
+				AWS_APPCONFIG_ENVIRONMENT: environmentName,
+			};
+		});
+		const configpath = (file: keyof typeof ATLASFILE_PATHS) => {
+			return all([appconfigEnvironment]).apply(([appconfigenvironment]) => {
+				const applicationName = appconfigenvironment.AWS_APPCONFIG_APPLICATION;
+				const environmentName = appconfigenvironment.AWS_APPCONFIG_ENVIRONMENT;
+				return interpolate`/applications/${applicationName}/environments/${environmentName}/${atlas[file].configuration.name}`;
+			});
+		};
+
+		const AWS_APPCONFIG_EXTENSION_PREFETCH_LIST = (() => {
+			let prefetch = [];
+			for (const af of Object.keys(atlas)) {
+				if (af) {
+					prefetch.push(af);
+				}
+			}
+			return Output.create(
+				prefetch.map((af) => configpath(af as keyof typeof ATLASFILE_PATHS)),
+			);
+		})().apply((list) => list.join(","));
+
 		const memorySize = context.environment.isProd ? 512 : 256;
 		const timeout = context.environment.isProd ? 18 : 11;
 		const lambda = new LambdaFn(
@@ -413,7 +605,11 @@ export = async () => {
 					logGroup: loggroup.name,
 					applicationLogLevel: context.environment.isProd ? "INFO" : "DEBUG",
 				},
-				environment: all([cloudmapEnvironment]).apply(([cloudmapEnv]) => {
+				layers: [
+					// TODO: RIP mapping
+					`arn:aws:lambda:us-west-2:359756378197:layer:AWS-AppConfig-Extension-Arm64:132`,
+				],
+				environment: all([ref$Environment]).apply(([cloudmapEnv]) => {
 					return {
 						variables: {
 							NODE_OPTIONS: [
@@ -429,6 +625,8 @@ export = async () => {
 									}
 								: {}),
 							...cloudmapEnv,
+							...appconfigEnvironment,
+							AWS_APPCONFIG_EXTENSION_PREFETCH_LIST,
 							...(ENVIRONMENT !== undefined && typeof ENVIRONMENT === "function"
 								? Object.fromEntries(
 										Object.entries(ENVIRONMENT(dereferenced$))
@@ -520,26 +718,28 @@ export = async () => {
 		);
 
 		const url = new FunctionUrl(_("url"), {
-			functionName: lambda.name,
-			qualifier: alias.name,
 			authorizationType: context.environment.isProd ? "AWS_IAM" : "NONE",
 			cors: {
 				allowMethods: ["*"],
 				allowOrigins: context.environment.isProd ? hostnames : ["*"],
 				maxAge: 86400,
 			},
+			functionName: lambda.name,
+			invokeMode: "RESPONSE_STREAM",
+			qualifier: alias.name,
 		});
 
 		let latestUrl: FunctionUrl | undefined;
 		if (!context.environment.isProd) {
 			latestUrl = new FunctionUrl(_("url-latest"), {
-				functionName: lambda.name,
-				authorizationType: context.environment.isProd ? "AWS_IAM" : "NONE",
+				authorizationType: "AWS_IAM",
 				cors: {
 					allowMethods: ["*"],
 					allowOrigins: hostnames,
 					maxAge: 86400,
 				},
+				functionName: lambda.name,
+				invokeMode: "RESPONSE_STREAM",
 			});
 		}
 
@@ -580,7 +780,10 @@ export = async () => {
 		);
 
 		return {
-			role: datalayer.props.lambda.role,
+			atlas,
+			codedeploy: {
+				deploymentGroup,
+			},
 			http: {
 				arn: lambda.arn,
 				name: lambda.name,
@@ -590,9 +793,7 @@ export = async () => {
 				version,
 				$latest: latestUrl,
 			},
-			codedeploy: {
-				deploymentGroup,
-			},
+			role: datalayer.props.lambda.role,
 		};
 	})({ codestar: __codestar, datalayer: __datalayer }, cloudwatch);
 
@@ -650,7 +851,7 @@ export = async () => {
 				new CodeDeployAppspecBuilder()
 					.setResources([
 						{
-							httphandler: new CodeDeployAppspecResourceBuilder()
+							[HANDLER_TYPE]: new CodeDeployAppspecResourceBuilder()
 								.setName(props.name)
 								.setAlias(props.alias)
 								// .setDescription()
@@ -666,9 +867,19 @@ export = async () => {
 		};
 
 		const project = (() => {
-			const PIPELINE_STAGE = "httphandler" as const;
+			const PIPELINE_STAGE = HANDLER_TYPE;
 			const EXTRACT_ACTION = "extractimage" as const;
 			const UPDATE_ACTION = "updatelambda" as const;
+
+			const ATLAS_PIPELINE_VARIABLES = Object.fromEntries(
+				Object.keys(ATLASFILE_PATHS).map(
+					(name) =>
+						[
+							`ATLASFILE_${name.toUpperCase()}_KEY`,
+							`<ATLASFILE_${name.toUpperCase()}_KEY>`,
+						] as const,
+				),
+			);
 
 			const stages = [
 				{
@@ -690,6 +901,7 @@ export = async () => {
 						SOURCE_IMAGE_URI: "<SOURCE_IMAGE_URI>",
 						S3_DEPLOY_BUCKET: "<S3_DEPLOY_BUCKET>",
 						S3_DEPLOY_KEY: "<S3_DEPLOY_KEY>",
+						...ATLAS_PIPELINE_VARIABLES,
 					},
 					exportedVariables: [
 						"STACKREF_CODESTAR_ECR_REPOSITORY_ARN",
@@ -739,6 +951,11 @@ export = async () => {
 								value: "SourceImage.ImageURI",
 								type: "PLAINTEXT",
 							},
+							...Object.keys(ATLAS_PIPELINE_VARIABLES).map((name) => ({
+								name,
+								value: `<${name}>`,
+								type: "PLAINTEXT",
+							})),
 						] as { name: string; value: string; type: "PLAINTEXT" }[],
 					},
 					phases: {
@@ -805,6 +1022,18 @@ export = async () => {
 										`rm -rf $CODEBUILD_SRC_DIR/.${EXTRACT_ACTION}/${PIPELINE_STAGE}/${OUTPUT_DIRECTORY} || true`,
 										`ls -al $CODEBUILD_SRC_DIR/.${EXTRACT_ACTION}/${PIPELINE_STAGE} || true`,
 									]),
+							// atlasfiles
+							...Object.entries(ATLASFILE_PATHS).flatMap(([name, { path }]) => {
+								const objectKey = `$ATLASFILE_${name.toUpperCase()}_KEY`;
+								return [
+									`echo "Rendering Atlasfile: ${name}"`,
+									`echo "s3://${objectKey}"`,
+									`aws s3 cp s3://${objectKey} $CODEBUILD_SRC_DIR/.${EXTRACT_ACTION}/${PIPELINE_STAGE}/${path}`,
+									`cat $CODEBUILD_SRC_DIR/.${EXTRACT_ACTION}/${PIPELINE_STAGE}/${path}`,
+								];
+							}),
+							// deploy key
+							`echo "Rendering deploy key to .deploykey"`,
 							`NODE_NO_WARNINGS=1 node -e '(${
 								// biome-ignore lint/complexity/useArrowFunction:
 								function () {
@@ -895,7 +1124,7 @@ export = async () => {
 							[
 								"aws lambda update-function-configuration",
 								"--function-name $LAMBDA_FUNCTION_NAME",
-								`--handler httphandler/${HANDLER}`,
+								`--handler ${PIPELINE_STAGE}/${HANDLER}`,
 							].join(" "),
 							"echo $DeployKey",
 							[
@@ -1131,6 +1360,12 @@ export = async () => {
 									__codestar.ecr.repository.url,
 									codebuild.httphandler_extractimage.project.name,
 									s3.artifacts.bucket,
+									Output.create([
+										...Object.entries(handler.atlas).map(([name, file]) => ({
+											name: name.toUpperCase(),
+											value: interpolate`${file.object.bucket}/${file.object.key}`,
+										})),
+									]),
 								]).apply(
 									([
 										repositoryArn,
@@ -1138,6 +1373,7 @@ export = async () => {
 										repositoryUrl,
 										projectExtractImageName,
 										deployBucketName,
+										atlasfiles,
 									]) => {
 										return {
 											ProjectName: projectExtractImageName,
@@ -1177,6 +1413,11 @@ export = async () => {
 													value: "#{SourceImage.ImageURI}",
 													type: "PLAINTEXT",
 												},
+												...atlasfiles.map(({ name, value }) => ({
+													name: `ATLASFILE_${name.toUpperCase()}_KEY`,
+													value,
+													type: "PLAINTEXT",
+												})),
 											]),
 										};
 									},

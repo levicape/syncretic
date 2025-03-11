@@ -1,0 +1,9 @@
+description: Cognito identity and user pools
+runtime:
+  name: nodejs
+  options:
+    packagemanager: pnpm
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: aws-typescript

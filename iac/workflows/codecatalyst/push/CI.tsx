@@ -9,11 +9,11 @@ import {
 	CodeCatalystWorkflowExpressions,
 	CodeCatalystWorkflowX,
 } from "@levicape/fourtwo/codecatalyst";
+import { CODECATALYST_PULUMI_STACKS } from "../../PulumiStacks.mts";
 import {
 	CODECATALYST_CI_MATRIX,
 	type CodeCatalystWorkflowProps,
 } from "../CodeCatalystMatrix.mjs";
-import { CODECATALYST_PULUMI_STACKS } from "../PulumiStacks.mts";
 
 const APPLICATION = "fourtwo";
 const PUSH_IMAGE_ECR_STACK_OUTPUT = "fourtwo_codestar_ecr";

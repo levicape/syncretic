@@ -52,8 +52,8 @@ jobs:
           path: ${{ env.STORE_PATH }}
           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.json') }}
           restore-keys: ${{ runner.os }}-pnpm-store-
-      - name: Set NPM Registry to Verdaccio:9200
-        run: pnpm set registry http://localhost:9200/;
+      - name: Set NPM Registry to Verdaccio:31313
+        run: pnpm set registry http://localhost:31313/;
       - if: ${{ steps.cache-npm.outputs.cache-hit != 'true' }}
         name: List Dependencies
         continue-on-error: true
@@ -186,6 +186,12 @@ jobs:
           context:stack.environment.isProd=false
           context:stack.environment.features=aws';
           remove_stack "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/codestar" --non-interactive --suppress-progress --diff --json;
+          configure_stack "Delete" "fourtwo-cognito.elm_pst_4" "$(pwd)/iac/stacks/src/cognito" "fourtwo-cognito" "_pulumi/cognito";
+          setup_stack "fourtwo-cognito.elm_pst_4" "$(pwd)/iac/stacks/src/cognito";
+          configure_stack_settings "$(pwd)/iac/stacks/src/cognito" 'aws:skipMetadataApiCheck=false
+          context:stack.environment.isProd=false
+          context:stack.environment.features=aws';
+          remove_stack "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/cognito" --non-interactive --suppress-progress --diff --json;
           configure_stack "Delete" "fourtwo-datalayer.elm_pst_4" "$(pwd)/iac/stacks/src/datalayer" "fourtwo-datalayer" "_pulumi/datalayer";
           setup_stack "fourtwo-datalayer.elm_pst_4" "$(pwd)/iac/stacks/src/datalayer";
           configure_stack_settings "$(pwd)/iac/stacks/src/datalayer" 'aws:skipMetadataApiCheck=false
@@ -221,13 +227,12 @@ jobs:
           rm -f .pulumi-ci .export-cd .pulumi-helper.sh .ci-env;
           rm -rf _pulumi;
           pnpm store prune || true;
-          corepack cache clean || true;
 
 ########################################
 ########################################
 #**:_$~- {"$$":"head","filename":"[wd][dispatch] - CD - [Dispatch: Delete].yml","source":"iac/workflows/github/workflow_dispatch/CD.js"}
 #**:_$~- {"$$":"script","generator":"codegen/github/GenerateGithubWorkflow.mts"}
-#**:_$~- {"$$":"body","hashed":"b437272582f12e811622ca3535a8ca6d0194020d220565656c7f98bb41d32add"}
-#**:_$~- {"$$":"footer","started":"2025-03-08T19:46:49.417Z","now":"2025-03-08T19:46:49.419Z","elapsed":"2ms"}
+#**:_$~- {"$$":"body","hashed":"3a3e03c8045aa3eaee0b6cd00d6eba5dbeb2f22ff9fae5318c955a5c75f0646d"}
+#**:_$~- {"$$":"footer","started":"2025-03-11T03:34:07.927Z","now":"2025-03-11T03:34:07.929Z","elapsed":"2ms"}
 # END OF GENERATED FILE
 

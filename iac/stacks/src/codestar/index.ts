@@ -1,5 +1,6 @@
 import { inspect } from "node:util";
 import { Context } from "@levicape/fourtwo-pulumi/commonjs/context/Context.cjs";
+import { Application as AppconfigApplication } from "@pulumi/aws/appconfig";
 import { Application } from "@pulumi/aws/codedeploy";
 import { DeploymentConfig } from "@pulumi/aws/codedeploy/deploymentConfig";
 import { Repository as ECRRepository, LifecyclePolicy } from "@pulumi/aws/ecr";
@@ -12,6 +13,7 @@ import { $deref } from "../Stack";
 import { FourtwoApplicationStackExportsZod } from "../application/exports.ts";
 import type { FourtwoCodestarStackExportsZod } from "./exports.ts";
 
+const PACKAGE_NAME = "@levicape/fourtwo" as const;
 const STACKREF_ROOT = process.env["STACKREF_ROOT"] ?? "fourtwo";
 const STACKREF_CONFIG = {
 	[STACKREF_ROOT]: {
@@ -139,6 +141,20 @@ export = async () => {
 		};
 	})();
 
+	const appconfig = (() => {
+		const application = new AppconfigApplication(_("appconfig"), {
+			description: `(${PACKAGE_NAME}) Appconfig registry for ${context.prefix}`,
+			tags: {
+				Name: _("appconfig"),
+				PackageName: PACKAGE_NAME,
+			},
+		});
+
+		return {
+			application,
+		};
+	})();
+
 	return all([
 		ecr.repository.arn,
 		ecr.repository.repositoryUrl,
@@ -147,6 +163,9 @@ export = async () => {
 		codedeploy.application.name,
 		codedeploy.deploymentConfig.arn,
 		codedeploy.deploymentConfig.deploymentConfigName,
+		appconfig.application.arn,
+		appconfig.application.id,
+		appconfig.application.name,
 	]).apply(
 		([
 			ecrRepositoryArn,
@@ -156,6 +175,9 @@ export = async () => {
 			codedeployApplicationName,
 			codedeployDeploymentConfigArn,
 			codedeployDeploymentConfigName,
+			appconfigApplicationArn,
+			appconfigApplicationId,
+			appconfigApplicationName,
 		]) => {
 			const exported = {
 				fourtwo_codestar_ecr: {
@@ -173,6 +195,13 @@ export = async () => {
 					deploymentConfig: {
 						arn: codedeployDeploymentConfigArn,
 						name: codedeployDeploymentConfigName,
+					},
+				},
+				fourtwo_codestar_appconfig: {
+					application: {
+						arn: appconfigApplicationArn,
+						id: appconfigApplicationId,
+						name: appconfigApplicationName,
 					},
 				},
 			} satisfies z.infer<typeof FourtwoCodestarStackExportsZod>;
