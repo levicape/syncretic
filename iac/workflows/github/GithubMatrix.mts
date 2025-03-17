@@ -1,8 +1,8 @@
+import type { CodeCatalystComputeSpec } from "@levicape/fourtwo/codecatalyst";
 import type {
-	CodeCatalystComputeSpec,
-	CodeCatalystWorkflowExpressions,
-} from "@levicape/fourtwo/codecatalyst";
-import type { GithubOn } from "@levicape/fourtwo/github";
+	GithubOn,
+	GithubWorkflowExpressions,
+} from "@levicape/fourtwo/github";
 
 const ENVIRONMENT = "elm_pst_4";
 export const GITHUB_CI_MATRIX = [
@@ -90,8 +90,8 @@ export const GITHUB_CI_MATRIX = [
 		npm: {
 			LEVICAPE: {
 				scope: "@levicape",
-				token: ({ current: { context: _$_ } }) => {
-					return _$_("Secrets.GITHUB_LEVICAPE_PAT");
+				token: ({ current: { secret } }) => {
+					return secret("LEVICAPE_NPM_TOKEN");
 				},
 				protocol: "https",
 				host: "npm.pkg.github.com",
@@ -115,9 +115,7 @@ export type GithubWorkflowProps<
 				string,
 				{
 					scope: string;
-					token: (
-						expresssions: typeof CodeCatalystWorkflowExpressions,
-					) => string;
+					token: (expresssions: typeof GithubWorkflowExpressions) => string;
 					protocol: string;
 					host: string;
 				}

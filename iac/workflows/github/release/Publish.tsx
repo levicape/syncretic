@@ -1,5 +1,5 @@
-/** @jsxImportSource @levicape/fourtwo */
 /** @jsxRuntime automatic */
+/** @jsxImportSource @levicape/fourtwo */
 
 import { GithubJobBuilder } from "@levicape/fourtwo/ci/cd/pipeline/github/GithubJobBuilder";
 import { GithubWorkflowExpressions } from "@levicape/fourtwo/ci/cd/pipeline/github/GithubWorkflowExpressions";
@@ -17,13 +17,25 @@ type CompileAndPublishProps = {
 	packageName: string;
 };
 
+const compileAndPublish: CompileAndPublishProps[] = [
+	{ packageName: "@levicape/fourtwo" },
+	{
+		packageName: "@levicape/fourtwo-pulumi",
+		cwd: "packages/pulumi",
+	},
+	{
+		packageName: "@levicape/fourtwo-builders",
+		cwd: "packages/builders",
+	},
+];
+
 export default (
 	(props: {
 		compileAndPublish?: CompileAndPublishProps[];
 	}) =>
 	async () => {
 		let {
-			current: { register, context: _$_, env },
+			current: { register, context: _$_, env, secret },
 		} = GithubWorkflowExpressions;
 
 		let CompileAndPublish = ({ cwd, packageName }: CompileAndPublishProps) => {
@@ -44,15 +56,37 @@ export default (
 					}
 					steps={
 						<>
+							<GithubStepCheckoutX />
+							<GithubStepX
+								name="Remove project .npmrc"
+								run={(() => {
+									const rootWorkspaceNpmrc = (() => {
+										let pathSegments = cwd
+											?.split("/")
+											.filter((segment) => segment.length > 0)
+											.map((segment) => "..")
+											.join("/");
+										if (pathSegments) {
+											return `${pathSegments}/.npmrc`;
+										}
+										return `.npmrc`;
+									})();
+
+									return [
+										`if [ -f ${rootWorkspaceNpmrc} ]; then rm ${rootWorkspaceNpmrc}; fi`,
+										`if [ -f .npmrc ]; then rm .npmrc; fi`,
+									];
+								})()}
+							/>
 							<GithubStepX
 								name={"Verify registry URL"}
 								continueOnError={true}
 								run={[
-									`echo "NPM_REGISTRY_URL: ${env("NPM_REGISTRY_PROTOCOL")}://${env("NPM_REGISTRY_HOST")}"`,
-									`curl -v --insecure ${env("NPM_REGISTRY_PROTOCOL")}://${env("NPM_REGISTRY_HOST")}`,
+									`echo "NPM_REGISTRY_URL: ${env("LEVICAPE_REGISTRY")}"`,
+									`echo "NPM_REGISTRY_HOST: ${env("LEVICAPE_REGISTRY_HOST")}"`,
+									`curl -v --insecure ${env("LEVICAPE_REGISTRY")}`,
 								]}
 							/>
-							<GithubStepCheckoutX />
 							<GithubStepNodeSetupX
 								configuration={NodeGhaConfiguration({ env })}
 								options={{}}
@@ -70,7 +104,7 @@ export default (
 							</GithubStepNodeSetupX>
 							<GithubStepNodeScriptsX
 								configuration={NodeGhaConfiguration({ env })}
-								scripts={["prepublish"]}
+								scripts={["prepublishOnly"]}
 							/>
 							<GithubStepX
 								name={"Increment version"}
@@ -78,7 +112,7 @@ export default (
 									"export PREID=$RELEVANT_SHA",
 									"export PREID=${PREID:0:10}",
 									`export ARGS="--git-tag-version=false --commit-hooks=false"`,
-									`npm version ${_$_("github.event.release.tag_name")}-$PREID.${_$_("github.run_number")} $ARGS --allow-same-version`,
+									`npm version ${_$_("github.event.release.tag_name")}-\${PREID:-unknown}.${_$_("github.run_number")} $ARGS --allow-same-version`,
 								]}
 								env={{
 									RELEVANT_SHA: _$_(
@@ -98,22 +132,23 @@ export default (
 			);
 		};
 
-		let packageScope = props.compileAndPublish?.[0]?.packageName.split("/")[0];
-		let names = props.compileAndPublish
-			?.map((props) => props.packageName.split("/").pop())
-			.join(", ");
+		let packageScope = props.compileAndPublish?.[0]?.packageName.replace(
+			/[^a-zA-Z0-9-_@]/g,
+			"_",
+		);
 
 		return (
 			<GithubWorkflowX
-				name={`${packageScope}`}
+				name={`${packageScope ?? "UNKNOWN_PACKAGE"}`}
 				on={{
 					release: {
 						types: ["released"],
 					},
 				}}
 				env={{
-					...register("NPM_REGISTRY_PROTOCOL", "https"),
-					...register("NPM_REGISTRY_HOST", "npm.pkg.github.com"),
+					...register("LEVICAPE_REGISTRY_HOST", "npm.pkg.github.com/"),
+					...register("LEVICAPE_REGISTRY", "https://npm.pkg.github.com"),
+					...register("LEVICAPE_TOKEN", secret("GITHUB_TOKEN")),
 				}}
 			>
 				{props.compileAndPublish
@@ -124,16 +159,4 @@ export default (
 			</GithubWorkflowX>
 		);
 	}
-)({
-	compileAndPublish: [
-		{ packageName: "@levicape/fourtwo" },
-		{
-			packageName: "@levicape/fourtwo-pulumi",
-			cwd: "packages/pulumi",
-		},
-		{
-			packageName: "@levicape/fourtwo-builders",
-			cwd: "packages/builders",
-		},
-	],
-});
+)({ compileAndPublish });

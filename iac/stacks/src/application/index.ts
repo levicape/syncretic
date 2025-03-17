@@ -1,6 +1,10 @@
 import { inspect } from "node:util";
 import { Context } from "@levicape/fourtwo-pulumi/commonjs/context/Context.cjs";
 import { Budget } from "@pulumi/aws/budgets/budget.js";
+import { getOrganization } from "@pulumi/aws/organizations/getOrganization";
+import { PrincipalAssociation } from "@pulumi/aws/ram/principalAssociation";
+import { ResourceAssociation } from "@pulumi/aws/ram/resourceAssociation";
+import { ResourceShare } from "@pulumi/aws/ram/resourceShare";
 import { Group } from "@pulumi/aws/resourcegroups/group.js";
 import { AppregistryApplication } from "@pulumi/aws/servicecatalog/appregistryapplication.js";
 import { Topic } from "@pulumi/aws/sns/topic.js";
@@ -9,12 +13,61 @@ import { error, warn } from "@pulumi/pulumi/log/index";
 import type { z } from "zod";
 import { FourtwoApplicationStackExportsZod } from "./exports.ts";
 
+const PACKAGE_NAME = "@levicape/fourtwo";
+const DESCRIPTION = `Fourtwo - IaC: redefined`;
+/**
+ * This stack creates the following resources:
+ * - A Service Catalog Application Registry Application
+ * - A Resource Groups Group
+ * - An SNS Topic
+ * - A Budget
+ *
+ * The stack is used to manage the application resources for the Fourtwo application.
+ *
+ * @returns {Promise<FourtwoApplicationStackExportsZod>} The exported resources.
+ */
 export = async () => {
 	const context = await Context.fromConfig({});
 	const _ = (name: string) => `${context.prefix}-${name}`;
 
 	const servicecatalog = (() => {
-		return { application: new AppregistryApplication(_("servicecatalog"), {}) };
+		return {
+			application: new AppregistryApplication(_("servicecatalog"), {
+				description: DESCRIPTION,
+				tags: {
+					PACKAGE_NAME,
+				},
+			}),
+		};
+	})();
+
+	const organization = await getOrganization({});
+	(() => {
+		const resourceShare = new ResourceShare(_("ram"), {
+			allowExternalPrincipals: false,
+			tags: {
+				Name: _("ram"),
+				PackageName: PACKAGE_NAME,
+			},
+		});
+
+		const principalAssociation = new PrincipalAssociation(
+			_("ram-principal-owner"),
+			{
+				principal: organization.masterAccountId,
+				resourceShareArn: resourceShare.arn,
+			},
+		);
+
+		const resourceAssociation = new ResourceAssociation(
+			_("ram-resource-application"),
+			{
+				resourceArn: servicecatalog.application.arn,
+				resourceShareArn: resourceShare.arn,
+			},
+		);
+
+		return { resourceShare, principalAssociation, resourceAssociation };
 	})();
 
 	const awsApplication = servicecatalog.application.applicationTag.apply(

@@ -239,7 +239,8 @@ export const AwsOrganizationPrincipalCommand = async () => {
 								},
 								Condition: {
 									StringEquals: {
-										"aws:PrincipalOrgID": organization.MasterAccountId,
+										"aws:PrincipalOrgID":
+											organization.Arn.split("/")?.at(-1) ?? "",
 									},
 								},
 							},

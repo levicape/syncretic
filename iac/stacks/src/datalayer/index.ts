@@ -4,7 +4,9 @@ import { SecurityGroup } from "@pulumi/aws/ec2/securityGroup";
 import { AccessPoint } from "@pulumi/aws/efs/accessPoint";
 import { FileSystem } from "@pulumi/aws/efs/fileSystem";
 import { MountTarget } from "@pulumi/aws/efs/mountTarget";
+import { ManagedPolicy } from "@pulumi/aws/iam";
 import { Role } from "@pulumi/aws/iam/role";
+import { RolePolicyAttachment } from "@pulumi/aws/iam/rolePolicyAttachment";
 import { PrivateDnsNamespace } from "@pulumi/aws/servicediscovery/privateDnsNamespace";
 import { Vpc } from "@pulumi/awsx/ec2/vpc";
 import { all } from "@pulumi/pulumi";
@@ -44,7 +46,7 @@ export = async () => {
 	});
 	const _ = (name: string) => `${context.prefix}-${name}`;
 	context.resourcegroups({ _ });
-
+	// Resources
 	const ec2 = (() => {
 		const vpc = new Vpc(
 			_("vpc"),
@@ -164,29 +166,391 @@ export = async () => {
 
 	const iam = (() => {
 		const lambda = (() => {
-			return new Role(
-				_("lambda-role"),
-				{
-					assumeRolePolicy: JSON.stringify({
-						Version: "2012-10-17",
-						Statement: [
-							{
-								Effect: "Allow",
-								Principal: {
-									Service: "lambda.amazonaws.com",
-								},
-								Action: "sts:AssumeRole",
+			const role = new Role(_("lambda-role"), {
+				description: `(${PACKAGE_NAME}) Lambda execution Role for ${context.prefix}`,
+				assumeRolePolicy: JSON.stringify({
+					Version: "2012-10-17",
+					Statement: [
+						{
+							Effect: "Allow",
+							Principal: {
+								Service: [
+									"apigateway.amazonaws.com",
+									"athena.amazonaws.com",
+									"cloudwatch.amazonaws.com",
+									"dynamodb.amazonaws.com",
+									"events.amazonaws.com",
+									"firehose.amazonaws.com",
+									"iam.amazonaws.com",
+									"kinesis.amazonaws.com",
+									"lambda.amazonaws.com",
+									"logs.amazonaws.com",
+									"s3.amazonaws.com",
+									"s3-object-lambda.amazonaws.com",
+									"sns.amazonaws.com",
+									"sqs.amazonaws.com",
+								],
 							},
-						],
-					}),
+							Action: "sts:AssumeRole",
+						},
+					],
+				}),
+				// Inline Policy: Maximum 10,128 characters
+				inlinePolicies: [
+					{
+						name: "LambdaExecutionPolicyInline",
+						policy: JSON.stringify({
+							Version: "2012-10-17",
+							Statement: [
+								{
+									Effect: "Allow",
+									Action: [
+										// AWSLambdaBasicExecutionRole
+										"logs:CreateLogGroup",
+										"logs:CreateLogStream",
+										"logs:PutLogEvents",
+										// AWSLambdaVPCAccessExecutionRole
+										"ec2:CreateNetworkInterface",
+										"ec2:DescribeNetworkInterfaces",
+										"ec2:DescribeSubnets",
+										"ec2:DeleteNetworkInterface",
+										"ec2:AssignPrivateIpAddresses",
+										"ec2:UnassignPrivateIpAddresses",
+										// AmazonElasticFileSystemClientReadWriteAccess
+										"elasticfilesystem:ClientMount",
+										"elasticfilesystem:ClientWrite",
+										"elasticfilesystem:DescribeMountTargets",
+										// AmazonS3ReadOnlyAccess
+										"s3:Get*",
+										"s3:List*",
+										"s3:Describe*",
+										"s3-object-lambda:Get*",
+										"s3-object-lambda:List*",
+									],
+									Resource: "*",
+								},
+								{
+									Effect: "Allow",
+									Action: "iam:PassRole",
+									Resource: "*",
+									Condition: {
+										StringEquals: {
+											"iam:PassedToService": "lambda.amazonaws.com",
+										},
+									},
+								},
+							],
+						}),
+					},
+					{
+						name: "LambdaIdentityPolicyInline",
+						policy: JSON.stringify({
+							Version: "2012-10-17",
+							Statement: [
+								{
+									Effect: "Allow",
+									Action: [
+										// AmazonSSMReadOnlyAccess
+										"cognito-identity:Describe*",
+										"cognito-identity:Get*",
+										"cognito-identity:List*",
+										"cognito-idp:Describe*",
+										"cognito-idp:AdminGet*",
+										"cognito-idp:AdminList*",
+										"cognito-idp:List*",
+										"cognito-idp:Get*",
+										"cognito-sync:Describe*",
+										"cognito-sync:Get*",
+										"cognito-sync:List*",
+										"iam:ListOpenIdConnectProviders",
+										"iam:ListRoles",
+										"sns:ListPlatformApplications",
+									],
+									Resource: "*",
+								},
+							],
+						}),
+					},
+					{
+						name: "LambdaServicePolicyInline",
+						policy: JSON.stringify({
+							Version: "2012-10-17",
+							Statement: [
+								{
+									Effect: "Allow",
+									Action: [
+										// AmazonSSMReadOnlyAccess
+										"ssm:Describe*",
+										"ssm:Get*",
+										"ssm:List*",
+										// AWSCloudMapDiscoverInstanceAccess
+										"servicediscovery:Discover*",
+										// AWSXrayWriteOnlyAccess
+										"xray:Put*",
+										"xray:Get*",
+										"kms:ListAliases",
+									],
+									Resource: "*",
+								},
+								{
+									Effect: "Allow",
+									Action: [
+										"logs:DescribeLogStreams",
+										"logs:GetLogEvents",
+										"logs:FilterLogEvents",
+									],
+									Resource: "arn:aws:logs:*:*:log-group:/aws/lambda/*",
+								},
+							],
+						}),
+					},
+					// LambdaDatastorePolicy -> Dynamodb, Sqs, Kinesis
+					// Default policies are either full write or read only,
+					// Inline policy can write but not create new tables, queues or topics
+				],
+				tags: {
+					Name: _("lambda-role"),
+					PackageName: PACKAGE_NAME,
 				},
-				{ parent: this },
+			});
+
+			/**
+			 *  Managed Policies
+			 *  ---> SNS - additional statements wrt. notifications
+			 */
+			[["sns", ManagedPolicy.AmazonSNSReadOnlyAccess]].forEach(
+				([policy, policyArn]) => {
+					new RolePolicyAttachment(_(`lambda-role-policy-${policy}`), {
+						role,
+						policyArn,
+					});
+				},
 			);
+
+			return role;
+		})();
+
+		const automation = (() => {
+			const role = new Role(_("automation-role"), {
+				description: `(${PACKAGE_NAME}) Automation Role for ${context.prefix}`,
+				assumeRolePolicy: JSON.stringify({
+					Version: "2012-10-17",
+					Statement: [
+						{
+							Effect: "Allow",
+							Principal: {
+								Service: [
+									"codebuild.amazonaws.com",
+									"codedeploy.amazonaws.com",
+									"codepipeline.amazonaws.com",
+									"events.amazonaws.com",
+									"lambda.amazonaws.com",
+									"servicediscovery.amazonaws.com",
+								],
+							},
+							Action: "sts:AssumeRole",
+						},
+					],
+				}),
+				inlinePolicies: [
+					{
+						name: "AutomationExecutionPolicyInline",
+						policy: JSON.stringify({
+							Version: "2012-10-17",
+							Statement: [
+								{
+									Effect: "Allow",
+									Action: [
+										"logs:CreateLogGroup",
+										"logs:CreateLogStream",
+										"logs:PutLogEvents",
+										// AmazonS3FullAccess
+										"s3:*",
+										"s3-object-lambda:*",
+										// AWSCodeBuildDeveloperAccess
+										"codebuild:StartBuild",
+										"codebuild:StopBuild",
+										"codebuild:StartBuildBatch",
+										"codebuild:StopBuildBatch",
+										"codebuild:Retry*",
+										"codebuild:BatchGet*",
+										"codebuild:GetResourcePolicy",
+										"codebuild:Describe*",
+										"codebuild:List*",
+										"codecommit:Get*",
+										"codecommit:ListBranches",
+										"cloudwatch:GetMetricStatistics",
+										"logs:GetLogEvents",
+										// AWSCodePipeline_FullAccess
+										"codepipeline:*",
+										"cloudformation:DescribeStacks",
+										"cloudformation:List*",
+										"cloudtrail:DescribeTrails",
+										"codebuild:BatchGetProjects",
+										"codebuild:CreateProject",
+										"codebuild:List*",
+										"codecommit:GetReferences",
+										"codecommit:List*",
+										"codedeploy:BatchGetDeploymentGroups",
+										"codedeploy:List*",
+										"ec2:Describe*",
+										"ecr:DescribeRepositories",
+										"ecs:List*",
+										"elasticbeanstalk:Describe*",
+										"iam:ListRoles",
+										"iam:GetRole",
+										"lambda:ListFunctions",
+										"opsworks:Describe*",
+										"sns:ListTopics",
+										"codestar-notifications:List*",
+										"states:ListStateMachines",
+									],
+									Resource: "*",
+								},
+							],
+						}),
+					},
+					{
+						name: "AutomationServicePolicyInline",
+						policy: JSON.stringify({
+							Version: "2012-10-17",
+							Statement: [
+								{
+									Effect: "Allow",
+									Action: [
+										// AmazonSSMReadOnlyAccess
+										"ssm:Describe*",
+										"ssm:Get*",
+										"ssm:List*",
+										// AWSLambda_FullAccess
+										"cloudwatch:ListMetrics",
+										"cloudwatch:GetMetricData",
+										"kms:Describe*",
+										"kms:Get*",
+										"kms:List*",
+										"iam:Get*",
+										"iam:List*",
+										"lambda:*",
+										"logs:DescribeLogGroups",
+										"states:DescribeStateMachine",
+										"states:ListStateMachines",
+										"tag:GetResources",
+										"xray:GetTraceSummaries",
+										"xray:BatchGetTraces",
+									],
+									Resource: "*",
+								},
+								{
+									Effect: "Allow",
+									Action: "iam:PassRole",
+									Resource: "*",
+									Condition: {
+										StringEquals: {
+											"iam:PassedToService": "lambda.amazonaws.com",
+										},
+									},
+								},
+							],
+						}),
+					},
+					{
+						name: "AutomationRegistryPolicyInline",
+						policy: JSON.stringify({
+							Version: "2012-10-17",
+							Statement: [
+								{
+									Effect: "Allow",
+									Action: [
+										// AWSCodeArtifactReadOnlyAccess
+										"codeartifact:Describe*",
+										"codeartifact:Get*",
+										"codeartifact:List*",
+										"codeartifact:ReadFromRepository",
+										// AmazonEC2ContainerRegistryReadOnly
+										"sts:GetServiceBearerToken",
+										"ecr:Get*",
+										"ecr:Describe*",
+										"ecr:List*",
+										"ecr:BatchCheckLayerAvailability",
+										"ecr:BatchGetImage",
+										"ecr-public:BatchCheckLayerAvailability",
+										"ecr-public:Get*",
+										"ecr-public:Describe*",
+									],
+									Resource: "*",
+								},
+								// AWSCodeArtifactReadOnlyAccess
+								{
+									Effect: "Allow",
+									Action: "sts:GetServiceBearerToken",
+									Resource: "*",
+									Condition: {
+										StringEquals: {
+											"sts:AWSServiceName": "codeartifact.amazonaws.com",
+										},
+									},
+								},
+							],
+						}),
+					},
+
+					{
+						name: "AutomationEventsPolicyInline",
+						policy: JSON.stringify({
+							Version: "2012-10-17",
+							Statement: [
+								{
+									Effect: "Allow",
+									Action: [
+										// CloudWatchEventsReadOnlyAccess
+										"events:Describe*",
+										"events:List*",
+										"events:TestEventPattern",
+										"schemas:Describe*",
+										"schemas:ExportSchema",
+										"schemas:Get*",
+										"schemas:List*",
+										"schemas:SearchSchemas",
+										"scheduler:Get*",
+										"scheduler:List*",
+										"pipes:DescribePipe",
+										"pipes:List*",
+									],
+									Resource: "*",
+								},
+							],
+						}),
+					},
+				],
+				tags: {
+					Name: _("automation-role"),
+					PackageName: PACKAGE_NAME,
+				},
+			});
+
+			/**
+			 *  Managed Policies:
+			 *  ---> CodeDeploy -  additional statements wrt. notifications
+			 */
+			(
+				[
+					["codedeploy", ManagedPolicy.AWSCodeDeployDeployerAccess],
+					["codedeploy-lambda", ManagedPolicy.AWSCodeDeployRoleForLambda],
+				] as const
+			).forEach(([name, arn]) => {
+				new RolePolicyAttachment(_(`automation-role-policy-${name}`), {
+					role: role,
+					policyArn: arn,
+				});
+			});
+
+			return role;
 		})();
 
 		return {
 			roles: {
 				lambda,
+				automation,
 			},
 		};
 	})();
@@ -251,6 +615,8 @@ export = async () => {
 		props,
 		iam.roles.lambda.arn,
 		iam.roles.lambda.name,
+		iam.roles.automation.arn,
+		iam.roles.automation.name,
 		ec2.vpc.vpcId,
 		ec2.subnetIds.apply((ids) => ids.join(",")),
 		ec2.securitygroup.id,
@@ -271,6 +637,8 @@ export = async () => {
 			jsonProps,
 			iamRoleLambdaArn,
 			iamRoleLambdaName,
+			iamRoleAutomationArn,
+			iamRoleAutomationName,
 			ec2VpcId,
 			ec2SubnetIds,
 			ec2SecurityGroupId,
@@ -292,6 +660,10 @@ export = async () => {
 						lambda: {
 							arn: iamRoleLambdaArn,
 							name: iamRoleLambdaName,
+						},
+						automation: {
+							arn: iamRoleAutomationArn,
+							name: iamRoleAutomationName,
 						},
 					},
 				},
