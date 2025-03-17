@@ -6,7 +6,7 @@ services:
     environment:      
       LOG_LEVEL: $LOG_LEVEL
       STRUCTURED_LOGGING: $STRUCTURED_LOGGING
-      PROJECT_PATH: ./packages/panel-io
+      PROJECT_PATH: ./realms/panel/panel-io
       PROJECT_COMMAND: http:dev
       PORT: $PANEL_HTTP
     volumes: &workspace_volumes
@@ -24,7 +24,7 @@ services:
     environment:
       LOG_LEVEL: $LOG_LEVEL
       STRUCTURED_LOGGING: $STRUCTURED_LOGGING
-      PROJECT_PATH: ./packages/panel-io
+      PROJECT_PATH: ./realms/panel/panel-io
       PROJECT_COMMAND: http:canary
       PANEL_HTTP: $PANEL_HTTP
       PANEL_UI: $PANEL_UI

@@ -10,6 +10,7 @@ import type { PanelHonoApp } from "../http/HonoApp.mjs";
 
 const client = hc<PanelHonoApp>(PanelHttp[HTTP_ROOT_PATH].url());
 const { trace } = await Effect.runPromise(
+		// @ts-ignore
 	Effect.provide(
 		Effect.gen(function* () {
 			const logging = yield* LoggingContext;
@@ -19,6 +20,7 @@ const { trace } = await Effect.runPromise(
 				}),
 			};
 		}),
+		// @ts-ignore
 		Context.empty().pipe(withStructuredLogging({ prefix: "Canary" })),
 	),
 );

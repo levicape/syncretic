@@ -29,8 +29,8 @@ catalogs:
       version: 3.1.0
   database-sqlite:
     better-sqlite3:
-      specifier: ^11.8.1
-      version: 11.8.1
+      specifier: ^11.9.0
+      version: 11.9.0
   default:
     '@levicape/paloma':
       specifier: 0.3.7-main.16
@@ -110,11 +110,11 @@ catalogs:
       specifier: ^2.0.3
       version: 2.0.4
     '@loglayer/transport-pino':
-      specifier: ^2.0.2
-      version: 2.0.2
+      specifier: ^2.1.1
+      version: 2.1.1
     loglayer:
-      specifier: ^6.3.1
-      version: 6.3.1
+      specifier: ^6.3.2
+      version: 6.3.2
   log-pino:
     pino:
       specifier: ^9.6.0
@@ -142,8 +142,8 @@ catalogs:
       version: 2.0.3
   parse-xml:
     fast-xml-parser:
-      specifier: ^4.5.0
-      version: 4.5.3
+      specifier: ^5.0.9
+      version: 5.0.9
   parse-yaml:
     js-yaml:
       specifier: ^4.1.0
@@ -277,7 +277,7 @@ importers:
         version: 2.0.4(consola@3.4.0)
       '@loglayer/transport-pino':
         specifier: catalog:log-loglayer
-        version: 2.0.2(pino@9.6.0)
+        version: 2.1.1(pino@9.6.0)
       '@stricli/core':
         specifier: catalog:cli
         version: 1.1.1
@@ -286,7 +286,7 @@ importers:
         version: 1.0.20
       better-sqlite3:
         specifier: catalog:database-sqlite
-        version: 11.8.1
+        version: 11.9.0
       consola:
         specifier: catalog:log-consola
         version: 3.4.0
@@ -298,7 +298,7 @@ importers:
         version: 2.4.1
       fast-xml-parser:
         specifier: catalog:parse-xml
-        version: 4.5.3
+        version: 5.0.9
       ini:
         specifier: catalog:parse-ini
         version: 5.0.0
@@ -307,10 +307,10 @@ importers:
         version: 4.1.0
       knex:
         specifier: catalog:database-sql
-        version: 3.1.0(better-sqlite3@11.8.1)(pg@8.13.3)
+        version: 3.1.0(better-sqlite3@11.9.0)
       loglayer:
         specifier: catalog:log-loglayer
-        version: 6.3.1
+        version: 6.3.2
       pino:
         specifier: catalog:log-pino
         version: 9.6.0
@@ -377,7 +377,7 @@ importers:
     dependencies:
       '@levicape/paloma':
         specifier: 'catalog:'
-        version: 0.3.7-main.16(pg@8.13.3)
+        version: 0.3.7-main.16
     devDependencies:
       typescript:
         specifier: catalog:dev
@@ -502,7 +502,41 @@ importers:
         specifier: catalog:dev
         version: 5.8.2
 
-  packages/panel-io:
+  packages/pulumi:
+    dependencies:
+      '@pulumi/aws':
+        specifier: catalog:pulumi
+        version: 6.72.0(ts-node@10.9.2(@swc/core@1.10.18(@swc/helpers@0.5.15))(@types/node@22.13.10)(typescript@5.8.2))(typescript@5.8.2)
+      '@pulumi/pulumi':
+        specifier: catalog:pulumi
+        version: 3.156.0(ts-node@10.9.2(@swc/core@1.10.18(@swc/helpers@0.5.15))(@types/node@22.13.10)(typescript@5.8.2))(typescript@5.8.2)
+    devDependencies:
+      '@biomejs/biome':
+        specifier: catalog:lint
+        version: 1.9.4
+      '@types/folder-hash':
+        specifier: catalog:types
+        version: 4.0.4
+      depcheck:
+        specifier: catalog:package
+        version: 1.4.7
+      expect:
+        specifier: catalog:test
+        version: 29.7.0
+      publint:
+        specifier: catalog:package
+        version: 0.3.9
+      syncpack:
+        specifier: catalog:package
+        version: 13.0.3(typescript@5.8.2)
+      tsx:
+        specifier: catalog:dev
+        version: 4.19.3
+      typescript:
+        specifier: catalog:dev
+        version: 5.8.2
+
+  realms/panel/panel-io:
     dependencies:
       '@bufbuild/protobuf':
         specifier: catalog:protobuf
@@ -527,7 +561,7 @@ importers:
         version: 9.0.2
       loglayer:
         specifier: catalog:log-loglayer
-        version: 6.3.1
+        version: 6.3.2
       std-env:
         specifier: catalog:runtime-env
         version: 3.8.1
@@ -551,7 +585,7 @@ importers:
         specifier: catalog:dev
         version: 5.8.2
 
-  packages/panel-ui:
+  realms/panel/panel-ui:
     dependencies:
       '@aws-lambda-powertools/logger':
         specifier: catalog:log-awspowertools
@@ -564,7 +598,7 @@ importers:
         version: 1.0.38
       '@levicape/paloma':
         specifier: 'catalog:'
-        version: 0.3.7-main.16(pg@8.13.3)
+        version: 0.3.7-main.16
       '@levicape/spork-atlas':
         specifier: 'catalog:'
         version: 0.9.2-main.6
@@ -585,7 +619,7 @@ importers:
         version: 4.21.2
       loglayer:
         specifier: catalog:log-loglayer
-        version: 6.3.1
+        version: 6.3.2
       react:
         specifier: catalog:web-react
         version: 19.0.0
@@ -639,40 +673,6 @@ importers:
         specifier: catalog:web-vite
         version: 6.2.2(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.29.2)(tsx@4.19.3)(yaml@2.7.0)
 
-  packages/pulumi:
-    dependencies:
-      '@pulumi/aws':
-        specifier: catalog:pulumi
-        version: 6.72.0(ts-node@10.9.2(@swc/core@1.10.18(@swc/helpers@0.5.15))(@types/node@22.13.10)(typescript@5.8.2))(typescript@5.8.2)
-      '@pulumi/pulumi':
-        specifier: catalog:pulumi
-        version: 3.156.0(ts-node@10.9.2(@swc/core@1.10.18(@swc/helpers@0.5.15))(@types/node@22.13.10)(typescript@5.8.2))(typescript@5.8.2)
-    devDependencies:
-      '@biomejs/biome':
-        specifier: catalog:lint
-        version: 1.9.4
-      '@types/folder-hash':
-        specifier: catalog:types
-        version: 4.0.4
-      depcheck:
-        specifier: catalog:package
-        version: 1.4.7
-      expect:
-        specifier: catalog:test
-        version: 29.7.0
-      publint:
-        specifier: catalog:package
-        version: 0.3.9
-      syncpack:
-        specifier: catalog:package
-        version: 13.0.3(typescript@5.8.2)
-      tsx:
-        specifier: catalog:dev
-        version: 4.19.3
-      typescript:
-        specifier: catalog:dev
-        version: 5.8.2
-
 packages:
 
   '@aws-crypto/sha256-browser@5.2.0':
@@ -688,19 +688,8 @@ packages:
   '@aws-crypto/util@5.2.0':
     resolution: {integrity: sha512-4RkU9EsI6ZpBve5fseQlGNUWKMa1RLPQ1dnjnQoe07ldfIzcsGb5hC5W0Dm7u423KWzawlrpbjXBrXCEv9zazQ==}
 
-  '@aws-lambda-powertools/commons@2.14.0':
-    resolution: {integrity: sha512-tJPVanYElAo0WymoQ0pyELpHdGCz9u7ERKdCwHv4abtJFY2VVoIMLtsUs8xUczV2hjIWl0+ye9CGYCBazKYB3Q==}
-
   '@aws-lambda-powertools/commons@2.16.0':
     resolution: {integrity: sha512-HtVibLx8yCHvfRhOwI85ghJJqF3pYr49rZP+kRyath0ZnIEWfklFmv9ehcohPzlIgaiOijKV4vyGCKiXBOnigw==}
-
-  '@aws-lambda-powertools/logger@2.14.0':
-    resolution: {integrity: sha512-gumsz+1yGBLB3zPB6Qlsw4Vse9SRgsg2qAy1Ocv+o7tE8AZiPslFFG1EldpNzz1hoGBzsdIKgoRlrUIdW8Pumg==}
-    peerDependencies:
-      '@middy/core': 4.x || 5.x || 6.x
-    peerDependenciesMeta:
-      '@middy/core':
-        optional: true
 
   '@aws-lambda-powertools/logger@2.16.0':
     resolution: {integrity: sha512-k7Xpjx1VAd/52p3Wssq83OwUFOeus6Mx9JnsXBAdAA/aUON7srbv2pPRFMGuoK9Qv5nYvADaBcL9hYtK/XknaA==}
@@ -1341,16 +1330,8 @@ packages:
     resolution: {integrity: sha512-XGSsWDweP80Fks16lwkAUIr54ICyBs6PsI4mpfTLQaWgEJRtY9xEV+PeyDpJ+sJEGZxqINlpmAwe/6tS1pP8Ng==}
     engines: {node: '>=10.3.0'}
 
-  '@loglayer/context-manager@1.0.2':
-    resolution: {integrity: sha512-arElnl3jEjdOFwLA3OKwd7A5Z00ueSCHO62APTUAsDtC/OwNJTmrKCEimNE7i9GQvwpQLaTb0buE2gHD/ZqT3g==}
-    engines: {node: '>=18'}
-
   '@loglayer/context-manager@1.0.4':
     resolution: {integrity: sha512-ueyMgT7rnFAAB3IO0oouCJIGIHHYsv5/UYKcXpHdRjDDWZIDcBAUCPc7AdaGNrf1weKUkGckjpGmXbxdZDJt0w==}
-    engines: {node: '>=18'}
-
-  '@loglayer/plugin@2.0.2':
-    resolution: {integrity: sha512-lFfGRmqHiMoCScUJy25m2vBJxEiSBeG/H38qY0jO2E5aS/ez+NcPHWPPVF3FLCyftGPldqxgYeQeIOO6HTitGQ==}
     engines: {node: '>=18'}
 
   '@loglayer/plugin@2.0.4':
@@ -1365,23 +1346,11 @@ packages:
     resolution: {integrity: sha512-M31Wrue64t0PLmhLsa8PGcRIbQJTcuEAzJoE89m9YvSOzZ0Kzzml/mvEQwLdPAqzYSVyxwcOcOvT3jPq+YBB3A==}
     engines: {node: '>=18'}
 
-  '@loglayer/transport-aws-lambda-powertools@3.0.2':
-    resolution: {integrity: sha512-MRqH83PoBaAsz47nI2eMaRR118jS7aMHOUYkA74/PcvRqKxDdz/3Du89FC+ok+pI7IWPF7VbDyuJdVibuUk1ww==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      '@aws-lambda-powertools/logger': '*'
-
   '@loglayer/transport-aws-lambda-powertools@3.0.4':
     resolution: {integrity: sha512-s1bIrl9XCLs34boPO2aFW6I56ejoQD2Vah9Hb+UH+6Ii6L2b3eoOL+ckA8mZsfxIhvTypBVatNCFZHmcgsAqDg==}
     engines: {node: '>=18'}
     peerDependencies:
       '@aws-lambda-powertools/logger': '*'
-
-  '@loglayer/transport-consola@2.0.2':
-    resolution: {integrity: sha512-2y9EI3qiT7rv7BYSONqXoEqcDtGgnexEodopjLtOr5lLNHnjy4NLcj0zTcubAPOGEpkyDHC6G5nzHlNqyEXdLQ==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      consola: '*'
 
   '@loglayer/transport-consola@2.0.4':
     resolution: {integrity: sha512-c4N+5ICNHVMWECOeCU2Yr+8qZ2Xj07zdCiFCMm5B5RLrEK+FFe92wei2wDPXCiTwUkiyyXEohLXXo4o5hNf/QA==}
@@ -1391,6 +1360,12 @@ packages:
 
   '@loglayer/transport-pino@2.0.2':
     resolution: {integrity: sha512-C1BGVg2f4Z62Qa90VXB/zrU0pO6QXhEe6cqwZiLZmw1F1pcPfX8ErKJPISqejRH9mjPLfc66KS+8DF0qRXUlNg==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      pino: '*'
+
+  '@loglayer/transport-pino@2.1.1':
+    resolution: {integrity: sha512-39Mlxu8uEgAeKSfKPj8zOU1T9D36YGFvKRDw489mdh1ENfiJGZoTCQpuQfsqw1aDBHtdoYDwMzvm60A/feSeMA==}
     engines: {node: '>=18'}
     peerDependencies:
       pino: '*'
@@ -2406,9 +2381,6 @@ packages:
   '@types/node@22.13.10':
     resolution: {integrity: sha512-I6LPUvlRH+O6VRUqYOcMudhaIdUVWfsjnZavnsraHvpBwaEyMN29ry+0UVJhImYL16xsscu0aske3yA+uPOWfw==}
 
-  '@types/node@22.13.5':
-    resolution: {integrity: sha512-+lTU0PxZXn0Dr1NBtC7Y8cR21AJr87dLLU953CWA6pMxxv/UDc7jYAY90upcrie1nRcD6XNG5HOYEDtgW5TxAg==}
-
   '@types/parse-json@4.0.2':
     resolution: {integrity: sha512-dISoDXWWQwUquiKsyZ4Ng+HX2KsPL7LyHKHQwgGFEA3IaKac4Obd+h2a/a6waisAoepJlBcx9paWqjA8/HVjCw==}
 
@@ -2599,6 +2571,9 @@ packages:
 
   better-sqlite3@11.8.1:
     resolution: {integrity: sha512-9BxNaBkblMjhJW8sMRZxnxVTRgbRmssZW0Oxc1MPBTfiR+WW21e2Mk4qu8CzrcZb1LwPCnFsfDEzq+SNcBU8eg==}
+
+  better-sqlite3@11.9.0:
+    resolution: {integrity: sha512-4b9xYnoaskj8eIkke9ZCB42p5bOPabptSku8Rl4Yww70Jf+aHeLvrIjXDJrKQxUEjdppsFb+fdJSjoH4TklROA==}
 
   bin-links@4.0.4:
     resolution: {integrity: sha512-cMtq4W5ZsEwcutJrVId+a/tjt8GSbS+h0oNkdl6+6rBuEv8Ot33Bevj5KPm40t309zuhVic8NjpuL42QCiJWWA==}
@@ -3005,9 +2980,6 @@ packages:
   effect@3.13.11:
     resolution: {integrity: sha512-SOUwX2E1ciNDPZDbSfx+YszGfIIg90sluKyx0BB6VwLIt8+NOA6tEAR3N2XI9MEOWfO/EpWzbARLnXI2hXcvaQ==}
 
-  effect@3.13.2:
-    resolution: {integrity: sha512-/w+CPqHDJ33Wq7xC4YKAchrEEPtjvxh563xH9kDTZp99seNYBoBs87vl8DJwartEjj+KLQLP8PzoDne+XmGT2A==}
-
   emoji-regex@10.4.0:
     resolution: {integrity: sha512-EC+0oUMY1Rqm4O6LLrgjtYDvcVYTy7chDnM4Q7030tP4Kwj3u/pR6gP9ygnp2CJMK5Gq+9Q2oqmrFJAz01DXjw==}
 
@@ -3162,8 +3134,8 @@ packages:
     resolution: {integrity: sha512-xkjOecfnKGkSsOwtZ5Pz7Us/T6mrbPQrq0nh+aCO5V9nk5NLWmasAHumTKjiPJPWANe+kAZ84Jc8ooJkzZ88Sw==}
     hasBin: true
 
-  fast-xml-parser@4.5.3:
-    resolution: {integrity: sha512-RKihhV+SHsIUGXObeVy9AXiBbFwkVk7Syp8XgwN5U3JV416+Gwp/GO9i0JYKmikykgz/UHRrrV4ROuZEo/T0ig==}
+  fast-xml-parser@5.0.9:
+    resolution: {integrity: sha512-2mBwCiuW3ycKQQ6SOesSB8WeF+fIGb6I/GG5vU5/XEptwFFhp9PE8b9O7fbs2dpq9fXn4ULR3UsfydNUCntf5A==}
     hasBin: true
 
   fastparse@1.1.2:
@@ -3816,12 +3788,12 @@ packages:
     resolution: {integrity: sha512-i24m8rpwhmPIS4zscNzK6MSEhk0DUWa/8iYQWxhffV8jkI4Phvs3F+quL5xvS0gdQR0FyTCMMH33Y78dDTzzIw==}
     engines: {node: '>=18'}
 
-  loglayer@6.1.3:
-    resolution: {integrity: sha512-/vAOpwgBUG99lgAATbhf49qjyBFUheOhz9L28Fy36NNiKMls24Oc6zdSVsaQo5Vp2i/5jkYjhFaAEy6yGOMPcA==}
-    engines: {node: '>=18'}
-
   loglayer@6.3.1:
     resolution: {integrity: sha512-oYC+p4T2CG9NIFy8LG2Gb81MKt2rnxWN/lWYtawWGUVjA747oxfqoTtBb0kKW4i9lOa1lF9E0FxrLqqHC/B3gw==}
+    engines: {node: '>=18'}
+
+  loglayer@6.3.2:
+    resolution: {integrity: sha512-RBjeSfoJ91QEOO4DhTbybj0aNoZRb7gzzPJaDG/UJAjZJcdlskImVPovPNak/Xn9cGLRwiW9dpJqdyTmvEJqww==}
     engines: {node: '>=18'}
 
   long@5.3.1:
@@ -4798,9 +4770,6 @@ packages:
     resolution: {integrity: sha512-RwNA9Z/7PrK06rYLIzFMlaF+l73iwpzsqRIFgbMLbTcLD6cOao82TaWefPXQvB2fOC4AjuYSEndS7N/mTCbkdQ==}
     engines: {node: '>= 0.8'}
 
-  std-env@3.8.0:
-    resolution: {integrity: sha512-Bc3YwwCB+OzldMxOXJIIvC6cPRWr/LxOp48CdQTOkPyk/t4JWWJbrilwBd7RJzKV8QW7tJkcgAmeuLLJugl5/w==}
-
   std-env@3.8.1:
     resolution: {integrity: sha512-vj5lIj3Mwf9D79hBkltk5qmkFI+biIKWS2IBxEyEU3AX1tUf7AoL8nSazCOiiqQsGKIq01SClsKEzweu34uwvA==}
 
@@ -4859,6 +4828,9 @@ packages:
 
   strnum@1.1.1:
     resolution: {integrity: sha512-O7aCHfYCamLCctjAiaucmE+fHf2DYHkus2OKCn4Wv03sykfFtgeECn505X6K4mPl8CRNd/qurC9guq+ynoN4pw==}
+
+  strnum@2.0.5:
+    resolution: {integrity: sha512-YAT3K/sgpCUxhxNMrrdhtod3jckkpYwH6JAuwmUdXZsmzH1wUyzTMrrK2wYCEEqlKwrWDd35NeuUkbBy/1iK+Q==}
 
   supports-color@7.2.0:
     resolution: {integrity: sha512-qpCAvRl9stuOHveKsn7HncJRvv501qIacKzQlO/+Lwxc9+0q2wLyv4Dfvt80/DPn2pqOBsJdDiogXGR9+OvwRw==}
@@ -5229,14 +5201,7 @@ snapshots:
       '@smithy/util-utf8': 2.3.0
       tslib: 2.8.1
 
-  '@aws-lambda-powertools/commons@2.14.0': {}
-
   '@aws-lambda-powertools/commons@2.16.0': {}
-
-  '@aws-lambda-powertools/logger@2.14.0':
-    dependencies:
-      '@aws-lambda-powertools/commons': 2.14.0
-      lodash.merge: 4.6.2
 
   '@aws-lambda-powertools/logger@2.16.0':
     dependencies:
@@ -6122,11 +6087,11 @@ snapshots:
       react: 19.0.0
       tslib: 2.8.1
 
-  '@effect/platform-node-shared@0.27.2(@effect/platform@0.77.2(effect@3.13.2))(effect@3.13.2)':
+  '@effect/platform-node-shared@0.27.2(@effect/platform@0.77.2(effect@3.13.11))(effect@3.13.11)':
     dependencies:
-      '@effect/platform': 0.77.2(effect@3.13.2)
+      '@effect/platform': 0.77.2(effect@3.13.11)
       '@parcel/watcher': 2.5.1
-      effect: 3.13.2
+      effect: 3.13.11
       multipasta: 0.2.5
 
   '@effect/platform-node-shared@0.29.2(@effect/platform@0.79.2(effect@3.13.11))(effect@3.13.11)':
@@ -6136,11 +6101,11 @@ snapshots:
       effect: 3.13.11
       multipasta: 0.2.5
 
-  '@effect/platform-node@0.73.2(@effect/platform@0.77.2(effect@3.13.2))(effect@3.13.2)':
+  '@effect/platform-node@0.73.2(@effect/platform@0.77.2(effect@3.13.11))(effect@3.13.11)':
     dependencies:
-      '@effect/platform': 0.77.2(effect@3.13.2)
-      '@effect/platform-node-shared': 0.27.2(@effect/platform@0.77.2(effect@3.13.2))(effect@3.13.2)
-      effect: 3.13.2
+      '@effect/platform': 0.77.2(effect@3.13.11)
+      '@effect/platform-node-shared': 0.27.2(@effect/platform@0.77.2(effect@3.13.11))(effect@3.13.11)
+      effect: 3.13.11
       mime: 3.0.0
       undici: 7.3.0
       ws: 8.18.1
@@ -6160,9 +6125,9 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@effect/platform@0.77.2(effect@3.13.2)':
+  '@effect/platform@0.77.2(effect@3.13.11)':
     dependencies:
-      effect: 3.13.2
+      effect: 3.13.11
       find-my-way-ts: 0.1.5
       multipasta: 0.2.5
 
@@ -6336,7 +6301,7 @@ snapshots:
       '@jest/schemas': 29.6.3
       '@types/istanbul-lib-coverage': 2.0.6
       '@types/istanbul-reports': 3.0.4
-      '@types/node': 22.13.5
+      '@types/node': 22.13.10
       '@types/yargs': 17.0.33
       chalk: 4.1.2
 
@@ -6366,13 +6331,13 @@ snapshots:
 
   '@juggle/resize-observer@3.4.0': {}
 
-  '@levicape/paloma@0.3.7-main.16(pg@8.13.3)':
+  '@levicape/paloma@0.3.7-main.16':
     dependencies:
-      '@aws-lambda-powertools/logger': 2.14.0
-      '@effect/platform': 0.77.2(effect@3.13.2)
-      '@effect/platform-node': 0.73.2(@effect/platform@0.77.2(effect@3.13.2))(effect@3.13.2)
-      '@loglayer/transport-aws-lambda-powertools': 3.0.2(@aws-lambda-powertools/logger@2.14.0)
-      '@loglayer/transport-consola': 2.0.2(consola@3.4.0)
+      '@aws-lambda-powertools/logger': 2.16.0
+      '@effect/platform': 0.77.2(effect@3.13.11)
+      '@effect/platform-node': 0.73.2(@effect/platform@0.77.2(effect@3.13.11))(effect@3.13.11)
+      '@loglayer/transport-aws-lambda-powertools': 3.0.4(@aws-lambda-powertools/logger@2.16.0)
+      '@loglayer/transport-consola': 2.0.4(consola@3.4.0)
       '@loglayer/transport-pino': 2.0.2(pino@9.6.0)
       '@stricli/core': 1.1.1
       better-sqlite3: 11.8.1
@@ -6380,15 +6345,54 @@ snapshots:
       csv: 6.3.11
       db0: 0.2.4(better-sqlite3@11.8.1)
       destr: 2.0.3
-      effect: 3.13.2
+      effect: 3.13.11
       fs-extra: 11.3.0
-      knex: 3.1.0(better-sqlite3@11.8.1)(pg@8.13.3)
+      knex: 3.1.0(better-sqlite3@11.8.1)
       ksuid: 3.0.0
-      loglayer: 6.1.3
+      loglayer: 6.3.1
       pino: 9.6.0
       pino-pretty: 13.0.0
       serialize-error: 12.0.0
-      std-env: 3.8.0
+      std-env: 3.8.1
+      verror: 1.10.1
+    transitivePeerDependencies:
+      - '@electric-sql/pglite'
+      - '@libsql/client'
+      - '@middy/core'
+      - bufferutil
+      - drizzle-orm
+      - mysql
+      - mysql2
+      - pg
+      - pg-native
+      - sqlite3
+      - supports-color
+      - tedious
+      - utf-8-validate
+
+  '@levicape/paloma@0.3.7-main.16(pg@8.13.3)':
+    dependencies:
+      '@aws-lambda-powertools/logger': 2.16.0
+      '@effect/platform': 0.77.2(effect@3.13.11)
+      '@effect/platform-node': 0.73.2(@effect/platform@0.77.2(effect@3.13.11))(effect@3.13.11)
+      '@loglayer/transport-aws-lambda-powertools': 3.0.4(@aws-lambda-powertools/logger@2.16.0)
+      '@loglayer/transport-consola': 2.0.4(consola@3.4.0)
+      '@loglayer/transport-pino': 2.0.2(pino@9.6.0)
+      '@stricli/core': 1.1.1
+      better-sqlite3: 11.8.1
+      consola: 3.4.0
+      csv: 6.3.11
+      db0: 0.2.4(better-sqlite3@11.8.1)
+      destr: 2.0.3
+      effect: 3.13.11
+      fs-extra: 11.3.0
+      knex: 3.1.0(better-sqlite3@11.8.1)(pg@8.13.3)
+      ksuid: 3.0.0
+      loglayer: 6.3.1
+      pino: 9.6.0
+      pino-pretty: 13.0.0
+      serialize-error: 12.0.0
+      std-env: 3.8.1
       verror: 1.10.1
     transitivePeerDependencies:
       - '@electric-sql/pglite'
@@ -6437,7 +6441,7 @@ snapshots:
       hono: 4.7.4
       hono-rate-limiter: 0.4.2(hono@4.7.4)
       jsonwebtoken: 9.0.2
-      loglayer: 6.3.1
+      loglayer: 6.3.2
       pino: 9.6.0
       pino-pretty: 13.0.0
       serialize-error: 12.0.0
@@ -6456,17 +6460,9 @@ snapshots:
 
   '@logdna/tail-file@2.2.0': {}
 
-  '@loglayer/context-manager@1.0.2':
-    dependencies:
-      '@loglayer/shared': 2.1.1
-
   '@loglayer/context-manager@1.0.4':
     dependencies:
       '@loglayer/shared': 2.2.1
-
-  '@loglayer/plugin@2.0.2':
-    dependencies:
-      '@loglayer/shared': 2.1.1
 
   '@loglayer/plugin@2.0.4':
     dependencies:
@@ -6476,20 +6472,10 @@ snapshots:
 
   '@loglayer/shared@2.2.1': {}
 
-  '@loglayer/transport-aws-lambda-powertools@3.0.2(@aws-lambda-powertools/logger@2.14.0)':
-    dependencies:
-      '@aws-lambda-powertools/logger': 2.14.0
-      '@loglayer/transport': 2.0.2
-
   '@loglayer/transport-aws-lambda-powertools@3.0.4(@aws-lambda-powertools/logger@2.16.0)':
     dependencies:
       '@aws-lambda-powertools/logger': 2.16.0
       '@loglayer/transport': 2.1.1
-
-  '@loglayer/transport-consola@2.0.2(consola@3.4.0)':
-    dependencies:
-      '@loglayer/transport': 2.0.2
-      consola: 3.4.0
 
   '@loglayer/transport-consola@2.0.4(consola@3.4.0)':
     dependencies:
@@ -6499,6 +6485,11 @@ snapshots:
   '@loglayer/transport-pino@2.0.2(pino@9.6.0)':
     dependencies:
       '@loglayer/transport': 2.0.2
+      pino: 9.6.0
+
+  '@loglayer/transport-pino@2.1.1(pino@9.6.0)':
+    dependencies:
+      '@loglayer/transport': 2.1.1
       pino: 9.6.0
 
   '@loglayer/transport@2.0.2':
@@ -7713,10 +7704,6 @@ snapshots:
     dependencies:
       undici-types: 6.20.0
 
-  '@types/node@22.13.5':
-    dependencies:
-      undici-types: 6.20.0
-
   '@types/parse-json@4.0.2': {}
 
   '@types/qs@6.9.18': {}
@@ -7893,6 +7880,11 @@ snapshots:
   base64-js@1.5.1: {}
 
   better-sqlite3@11.8.1:
+    dependencies:
+      bindings: 1.5.0
+      prebuild-install: 7.1.3
+
+  better-sqlite3@11.9.0:
     dependencies:
       bindings: 1.5.0
       prebuild-install: 7.1.3
@@ -8272,11 +8264,6 @@ snapshots:
       '@standard-schema/spec': 1.0.0
       fast-check: 3.23.2
 
-  effect@3.13.2:
-    dependencies:
-      '@standard-schema/spec': 1.0.0
-      fast-check: 3.23.2
-
   emoji-regex@10.4.0: {}
 
   emoji-regex@8.0.0: {}
@@ -8469,9 +8456,9 @@ snapshots:
     dependencies:
       strnum: 1.1.1
 
-  fast-xml-parser@4.5.3:
+  fast-xml-parser@5.0.9:
     dependencies:
-      strnum: 1.1.1
+      strnum: 2.0.5
 
   fastparse@1.1.2: {}
 
@@ -8891,7 +8878,7 @@ snapshots:
   jest-util@29.7.0:
     dependencies:
       '@jest/types': 29.6.3
-      '@types/node': 22.13.5
+      '@types/node': 22.13.10
       chalk: 4.1.2
       ci-info: 3.9.0
       graceful-fs: 4.2.11
@@ -8974,6 +8961,27 @@ snapshots:
 
   kleur@3.0.3: {}
 
+  knex@3.1.0(better-sqlite3@11.8.1):
+    dependencies:
+      colorette: 2.0.19
+      commander: 10.0.1
+      debug: 4.3.4
+      escalade: 3.2.0
+      esm: 3.2.25
+      get-package-type: 0.1.0
+      getopts: 2.3.0
+      interpret: 2.2.0
+      lodash: 4.17.21
+      pg-connection-string: 2.6.2
+      rechoir: 0.8.0
+      resolve-from: 5.0.0
+      tarn: 3.0.2
+      tildify: 2.0.0
+    optionalDependencies:
+      better-sqlite3: 11.8.1
+    transitivePeerDependencies:
+      - supports-color
+
   knex@3.1.0(better-sqlite3@11.8.1)(pg@8.13.3):
     dependencies:
       colorette: 2.0.19
@@ -8993,6 +9001,27 @@ snapshots:
     optionalDependencies:
       better-sqlite3: 11.8.1
       pg: 8.13.3
+    transitivePeerDependencies:
+      - supports-color
+
+  knex@3.1.0(better-sqlite3@11.9.0):
+    dependencies:
+      colorette: 2.0.19
+      commander: 10.0.1
+      debug: 4.3.4
+      escalade: 3.2.0
+      esm: 3.2.25
+      get-package-type: 0.1.0
+      getopts: 2.3.0
+      interpret: 2.2.0
+      lodash: 4.17.21
+      pg-connection-string: 2.6.2
+      rechoir: 0.8.0
+      resolve-from: 5.0.0
+      tarn: 3.0.2
+      tildify: 2.0.0
+    optionalDependencies:
+      better-sqlite3: 11.9.0
     transitivePeerDependencies:
       - supports-color
 
@@ -9085,14 +9114,14 @@ snapshots:
       chalk: 5.4.1
       is-unicode-supported: 1.3.0
 
-  loglayer@6.1.3:
-    dependencies:
-      '@loglayer/context-manager': 1.0.2
-      '@loglayer/plugin': 2.0.2
-      '@loglayer/shared': 2.1.1
-      '@loglayer/transport': 2.0.2
-
   loglayer@6.3.1:
+    dependencies:
+      '@loglayer/context-manager': 1.0.4
+      '@loglayer/plugin': 2.0.4
+      '@loglayer/shared': 2.2.1
+      '@loglayer/transport': 2.1.1
+
+  loglayer@6.3.2:
     dependencies:
       '@loglayer/context-manager': 1.0.4
       '@loglayer/plugin': 2.0.4
@@ -10160,8 +10189,6 @@ snapshots:
 
   statuses@2.0.1: {}
 
-  std-env@3.8.0: {}
-
   std-env@3.8.1: {}
 
   stdin-discarder@0.2.2: {}
@@ -10211,6 +10238,8 @@ snapshots:
   strip-json-comments@3.1.1: {}
 
   strnum@1.1.1: {}
+
+  strnum@2.0.5: {}
 
   supports-color@7.2.0:
     dependencies:
