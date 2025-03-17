@@ -6,8 +6,12 @@ on:
   workflow_dispatch:
     {}
 env:
-  NPM_REGISTRY_PROTOCOL: https
-  NPM_REGISTRY_HOST: npm.pkg.github.com
+  NPM_REGISTRY_PROTOCOL_LEVICAPE: https
+  NPM_REGISTRY_HOST_LEVICAPE: npm.pkg.github.com
+  NPM_TOKEN_LEVICAPE: ${{ secrets.LEVICAPE_NPM_TOKEN }}
+  LEVICAPE_REGISTRY_HOST: npm.pkg.github.com/
+  LEVICAPE_REGISTRY: https://npm.pkg.github.com
+  LEVICAPE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   NODE_NO_WARNINGS: "1"
   NPM_CONFIG_UPDATE_NOTIFIER: "false"
   FRONTEND_HOSTNAME: at.levicape.cloud
@@ -30,7 +34,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22.13.0
-          registry-url: ${{ env.NPM_REGISTRY_PROTOCOL }}://${{ env.NPM_REGISTRY_HOST }}
+          registry-url: ${{ env.NPM_REGISTRY_PROTOCOL_LEVICAPE }}://${{ env.NPM_REGISTRY_HOST_LEVICAPE }}
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
           scope: "@levicape"
@@ -53,15 +57,13 @@ jobs:
           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.json') }}
           restore-keys: ${{ runner.os }}-pnpm-store-
       - name: Set NPM Registry to Verdaccio:31313
-        run: pnpm set registry http://localhost:31313/;
+        run: pnpm set registry http://localhost:31313;
       - if: ${{ steps.cache-npm.outputs.cache-hit != 'true' }}
         name: List Dependencies
         continue-on-error: true
         run: pnpm list;
       - name: Install Dependencies
         run: pnpm install;
-      - name: Reset Nx Cache
-        run: pnpm exec nx reset || true;
       - name: Build image
         run: pnpm exec nx pack:build iac-images-application --verbose;
       - name: Verify AWS credentials
@@ -69,7 +71,10 @@ jobs:
         with:
           aws-region: ${{ env.AWS_REGION }}
       - name: Setup Pulumi state backend
-        run: STRUCTURED_LOGGING=quiet pnpm dx:cli:bin aws pulumi ci --region $AWS_REGION > .pulumi-ci;
+        run: |-
+          echo "Retriving AWS credentials with pnpm dx:cli:bin aws in $AWS_REGION";
+          pnpm dx:cli:bin;
+          STRUCTURED_LOGGING=quiet pnpm dx:cli:bin aws pulumi ci --region $AWS_REGION > .pulumi-ci;
       - name: Display Pulumi CI output
         run: cat .pulumi-ci;
       - name: Extract exports from Pulumi CI
@@ -174,65 +179,64 @@ jobs:
           pnpm -C packages/builders build:tsc;
           pnpm -C packages/pulumi build:tsc;
           source .pulumi-helper.sh;
-          configure_stack "Delete" "fourtwo-application.elm_pst_4" "$(pwd)/iac/stacks/src/application" "fourtwo-application" "_pulumi/application";
-          setup_stack "fourtwo-application.elm_pst_4" "$(pwd)/iac/stacks/src/application";
-          configure_stack_settings "$(pwd)/iac/stacks/src/application" 'aws:skipMetadataApiCheck=false
-          context:stack.environment.isProd=false
-          context:stack.environment.features=aws';
-          remove_stack "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/application" --non-interactive --suppress-progress --diff --json;
-          configure_stack "Delete" "fourtwo-codestar.elm_pst_4" "$(pwd)/iac/stacks/src/codestar" "fourtwo-codestar" "_pulumi/codestar";
-          setup_stack "fourtwo-codestar.elm_pst_4" "$(pwd)/iac/stacks/src/codestar";
-          configure_stack_settings "$(pwd)/iac/stacks/src/codestar" 'aws:skipMetadataApiCheck=false
-          context:stack.environment.isProd=false
-          context:stack.environment.features=aws';
-          remove_stack "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/codestar" --non-interactive --suppress-progress --diff --json;
-          configure_stack "Delete" "fourtwo-cognito.elm_pst_4" "$(pwd)/iac/stacks/src/cognito" "fourtwo-cognito" "_pulumi/cognito";
-          setup_stack "fourtwo-cognito.elm_pst_4" "$(pwd)/iac/stacks/src/cognito";
-          configure_stack_settings "$(pwd)/iac/stacks/src/cognito" 'aws:skipMetadataApiCheck=false
-          context:stack.environment.isProd=false
-          context:stack.environment.features=aws';
-          remove_stack "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/cognito" --non-interactive --suppress-progress --diff --json;
-          configure_stack "Delete" "fourtwo-datalayer.elm_pst_4" "$(pwd)/iac/stacks/src/datalayer" "fourtwo-datalayer" "_pulumi/datalayer";
-          setup_stack "fourtwo-datalayer.elm_pst_4" "$(pwd)/iac/stacks/src/datalayer";
-          configure_stack_settings "$(pwd)/iac/stacks/src/datalayer" 'aws:skipMetadataApiCheck=false
-          context:stack.environment.isProd=false
-          context:stack.environment.features=aws';
-          remove_stack "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/datalayer" --non-interactive --suppress-progress --diff --json;
-          configure_stack "Delete" "fourtwo-panel-http.elm_pst_4" "$(pwd)/iac/stacks/src/domains/panel/http" "fourtwo-panel-http" "_pulumi/domains_panel_http";
-          setup_stack "fourtwo-panel-http.elm_pst_4" "$(pwd)/iac/stacks/src/domains/panel/http";
-          configure_stack_settings "$(pwd)/iac/stacks/src/domains/panel/http" 'aws:skipMetadataApiCheck=false
-          context:stack.environment.isProd=false
-          context:stack.environment.features=aws';
-          remove_stack "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/domains/panel/http" --non-interactive --suppress-progress --diff --json;
-          configure_stack "Delete" "fourtwo-panel-web.elm_pst_4" "$(pwd)/iac/stacks/src/domains/panel/web" "fourtwo-panel-web" "_pulumi/domains_panel_web";
-          setup_stack "fourtwo-panel-web.elm_pst_4" "$(pwd)/iac/stacks/src/domains/panel/web";
-          configure_stack_settings "$(pwd)/iac/stacks/src/domains/panel/web" 'aws:skipMetadataApiCheck=false
-          context:stack.environment.isProd=false
-          context:stack.environment.features=aws';
-          remove_stack "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/domains/panel/web" --non-interactive --suppress-progress --diff --json;
-          configure_stack "Delete" "fourtwo-panel-monitor.elm_pst_4" "$(pwd)/iac/stacks/src/domains/panel/monitor" "fourtwo-panel-monitor" "_pulumi/domains_panel_monitor";
-          setup_stack "fourtwo-panel-monitor.elm_pst_4" "$(pwd)/iac/stacks/src/domains/panel/monitor";
-          configure_stack_settings "$(pwd)/iac/stacks/src/domains/panel/monitor" 'aws:skipMetadataApiCheck=false
-          context:stack.environment.isProd=false
-          context:stack.environment.features=aws';
-          remove_stack "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/domains/panel/monitor" --non-interactive --suppress-progress --diff --json;
           configure_stack "Delete" "fourtwo-panel-wwwroot.elm_pst_4" "$(pwd)/iac/stacks/src/domains/panel/wwwroot" "fourtwo-panel-wwwroot" "_pulumi/domains_panel_wwwroot";
           setup_stack "fourtwo-panel-wwwroot.elm_pst_4" "$(pwd)/iac/stacks/src/domains/panel/wwwroot";
           configure_stack_settings "$(pwd)/iac/stacks/src/domains/panel/wwwroot" 'aws:skipMetadataApiCheck=false
           context:stack.environment.isProd=false
           context:stack.environment.features=aws';
           remove_stack "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/domains/panel/wwwroot" --non-interactive --suppress-progress --diff --json;
+          configure_stack "Delete" "fourtwo-panel-monitor.elm_pst_4" "$(pwd)/iac/stacks/src/domains/panel/monitor" "fourtwo-panel-monitor" "_pulumi/domains_panel_monitor";
+          setup_stack "fourtwo-panel-monitor.elm_pst_4" "$(pwd)/iac/stacks/src/domains/panel/monitor";
+          configure_stack_settings "$(pwd)/iac/stacks/src/domains/panel/monitor" 'aws:skipMetadataApiCheck=false
+          context:stack.environment.isProd=false
+          context:stack.environment.features=aws';
+          remove_stack "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/domains/panel/monitor" --non-interactive --suppress-progress --diff --json;
+          configure_stack "Delete" "fourtwo-panel-web.elm_pst_4" "$(pwd)/iac/stacks/src/domains/panel/web" "fourtwo-panel-web" "_pulumi/domains_panel_web";
+          setup_stack "fourtwo-panel-web.elm_pst_4" "$(pwd)/iac/stacks/src/domains/panel/web";
+          configure_stack_settings "$(pwd)/iac/stacks/src/domains/panel/web" 'aws:skipMetadataApiCheck=false
+          context:stack.environment.isProd=false
+          context:stack.environment.features=aws';
+          remove_stack "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/domains/panel/web" --non-interactive --suppress-progress --diff --json;
+          configure_stack "Delete" "fourtwo-panel-http.elm_pst_4" "$(pwd)/iac/stacks/src/domains/panel/http" "fourtwo-panel-http" "_pulumi/domains_panel_http";
+          setup_stack "fourtwo-panel-http.elm_pst_4" "$(pwd)/iac/stacks/src/domains/panel/http";
+          configure_stack_settings "$(pwd)/iac/stacks/src/domains/panel/http" 'aws:skipMetadataApiCheck=false
+          context:stack.environment.isProd=false
+          context:stack.environment.features=aws';
+          remove_stack "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/domains/panel/http" --non-interactive --suppress-progress --diff --json;
+          configure_stack "Delete" "fourtwo-datalayer.elm_pst_4" "$(pwd)/iac/stacks/src/datalayer" "fourtwo-datalayer" "_pulumi/datalayer";
+          setup_stack "fourtwo-datalayer.elm_pst_4" "$(pwd)/iac/stacks/src/datalayer";
+          configure_stack_settings "$(pwd)/iac/stacks/src/datalayer" 'aws:skipMetadataApiCheck=false
+          context:stack.environment.isProd=false
+          context:stack.environment.features=aws';
+          remove_stack "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/datalayer" --non-interactive --suppress-progress --diff --json;
+          configure_stack "Delete" "fourtwo-cognito.elm_pst_4" "$(pwd)/iac/stacks/src/cognito" "fourtwo-cognito" "_pulumi/cognito";
+          setup_stack "fourtwo-cognito.elm_pst_4" "$(pwd)/iac/stacks/src/cognito";
+          configure_stack_settings "$(pwd)/iac/stacks/src/cognito" 'aws:skipMetadataApiCheck=false
+          context:stack.environment.isProd=false
+          context:stack.environment.features=aws';
+          remove_stack "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/cognito" --non-interactive --suppress-progress --diff --json;
+          configure_stack "Delete" "fourtwo-codestar.elm_pst_4" "$(pwd)/iac/stacks/src/codestar" "fourtwo-codestar" "_pulumi/codestar";
+          setup_stack "fourtwo-codestar.elm_pst_4" "$(pwd)/iac/stacks/src/codestar";
+          configure_stack_settings "$(pwd)/iac/stacks/src/codestar" 'aws:skipMetadataApiCheck=false
+          context:stack.environment.isProd=false
+          context:stack.environment.features=aws';
+          remove_stack "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/codestar" --non-interactive --suppress-progress --diff --json;
+          configure_stack "Delete" "fourtwo-application.elm_pst_4" "$(pwd)/iac/stacks/src/application" "fourtwo-application" "_pulumi/application";
+          setup_stack "fourtwo-application.elm_pst_4" "$(pwd)/iac/stacks/src/application";
+          configure_stack_settings "$(pwd)/iac/stacks/src/application" 'aws:skipMetadataApiCheck=false
+          context:stack.environment.isProd=false
+          context:stack.environment.features=aws';
+          remove_stack "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/application" --non-interactive --suppress-progress --diff --json;
       - name: Cleanup
         run: |-
           rm -f .pulumi-ci .export-cd .pulumi-helper.sh .ci-env;
           rm -rf _pulumi;
-          pnpm store prune || true;
 
 ########################################
 ########################################
 #**:_$~- {"$$":"head","filename":"[wd][dispatch] - CD - [Dispatch: Delete].yml","source":"iac/workflows/github/workflow_dispatch/CD.js"}
 #**:_$~- {"$$":"script","generator":"codegen/github/GenerateGithubWorkflow.mts"}
-#**:_$~- {"$$":"body","hashed":"3a3e03c8045aa3eaee0b6cd00d6eba5dbeb2f22ff9fae5318c955a5c75f0646d"}
-#**:_$~- {"$$":"footer","started":"2025-03-11T03:34:07.927Z","now":"2025-03-11T03:34:07.929Z","elapsed":"2ms"}
+#**:_$~- {"$$":"body","hashed":"e8fe18fd97e79832ff61b460e88365d623775b54e863e1d02f6a004ba75d30d9"}
+#**:_$~- {"$$":"footer","started":"2025-03-17T05:39:37.633Z","now":"2025-03-17T05:39:37.637Z","elapsed":"4ms"}
 # END OF GENERATED FILE
 

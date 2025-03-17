@@ -44,6 +44,10 @@ export const FourtwoDatalayerStackExportsZod = z.object({
 				arn: z.string(),
 				name: z.string(),
 			}),
+			automation: z.object({
+				arn: z.string(),
+				name: z.string(),
+			}),
 		}),
 	}),
 	fourtwo_datalayer_cloudmap: z.object({

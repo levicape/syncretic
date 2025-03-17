@@ -24,6 +24,12 @@ const OUTPUT_PULUMI_PATH = "_pulumi";
 const RUNS_ON = "act-darwin-a64-atoko";
 const FOURTWO_BIN = "pnpm dx:cli:bin";
 
+const DEPLOY_PREAMBLE = [
+	"pnpm build:tsc",
+	"pnpm -C packages/builders build:tsc",
+	"pnpm -C packages/pulumi build:tsc",
+];
+
 export const NodeGhaConfiguration = ({
 	env: e,
 	secret,
@@ -36,7 +42,10 @@ export const NodeGhaConfiguration = ({
 		},
 		registry: {
 			scope: "@levicape",
-			host: `${e("NPM_REGISTRY_PROTOCOL")}://${e("NPM_REGISTRY_HOST")}`,
+			/**
+			 * @see iac/stacks/codestar
+			 */
+			host: `${e("NPM_REGISTRY_PROTOCOL_LEVICAPE")}://${e("NPM_REGISTRY_HOST_LEVICAPE")}`,
 			secret,
 		},
 		version: {
@@ -44,25 +53,29 @@ export const NodeGhaConfiguration = ({
 		},
 	}) as const;
 
-const DEPLOY_PREAMBLE = [
-	"pnpm build:tsc",
-	"pnpm -C packages/builders build:tsc",
-	"pnpm -C packages/pulumi build:tsc",
-];
-
 const cd = (matrix: GithubWorkflowProps<boolean, boolean>) => {
 	return (
 		<GithubWorkflowX
 			name={matrix.name}
 			on={matrix.triggers}
 			env={{
-				...register("NPM_REGISTRY_PROTOCOL", "https"),
-				...register("NPM_REGISTRY_HOST", "npm.pkg.github.com"),
-				// ...Object.entries(matrix.pipeline.install.npm).flatMap(([name, npm]) => [
-				//   register(`NPM_REGISTRY_PROTOCOL_${name}`, npm.protocol),
-				//   register(`NPM_REGISTRY_HOST_${name}`, npm.host),
-				//   register(`NODE_AUTH_TOKEN_${name}`, npm.token(GithubWorkflowExpressions)),
-				// ]),
+				...Object.entries(matrix.pipeline.install.npm)
+					.map(([name, npm]) => [name.toUpperCase(), npm] as const)
+					.reduce(
+						(acc, [name, npm]) => ({
+							...acc,
+							...register(`NPM_REGISTRY_PROTOCOL_${name}`, npm.protocol),
+							...register(`NPM_REGISTRY_HOST_${name}`, npm.host),
+							...register(
+								`NPM_TOKEN_${name}`,
+								npm.token(GithubWorkflowExpressions),
+							),
+						}),
+						{},
+					),
+				...register("LEVICAPE_REGISTRY_HOST", "npm.pkg.github.com/"),
+				...register("LEVICAPE_REGISTRY", "https://npm.pkg.github.com"),
+				...register("LEVICAPE_TOKEN", secret("GITHUB_TOKEN")),
 				...register("NODE_NO_WARNINGS", "1"),
 				...register("NPM_CONFIG_UPDATE_NOTIFIER", "false"),
 				...register("FRONTEND_HOSTNAME", `at.levicape.cloud`),
@@ -105,14 +118,10 @@ const cd = (matrix: GithubWorkflowProps<boolean, boolean>) => {
 										{/* Verdaccio NPM mirror https://verdaccio.org */}
 										<GithubStepX
 											name="Set NPM Registry to Verdaccio:31313"
-											run={["pnpm set registry http://localhost:31313/"]}
+											run={["pnpm set registry http://localhost:31313"]}
 										/>
 										{/* Install */}
 										<GithubStepNodeInstallX {...node} />
-										<GithubStepX
-											name="Reset Nx Cache"
-											run={["pnpm exec nx reset || true"]}
-										/>
 										{/* Compile sources */}
 										<GithubStepX
 											name="Build image"
@@ -132,6 +141,8 @@ const cd = (matrix: GithubWorkflowProps<boolean, boolean>) => {
 										<GithubStepX
 											name="Setup Pulumi state backend"
 											run={[
+												`echo "Retriving AWS credentials with ${FOURTWO_BIN} aws in $AWS_REGION"`,
+												`${FOURTWO_BIN}`,
 												`STRUCTURED_LOGGING=quiet ${FOURTWO_BIN} aws pulumi ci --region $AWS_REGION > .pulumi-ci`,
 											]}
 										/>
@@ -250,47 +261,48 @@ source .pulumi-helper.sh`,
 												"source .export-cd",
 												...DEPLOY_PREAMBLE,
 												"source .pulumi-helper.sh",
-												...CODECATALYST_PULUMI_STACKS.flatMap(
-													({ stack, name, output, root }) => {
-														const STEP = matrix.pipeline.deploy
-															? "Deploy"
-															: matrix.pipeline.delete
-																? "Delete"
-																: "Preview";
-														const PULUMI_DEFAULT_ARGS =
-															"--non-interactive --suppress-progress --diff --json";
-														const PULUMI_STACK_CWD = `$(pwd)/iac/stacks/src/${stack}`;
-														const PULUMI_PROJECT = `${root ?? APPLICATION}-${name ?? stack}`;
-														const PULUMI_STACK_NAME = `${PULUMI_PROJECT}.${matrix.pipeline.environment.name}`;
-														const PULUMI_STACK_OUTPUT = `${OUTPUT_PULUMI_PATH}/${output}`;
-														const PULUMI_MESSAGE =
-															"${{ github.ref_name }}-${{ github.sha }}";
-														const PULUMI_CONFIGS = Object.entries({
-															"aws:skipMetadataApiCheck": false,
-															"context:stack.environment.isProd": false,
-															"context:stack.environment.features": "aws",
-															//   "frontend:stack.dns.hostnames[0]": `${{ env.CI_ENVIRONMENT }}.${root || APPLICATION}.${{ env.FRONTEND_HOSTNAME }}`,
-															//   "frontend:stack.dns.hostnames[1]": `${PULUMI_PROJECT}.${{ env.CI_ENVIRONMENT }}.${root || APPLICATION}.${{ env.FRONTEND_HOSTNAME }}`,
-														})
-															.map(([k, v]) => `${k}=${v}`)
-															.join("\n");
+												...((s) =>
+													matrix.pipeline.delete !== true ? s : s.reverse())(
+													CODECATALYST_PULUMI_STACKS,
+												).flatMap(({ stack, name, output, root }) => {
+													const STEP = matrix.pipeline.deploy
+														? "Deploy"
+														: matrix.pipeline.delete
+															? "Delete"
+															: "Preview";
+													const PULUMI_DEFAULT_ARGS =
+														"--non-interactive --suppress-progress --diff --json";
+													const PULUMI_STACK_CWD = `$(pwd)/iac/stacks/src/${stack}`;
+													const PULUMI_PROJECT = `${root ?? APPLICATION}-${name ?? stack}`;
+													const PULUMI_STACK_NAME = `${PULUMI_PROJECT}.${matrix.pipeline.environment.name}`;
+													const PULUMI_STACK_OUTPUT = `${OUTPUT_PULUMI_PATH}/${output}`;
+													const PULUMI_MESSAGE =
+														"${{ github.ref_name }}-${{ github.sha }}";
+													const PULUMI_CONFIGS = Object.entries({
+														"aws:skipMetadataApiCheck": false,
+														"context:stack.environment.isProd": false,
+														"context:stack.environment.features": "aws",
+														//   "frontend:stack.dns.hostnames[0]": `${{ env.CI_ENVIRONMENT }}.${root || APPLICATION}.${{ env.FRONTEND_HOSTNAME }}`,
+														//   "frontend:stack.dns.hostnames[1]": `${PULUMI_PROJECT}.${{ env.CI_ENVIRONMENT }}.${root || APPLICATION}.${{ env.FRONTEND_HOSTNAME }}`,
+													})
+														.map(([k, v]) => `${k}=${v}`)
+														.join("\n");
 
-														return [
-															`configure_stack "${STEP}" "${PULUMI_STACK_NAME}" "${PULUMI_STACK_CWD}" "${PULUMI_PROJECT}" "${PULUMI_STACK_OUTPUT}"`,
-															`setup_stack "${PULUMI_STACK_NAME}" "${PULUMI_STACK_CWD}"`,
-															`configure_stack_settings "${PULUMI_STACK_CWD}" '${PULUMI_CONFIGS}'`,
-															matrix.pipeline.delete
-																? `remove_stack "${PULUMI_MESSAGE}" "${PULUMI_STACK_CWD}" ${PULUMI_DEFAULT_ARGS}`
-																: `refresh_and_preview "${PULUMI_MESSAGE}" "${PULUMI_STACK_CWD}" ${PULUMI_DEFAULT_ARGS}`,
-															...(matrix.pipeline.deploy
-																? [
-																		`deploy_stack "${PULUMI_MESSAGE}" "${PULUMI_STACK_CWD}" ${PULUMI_DEFAULT_ARGS}`,
-																		`capture_outputs "${PULUMI_STACK_CWD}" "${PULUMI_STACK_OUTPUT}"`,
-																	]
-																: []),
-														];
-													},
-												),
+													return [
+														`configure_stack "${STEP}" "${PULUMI_STACK_NAME}" "${PULUMI_STACK_CWD}" "${PULUMI_PROJECT}" "${PULUMI_STACK_OUTPUT}"`,
+														`setup_stack "${PULUMI_STACK_NAME}" "${PULUMI_STACK_CWD}"`,
+														`configure_stack_settings "${PULUMI_STACK_CWD}" '${PULUMI_CONFIGS}'`,
+														matrix.pipeline.delete
+															? `remove_stack "${PULUMI_MESSAGE}" "${PULUMI_STACK_CWD}" ${PULUMI_DEFAULT_ARGS}`
+															: `refresh_and_preview "${PULUMI_MESSAGE}" "${PULUMI_STACK_CWD}" ${PULUMI_DEFAULT_ARGS}`,
+														...(matrix.pipeline.deploy
+															? [
+																	`deploy_stack "${PULUMI_MESSAGE}" "${PULUMI_STACK_CWD}" ${PULUMI_DEFAULT_ARGS}`,
+																	`capture_outputs "${PULUMI_STACK_CWD}" "${PULUMI_STACK_OUTPUT}"`,
+																]
+															: []),
+													];
+												}),
 											]}
 										/>
 										{/* Tag and push images */}
@@ -338,7 +350,6 @@ source .pulumi-helper.sh`,
 													".ci-env",
 												].join(" ")}`,
 												`rm -rf ${OUTPUT_PULUMI_PATH}`,
-												"pnpm store prune || true",
 											]}
 										/>
 									</>

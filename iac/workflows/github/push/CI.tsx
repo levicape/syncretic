@@ -1,5 +1,5 @@
-/** @jsxImportSource @levicape/fourtwo */
 /** @jsxRuntime automatic */
+/** @jsxImportSource @levicape/fourtwo */
 
 import {
 	GithubJobBuilder,
@@ -8,13 +8,12 @@ import {
 	GithubStepNodeInstallX,
 	GithubStepNodeSetupX,
 	GithubStepX,
-	type GithubWorkflowBuilder,
 	GithubWorkflowExpressions,
 	GithubWorkflowX,
 } from "@levicape/fourtwo/github";
 
-let {
-	current: { register, context: _$_, env },
+const {
+	current: { register, context: _$_, env, secret },
 } = GithubWorkflowExpressions;
 
 export const NodeGhaConfiguration = ({
@@ -29,23 +28,24 @@ export const NodeGhaConfiguration = ({
 		},
 		registry: {
 			scope: "@levicape",
-			host: `${e("NPM_REGISTRY_PROTOCOL")}://${e("NPM_REGISTRY_HOST")}`,
+			host: `${e("LEVICAPE_REGISTRY")}`,
 			secret,
 		},
 		version: {
-			node: "22.12.0",
+			node: "22.13.0",
 		},
 	}) as const;
 
-export default (): GithubWorkflowBuilder<string, string> => (
+export default async () => (
 	<GithubWorkflowX
-		name="on Push: Test Package"
+		name="on Push: Compile, Lint, Test all workspace packages"
 		on={{
 			push: {},
 		}}
 		env={{
-			...register("NPM_REGISTRY_PROTOCOL", "https"),
-			...register("NPM_REGISTRY_HOST", "npm.pkg.github.com"),
+			...register("LEVICAPE_REGISTRY_HOST", "npm.pkg.github.com/"),
+			...register("LEVICAPE_REGISTRY", "https://npm.pkg.github.com"),
+			...register("LEVICAPE_TOKEN", secret("GITHUB_TOKEN")),
 		}}
 	>
 		<GithubJobX
@@ -55,8 +55,9 @@ export default (): GithubWorkflowBuilder<string, string> => (
 			steps={
 				<>
 					<GithubStepCheckoutX />
-					<GithubStepNodeSetupX configuration={NodeGhaConfiguration({ env })}>
-						{(node) => {
+					<GithubStepNodeSetupX
+						configuration={NodeGhaConfiguration({ env })}
+						children={(node) => {
 							return (
 								<>
 									<GithubStepNodeInstallX {...node} />
@@ -78,10 +79,17 @@ export default (): GithubWorkflowBuilder<string, string> => (
 											"pnpm exec nx run-many -t test --parallel=1 --verbose --no-cloud",
 										]}
 									/>
+									<GithubStepX
+										name="Clean cache"
+										run={[
+											"pnpm store prune || true",
+											"corepack cache clean || true",
+										]}
+									/>
 								</>
 							);
 						}}
-					</GithubStepNodeSetupX>
+					/>
 				</>
 			}
 		/>
@@ -102,9 +110,6 @@ export default (): GithubWorkflowBuilder<string, string> => (
 										run={[
 											"pnpm exec nx pack:build iac-images-application --verbose",
 										]}
-										env={{
-											IMAGE_NAME: "levicape-fourtwo",
-										}}
 									/>
 								</>
 							);

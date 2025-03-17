@@ -1,4 +1,4 @@
-import { SporkHonoHttpServer } from "@levicape/spork/hono";
+import { SporkHonoHttpServer } from "@levicape/spork/router/hono/HonoHttpServerBuilder";
 import { Hono } from "hono";
 import { HTTP_ROOT_PATH } from "./Atlas.mjs";
 

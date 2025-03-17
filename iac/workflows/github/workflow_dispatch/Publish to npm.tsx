@@ -139,7 +139,7 @@ export default async () => {
 									<>
 										<GithubStepNodeScriptsX
 											{...node}
-											scripts={["prepublish"]}
+											scripts={["prepublishOnly"]}
 										/>
 										{/* <GithubStepX
 										if={"success()"}

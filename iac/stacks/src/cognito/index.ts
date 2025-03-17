@@ -49,23 +49,29 @@ export = async () => {
 		},
 	});
 
-	// const userPool = new UserPool(_("userpool"), {
-	// 	adminCreateUserConfig: {
-	// 		"allowAdminCreateUserOnly": true
-	// 	},
-	//     tags: {
-	//         PackageName: PACKAGE_NAME,
-	//     },
-	// });
+	// Helper function to create a User Pool
+	// const createUserPool = async (name: string, config: any) => {
+	// 	const userPool = new UserPool(_(`userpool-${name}`), {
+	// 		adminCreateUserConfig: {
+	// 			AllowAdminCreateUserOnly: true,
+	// 		},
+	// 		tags: {
+	// 			PackageName: PACKAGE_NAME,
+	// 		},
+	// 		...config, // Allow for overrides or additional config
+	// 	});
 
-	// const userPoolClient = new UserPoolClient(_("userpool-client"), {
-	//     userPoolId: userPool.id,
-	// });
+	// 	const userPoolClient = new UserPoolClient(_(`userpool-client-${name}`), {
+	// 		userPoolId: userPool.id,
+	// 	});
 
-	// const userPoolDomain = new UserPoolDomain(_("userpool-domain"), {
-	//     userPoolId: userPool.id,
-	//     domain: `org`,
-	// });
+	// 	const userPoolDomain = new UserPoolDomain(_(`userpool-domain-${name}`), {
+	// 		userPoolId: userPool.id,
+	// 		domain: `${name}-org`, // Consider a more robust domain naming strategy
+	// 	});
+
+	// 	return { users, client, domain };
+	// };
 
 	const identityPoolOutput = all([
 		identityPool.arn,
@@ -100,7 +106,6 @@ export = async () => {
 		},
 	);
 
-	// Return the stack outputs
 	return all([identityPoolOutput]).apply(([idpool]) => {
 		const exported = {
 			fourtwo_cognito_identity_pool: {
@@ -108,7 +113,6 @@ export = async () => {
 			},
 		} satisfies z.infer<typeof FourtwoCognitoStackExportsZod>;
 
-		// Validate the stack outputs against the Zod schema
 		const validate = FourtwoCognitoStackExportsZod.safeParse(exported);
 		if (!validate.success) {
 			error(`Validation failed: ${JSON.stringify(validate.error, null, 2)}`);

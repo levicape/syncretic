@@ -6,8 +6,12 @@ on:
   workflow_dispatch:
     {}
 env:
-  NPM_REGISTRY_PROTOCOL: https
-  NPM_REGISTRY_HOST: npm.pkg.github.com
+  NPM_REGISTRY_PROTOCOL_LEVICAPE: https
+  NPM_REGISTRY_HOST_LEVICAPE: npm.pkg.github.com
+  NPM_TOKEN_LEVICAPE: ${{ secrets.LEVICAPE_NPM_TOKEN }}
+  LEVICAPE_REGISTRY_HOST: npm.pkg.github.com/
+  LEVICAPE_REGISTRY: https://npm.pkg.github.com
+  LEVICAPE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   NODE_NO_WARNINGS: "1"
   NPM_CONFIG_UPDATE_NOTIFIER: "false"
   FRONTEND_HOSTNAME: at.levicape.cloud
@@ -30,7 +34,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22.13.0
-          registry-url: ${{ env.NPM_REGISTRY_PROTOCOL }}://${{ env.NPM_REGISTRY_HOST }}
+          registry-url: ${{ env.NPM_REGISTRY_PROTOCOL_LEVICAPE }}://${{ env.NPM_REGISTRY_HOST_LEVICAPE }}
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
           scope: "@levicape"
@@ -53,15 +57,13 @@ jobs:
           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.json') }}
           restore-keys: ${{ runner.os }}-pnpm-store-
       - name: Set NPM Registry to Verdaccio:31313
-        run: pnpm set registry http://localhost:31313/;
+        run: pnpm set registry http://localhost:31313;
       - if: ${{ steps.cache-npm.outputs.cache-hit != 'true' }}
         name: List Dependencies
         continue-on-error: true
         run: pnpm list;
       - name: Install Dependencies
         run: pnpm install;
-      - name: Reset Nx Cache
-        run: pnpm exec nx reset || true;
       - name: Build image
         run: pnpm exec nx pack:build iac-images-application --verbose;
       - name: Verify AWS credentials
@@ -69,7 +71,10 @@ jobs:
         with:
           aws-region: ${{ env.AWS_REGION }}
       - name: Setup Pulumi state backend
-        run: STRUCTURED_LOGGING=quiet pnpm dx:cli:bin aws pulumi ci --region $AWS_REGION > .pulumi-ci;
+        run: |-
+          echo "Retriving AWS credentials with pnpm dx:cli:bin aws in $AWS_REGION";
+          pnpm dx:cli:bin;
+          STRUCTURED_LOGGING=quiet pnpm dx:cli:bin aws pulumi ci --region $AWS_REGION > .pulumi-ci;
       - name: Display Pulumi CI output
         run: cat .pulumi-ci;
       - name: Extract exports from Pulumi CI
@@ -226,13 +231,12 @@ jobs:
         run: |-
           rm -f .pulumi-ci .export-cd .pulumi-helper.sh .ci-env;
           rm -rf _pulumi;
-          pnpm store prune || true;
 
 ########################################
 ########################################
 #**:_$~- {"$$":"head","filename":"[wd][dispatch] - CD - [Dispatch: Preview].yml","source":"iac/workflows/github/workflow_dispatch/CD.js"}
 #**:_$~- {"$$":"script","generator":"codegen/github/GenerateGithubWorkflow.mts"}
-#**:_$~- {"$$":"body","hashed":"ffe1ab986ca0b69fa1811a509833b83af1106e6a919db33c1f0a3a4b86282a18"}
-#**:_$~- {"$$":"footer","started":"2025-03-11T03:34:07.924Z","now":"2025-03-11T03:34:07.926Z","elapsed":"2ms"}
+#**:_$~- {"$$":"body","hashed":"5293e05cb4440a0d6fdf644dfa375c04def7211e61634aa45e5a2725f7fc7ca1"}
+#**:_$~- {"$$":"footer","started":"2025-03-17T05:39:37.628Z","now":"2025-03-17T05:39:37.631Z","elapsed":"3ms"}
 # END OF GENERATED FILE
 
