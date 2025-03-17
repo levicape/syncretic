@@ -6,7 +6,7 @@ services:
     environment: 
       LOG_LEVEL: $LOG_LEVEL
       STRUCTURED_LOGGING: $STRUCTURED_LOGGING
-      PROJECT_PATH: ./packages/panel-ui
+      PROJECT_PATH: ./realms/panel/panel-ui
       PROJECT_COMMAND: staticwww:dev
       PORT: $PANEL_UI
     volumes: &workspace_volumes

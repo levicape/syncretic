@@ -3,8 +3,10 @@ packages:
   - iac/*
   - iac/images/*
   - canary
+  - external/*/*
   - packages/*
   - protocols/*
+  - realms/*/*
 catalog:
   '@levicape/paloma': 0.3.7-main.16
   '@levicape/spork': 0.9.2-main.6
@@ -41,11 +43,11 @@ catalogs:
   database-postgres:
     pg: ^8.13.1
   database-sql:
-    db0: ^0.2.4
+    db0: ^0.3.1
     knex: ^3.1.0
     slonik: ^46.4.0
   database-sqlite:
-    better-sqlite3: ^11.8.1
+    better-sqlite3: ^11.9.0
   data-column-arrow:
     '@apache-arrow/esnext-esm': ^19.0.0
     '@apache-arrow/ts': ^19.0.0
@@ -109,8 +111,8 @@ catalogs:
   log-loglayer:
     '@loglayer/transport-aws-lambda-powertools': ^3.0.3
     '@loglayer/transport-consola': ^2.0.3
-    '@loglayer/transport-pino': ^2.0.2
-    loglayer: ^6.3.1
+    '@loglayer/transport-pino': ^2.1.1
+    loglayer: ^6.3.2
   log-pino:
     pino: ^9.6.0
     pino-pretty: ^13.0.0
@@ -130,7 +132,7 @@ catalogs:
   parse-path:
     pathe: ^2.0.2
   parse-xml:
-    fast-xml-parser: ^4.5.0
+    fast-xml-parser: ^5.0.9
   parse-yaml:
     js-yaml: ^4.1.0
     yaml: ^2.7.0
