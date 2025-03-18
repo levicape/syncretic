@@ -1,0 +1,10 @@
+description: |
+  Cognito identity pool and OIDC configuration
+runtime:
+  name: nodejs
+  options:
+    packagemanager: pnpm
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: aws-typescript

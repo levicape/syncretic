@@ -195,14 +195,22 @@ jobs:
           refresh_and_preview "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/codestar" --non-interactive --suppress-progress --diff --json;
           deploy_stack "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/codestar" --non-interactive --suppress-progress --diff --json;
           capture_outputs "$(pwd)/iac/stacks/src/codestar" "_pulumi/codestar";
-          configure_stack "Deploy" "fourtwo-cognito.elm_pst_4" "$(pwd)/iac/stacks/src/cognito" "fourtwo-cognito" "_pulumi/cognito";
-          setup_stack "fourtwo-cognito.elm_pst_4" "$(pwd)/iac/stacks/src/cognito";
-          configure_stack_settings "$(pwd)/iac/stacks/src/cognito" 'aws:skipMetadataApiCheck=false
+          configure_stack "Deploy" "fourtwo-cognito-identity.elm_pst_4" "$(pwd)/iac/stacks/src/cognito/identity" "fourtwo-cognito-identity" "_pulumi/cognito_identity";
+          setup_stack "fourtwo-cognito-identity.elm_pst_4" "$(pwd)/iac/stacks/src/cognito/identity";
+          configure_stack_settings "$(pwd)/iac/stacks/src/cognito/identity" 'aws:skipMetadataApiCheck=false
           context:stack.environment.isProd=false
           context:stack.environment.features=aws';
-          refresh_and_preview "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/cognito" --non-interactive --suppress-progress --diff --json;
-          deploy_stack "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/cognito" --non-interactive --suppress-progress --diff --json;
-          capture_outputs "$(pwd)/iac/stacks/src/cognito" "_pulumi/cognito";
+          refresh_and_preview "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/cognito/identity" --non-interactive --suppress-progress --diff --json;
+          deploy_stack "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/cognito/identity" --non-interactive --suppress-progress --diff --json;
+          capture_outputs "$(pwd)/iac/stacks/src/cognito/identity" "_pulumi/cognito_identity";
+          configure_stack "Deploy" "fourtwo-cognito-users.elm_pst_4" "$(pwd)/iac/stacks/src/cognito/users" "fourtwo-cognito-users" "_pulumi/cognito_users";
+          setup_stack "fourtwo-cognito-users.elm_pst_4" "$(pwd)/iac/stacks/src/cognito/users";
+          configure_stack_settings "$(pwd)/iac/stacks/src/cognito/users" 'aws:skipMetadataApiCheck=false
+          context:stack.environment.isProd=false
+          context:stack.environment.features=aws';
+          refresh_and_preview "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/cognito/users" --non-interactive --suppress-progress --diff --json;
+          deploy_stack "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/cognito/users" --non-interactive --suppress-progress --diff --json;
+          capture_outputs "$(pwd)/iac/stacks/src/cognito/users" "_pulumi/cognito_users";
           configure_stack "Deploy" "fourtwo-datalayer.elm_pst_4" "$(pwd)/iac/stacks/src/datalayer" "fourtwo-datalayer" "_pulumi/datalayer";
           setup_stack "fourtwo-datalayer.elm_pst_4" "$(pwd)/iac/stacks/src/datalayer";
           configure_stack_settings "$(pwd)/iac/stacks/src/datalayer" 'aws:skipMetadataApiCheck=false
@@ -211,38 +219,38 @@ jobs:
           refresh_and_preview "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/datalayer" --non-interactive --suppress-progress --diff --json;
           deploy_stack "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/datalayer" --non-interactive --suppress-progress --diff --json;
           capture_outputs "$(pwd)/iac/stacks/src/datalayer" "_pulumi/datalayer";
-          configure_stack "Deploy" "fourtwo-panel-http.elm_pst_4" "$(pwd)/iac/stacks/src/domains/panel/http" "fourtwo-panel-http" "_pulumi/domains_panel_http";
-          setup_stack "fourtwo-panel-http.elm_pst_4" "$(pwd)/iac/stacks/src/domains/panel/http";
-          configure_stack_settings "$(pwd)/iac/stacks/src/domains/panel/http" 'aws:skipMetadataApiCheck=false
+          configure_stack "Deploy" "fourtwo-panel-http.elm_pst_4" "$(pwd)/iac/stacks/src/scopes/panel/http" "fourtwo-panel-http" "_pulumi/scopes_panel_http";
+          setup_stack "fourtwo-panel-http.elm_pst_4" "$(pwd)/iac/stacks/src/scopes/panel/http";
+          configure_stack_settings "$(pwd)/iac/stacks/src/scopes/panel/http" 'aws:skipMetadataApiCheck=false
           context:stack.environment.isProd=false
           context:stack.environment.features=aws';
-          refresh_and_preview "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/domains/panel/http" --non-interactive --suppress-progress --diff --json;
-          deploy_stack "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/domains/panel/http" --non-interactive --suppress-progress --diff --json;
-          capture_outputs "$(pwd)/iac/stacks/src/domains/panel/http" "_pulumi/domains_panel_http";
-          configure_stack "Deploy" "fourtwo-panel-web.elm_pst_4" "$(pwd)/iac/stacks/src/domains/panel/web" "fourtwo-panel-web" "_pulumi/domains_panel_web";
-          setup_stack "fourtwo-panel-web.elm_pst_4" "$(pwd)/iac/stacks/src/domains/panel/web";
-          configure_stack_settings "$(pwd)/iac/stacks/src/domains/panel/web" 'aws:skipMetadataApiCheck=false
+          refresh_and_preview "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/scopes/panel/http" --non-interactive --suppress-progress --diff --json;
+          deploy_stack "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/scopes/panel/http" --non-interactive --suppress-progress --diff --json;
+          capture_outputs "$(pwd)/iac/stacks/src/scopes/panel/http" "_pulumi/scopes_panel_http";
+          configure_stack "Deploy" "fourtwo-panel-web.elm_pst_4" "$(pwd)/iac/stacks/src/scopes/panel/web" "fourtwo-panel-web" "_pulumi/scopes_panel_web";
+          setup_stack "fourtwo-panel-web.elm_pst_4" "$(pwd)/iac/stacks/src/scopes/panel/web";
+          configure_stack_settings "$(pwd)/iac/stacks/src/scopes/panel/web" 'aws:skipMetadataApiCheck=false
           context:stack.environment.isProd=false
           context:stack.environment.features=aws';
-          refresh_and_preview "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/domains/panel/web" --non-interactive --suppress-progress --diff --json;
-          deploy_stack "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/domains/panel/web" --non-interactive --suppress-progress --diff --json;
-          capture_outputs "$(pwd)/iac/stacks/src/domains/panel/web" "_pulumi/domains_panel_web";
-          configure_stack "Deploy" "fourtwo-panel-monitor.elm_pst_4" "$(pwd)/iac/stacks/src/domains/panel/monitor" "fourtwo-panel-monitor" "_pulumi/domains_panel_monitor";
-          setup_stack "fourtwo-panel-monitor.elm_pst_4" "$(pwd)/iac/stacks/src/domains/panel/monitor";
-          configure_stack_settings "$(pwd)/iac/stacks/src/domains/panel/monitor" 'aws:skipMetadataApiCheck=false
+          refresh_and_preview "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/scopes/panel/web" --non-interactive --suppress-progress --diff --json;
+          deploy_stack "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/scopes/panel/web" --non-interactive --suppress-progress --diff --json;
+          capture_outputs "$(pwd)/iac/stacks/src/scopes/panel/web" "_pulumi/scopes_panel_web";
+          configure_stack "Deploy" "fourtwo-panel-monitor.elm_pst_4" "$(pwd)/iac/stacks/src/scopes/panel/monitor" "fourtwo-panel-monitor" "_pulumi/scopes_panel_monitor";
+          setup_stack "fourtwo-panel-monitor.elm_pst_4" "$(pwd)/iac/stacks/src/scopes/panel/monitor";
+          configure_stack_settings "$(pwd)/iac/stacks/src/scopes/panel/monitor" 'aws:skipMetadataApiCheck=false
           context:stack.environment.isProd=false
           context:stack.environment.features=aws';
-          refresh_and_preview "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/domains/panel/monitor" --non-interactive --suppress-progress --diff --json;
-          deploy_stack "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/domains/panel/monitor" --non-interactive --suppress-progress --diff --json;
-          capture_outputs "$(pwd)/iac/stacks/src/domains/panel/monitor" "_pulumi/domains_panel_monitor";
-          configure_stack "Deploy" "fourtwo-panel-wwwroot.elm_pst_4" "$(pwd)/iac/stacks/src/domains/panel/wwwroot" "fourtwo-panel-wwwroot" "_pulumi/domains_panel_wwwroot";
-          setup_stack "fourtwo-panel-wwwroot.elm_pst_4" "$(pwd)/iac/stacks/src/domains/panel/wwwroot";
-          configure_stack_settings "$(pwd)/iac/stacks/src/domains/panel/wwwroot" 'aws:skipMetadataApiCheck=false
+          refresh_and_preview "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/scopes/panel/monitor" --non-interactive --suppress-progress --diff --json;
+          deploy_stack "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/scopes/panel/monitor" --non-interactive --suppress-progress --diff --json;
+          capture_outputs "$(pwd)/iac/stacks/src/scopes/panel/monitor" "_pulumi/scopes_panel_monitor";
+          configure_stack "Deploy" "fourtwo-panel-wwwroot.elm_pst_4" "$(pwd)/iac/stacks/src/scopes/panel/wwwroot" "fourtwo-panel-wwwroot" "_pulumi/scopes_panel_wwwroot";
+          setup_stack "fourtwo-panel-wwwroot.elm_pst_4" "$(pwd)/iac/stacks/src/scopes/panel/wwwroot";
+          configure_stack_settings "$(pwd)/iac/stacks/src/scopes/panel/wwwroot" 'aws:skipMetadataApiCheck=false
           context:stack.environment.isProd=false
           context:stack.environment.features=aws';
-          refresh_and_preview "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/domains/panel/wwwroot" --non-interactive --suppress-progress --diff --json;
-          deploy_stack "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/domains/panel/wwwroot" --non-interactive --suppress-progress --diff --json;
-          capture_outputs "$(pwd)/iac/stacks/src/domains/panel/wwwroot" "_pulumi/domains_panel_wwwroot";
+          refresh_and_preview "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/scopes/panel/wwwroot" --non-interactive --suppress-progress --diff --json;
+          deploy_stack "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/scopes/panel/wwwroot" --non-interactive --suppress-progress --diff --json;
+          capture_outputs "$(pwd)/iac/stacks/src/scopes/panel/wwwroot" "_pulumi/scopes_panel_wwwroot";
       - name: Tag and push image with git-${{ github.sha }}
         run: |-
           ls -la _pulumi || true;
@@ -250,18 +258,20 @@ jobs:
           source _pulumi/application.sh;
           cat _pulumi/codestar.sh;
           source _pulumi/codestar.sh;
-          cat _pulumi/cognito.sh;
-          source _pulumi/cognito.sh;
+          cat _pulumi/cognito_identity.sh;
+          source _pulumi/cognito_identity.sh;
+          cat _pulumi/cognito_users.sh;
+          source _pulumi/cognito_users.sh;
           cat _pulumi/datalayer.sh;
           source _pulumi/datalayer.sh;
-          cat _pulumi/domains_panel_http.sh;
-          source _pulumi/domains_panel_http.sh;
-          cat _pulumi/domains_panel_web.sh;
-          source _pulumi/domains_panel_web.sh;
-          cat _pulumi/domains_panel_monitor.sh;
-          source _pulumi/domains_panel_monitor.sh;
-          cat _pulumi/domains_panel_wwwroot.sh;
-          source _pulumi/domains_panel_wwwroot.sh;
+          cat _pulumi/scopes_panel_http.sh;
+          source _pulumi/scopes_panel_http.sh;
+          cat _pulumi/scopes_panel_web.sh;
+          source _pulumi/scopes_panel_web.sh;
+          cat _pulumi/scopes_panel_monitor.sh;
+          source _pulumi/scopes_panel_monitor.sh;
+          cat _pulumi/scopes_panel_wwwroot.sh;
+          source _pulumi/scopes_panel_wwwroot.sh;
           echo "Verify imported environment variables";
           echo "Codestar output fourtwo_codestar_ecr: $fourtwo_codestar_ecr";
           export ECR_URL=$(echo  $fourtwo_codestar_ecr | jq -r .repository.url);
@@ -279,18 +289,20 @@ jobs:
           source _pulumi/application.sh;
           cat _pulumi/codestar.sh;
           source _pulumi/codestar.sh;
-          cat _pulumi/cognito.sh;
-          source _pulumi/cognito.sh;
+          cat _pulumi/cognito_identity.sh;
+          source _pulumi/cognito_identity.sh;
+          cat _pulumi/cognito_users.sh;
+          source _pulumi/cognito_users.sh;
           cat _pulumi/datalayer.sh;
           source _pulumi/datalayer.sh;
-          cat _pulumi/domains_panel_http.sh;
-          source _pulumi/domains_panel_http.sh;
-          cat _pulumi/domains_panel_web.sh;
-          source _pulumi/domains_panel_web.sh;
-          cat _pulumi/domains_panel_monitor.sh;
-          source _pulumi/domains_panel_monitor.sh;
-          cat _pulumi/domains_panel_wwwroot.sh;
-          source _pulumi/domains_panel_wwwroot.sh;
+          cat _pulumi/scopes_panel_http.sh;
+          source _pulumi/scopes_panel_http.sh;
+          cat _pulumi/scopes_panel_web.sh;
+          source _pulumi/scopes_panel_web.sh;
+          cat _pulumi/scopes_panel_monitor.sh;
+          source _pulumi/scopes_panel_monitor.sh;
+          cat _pulumi/scopes_panel_wwwroot.sh;
+          source _pulumi/scopes_panel_wwwroot.sh;
           echo "Verify imported environment variables";
           echo "Codestar output fourtwo_codestar_ecr: $fourtwo_codestar_ecr";
           export ECR_URL=$(echo  $fourtwo_codestar_ecr | jq -r .repository.url);
@@ -310,7 +322,7 @@ jobs:
 ########################################
 #**:_$~- {"$$":"head","filename":"[wd][dispatch] - CD - [Dispatch: Preview, Deploy, Push].yml","source":"iac/workflows/github/workflow_dispatch/CD.js"}
 #**:_$~- {"$$":"script","generator":"codegen/github/GenerateGithubWorkflow.mts"}
-#**:_$~- {"$$":"body","hashed":"05972da52d64b86d396d816a39c6d97fd23246f9fadc63b58ae90d41d3b8d9c7"}
-#**:_$~- {"$$":"footer","started":"2025-03-17T05:39:37.612Z","now":"2025-03-17T05:39:37.620Z","elapsed":"8ms"}
+#**:_$~- {"$$":"body","hashed":"63b422e6481fe680ef26c2573e93f9e23ec66265b33f4c6f82e62a2bb0879be0"}
+#**:_$~- {"$$":"footer","started":"2025-03-17T11:38:22.134Z","now":"2025-03-17T11:38:22.142Z","elapsed":"8ms"}
 # END OF GENERATED FILE
 

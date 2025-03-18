@@ -262,4 +262,161 @@ export class AwsS3 {
 
 		return;
 	}
+
+	async PutBucketLifecycle({
+		BucketName,
+		LifecycleConfiguration,
+		ExpectedBucketOwner,
+	}: {
+		BucketName: string;
+		LifecycleConfiguration: {
+			Rules: Array<
+				| {
+						ID: string;
+						Status: "Enabled" | "Disabled";
+						Transitions: Array<{
+							StorageClass: string;
+							TransitionInDays: number;
+						}>;
+						ExpirationInDays?: never;
+						ExpiredObjectDeleteMarker?: boolean;
+						AbortIncompleteMultipartUpload?: never;
+				  }
+				| {
+						ID: string;
+						Status: "Enabled" | "Disabled";
+						ExpirationInDays: number;
+						ExpiredObjectDeleteMarker?: boolean;
+						Transitions?: never;
+						AbortIncompleteMultipartUpload?: never;
+				  }
+				| {
+						ID: string;
+						Status: "Enabled" | "Disabled";
+						AbortIncompleteMultipartUpload: {
+							DaysAfterInitiation: number;
+						};
+						Transitions?: never;
+						ExpirationInDays?: never;
+						ExpiredObjectDeleteMarker?: never;
+						NoncurrentVersionExpirationInDays?: never;
+						NewerNoncurrentVersions?: never;
+				  }
+				| {
+						ID: string;
+						Status: "Enabled" | "Disabled";
+						NoncurrentVersionExpirationInDays: number;
+						NewerNoncurrentVersions?: number;
+						Transitions?: never;
+						ExpirationInDays?: never;
+						ExpiredObjectDeleteMarker?: never;
+						AbortIncompleteMultipartUpload?: never;
+				  }
+			>;
+		};
+		ExpectedBucketOwner: string;
+	}) {
+		let bucketLocation = BucketName;
+		if (BucketName.startsWith("/")) {
+			bucketLocation = BucketName.substring(1);
+		}
+
+		const response = await this.client.fetch(
+			`https://${bucketLocation}.s3.us-east-1.amazonaws.com/?lifecycle`,
+			{
+				method: "PUT",
+				headers: {
+					"Content-Type": "application/xml",
+					"x-amz-expected-bucket-owner": ExpectedBucketOwner,
+				},
+				body: `
+				<LifecycleConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+					${LifecycleConfiguration.Rules.map((rule) => {
+						if (rule.Transitions !== undefined) {
+							return `
+							<Rule>
+								<ID>${rule.ID}</ID>
+								<Status>${rule.Status}</Status>
+								<Transitions>
+									${rule.Transitions.map((transition) => {
+										return `
+										<Transition>
+											<StorageClass>${transition.StorageClass}</StorageClass>
+											<TransitionInDays>${transition.TransitionInDays}</TransitionInDays>
+										</Transition>
+									`;
+									}).join("")}
+								</Transitions>
+							</Rule>
+						`;
+						}
+						if (rule.ExpirationInDays !== undefined) {
+							return `
+							<Rule>
+								<ID>${rule.ID}</ID>
+								<Status>${rule.Status}</Status>
+								<Expiration>
+									<Days>${rule.ExpirationInDays}</Days>
+									<ExpiredObjectDeleteMarker>${rule.ExpiredObjectDeleteMarker}</ExpiredObjectDeleteMarker>
+								</Expiration>
+							</Rule>
+						`;
+						}
+						if (rule.AbortIncompleteMultipartUpload !== undefined) {
+							return `
+							<Rule>
+								<ID>${rule.ID}</ID>	
+								<Status>${rule.Status}</Status>
+								<AbortIncompleteMultipartUpload>
+									<DaysAfterInitiation>${rule.AbortIncompleteMultipartUpload.DaysAfterInitiation}</DaysAfterInitiation>
+								</AbortIncompleteMultipartUpload>
+							</Rule>
+						`;
+						}
+						if (rule.NoncurrentVersionExpirationInDays !== undefined) {
+							return `
+							<Rule>
+								<ID>${rule.ID}</ID>
+								<Status>${rule.Status}</Status>
+								<NoncurrentVersionExpiration>
+									<NoncurrentDays>${rule.NoncurrentVersionExpirationInDays}</NoncurrentDays>
+									<NewerNoncurrentVersions>${rule.NewerNoncurrentVersions}</NewerNoncurrentVersions>
+								</NoncurrentVersionExpiration>
+							</Rule>
+						`;
+						}
+						throw new VError(
+							{
+								name: "INVALID_LIFECYCLE_RULE",
+								info: {
+									rule,
+								},
+							},
+							"Invalid lifecycle rule: %j",
+							rule,
+						);
+					}).join("\n")}
+				</LifecycleConfiguration>`.trim(),
+				aws: { region: "us-east-1", signQuery: true, allHeaders: true },
+			},
+		);
+
+		if (response.status !== 200) {
+			console.dir(
+				{
+					S3: {
+						status: response.status,
+						statusText: response.statusText,
+						body: await response.text(),
+					},
+				},
+				{ depth: null },
+			);
+			throw new Error(
+				`Failed to put bucket versioning: ${response.statusText}`,
+			);
+		}
+
+		return;
+	}
 }

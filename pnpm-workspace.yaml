@@ -116,6 +116,8 @@ catalogs:
   log-pino:
     pino: ^9.6.0
     pino-pretty: ^13.0.0
+  oidc-client:
+    oidc-client-ts: "^3.2.0"
   package:
     ci: ^2.3.0
     depcheck: ^1.4.7

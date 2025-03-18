@@ -1,0 +1,145 @@
+@import "tailwindcss" source("../app");
+@tailwind utilities;
+@plugin "daisyui" {
+	themes: light --default, dark --prefersdark;
+}
+@layer base {
+	:root {
+		--color-rodeo-dust-50: #f9f5f3;
+		--color-rodeo-dust-100: #f0eae4;
+		--color-rodeo-dust-200: #e0d2c8;
+		--color-rodeo-dust-300: #c6ab99;
+		--color-rodeo-dust-400: #b79380;
+		--color-rodeo-dust-500: #a97b66;
+		--color-rodeo-dust-600: #9b6a5b;
+		--color-rodeo-dust-700: #82564c;
+		--color-rodeo-dust-800: #6a4842;
+		--color-rodeo-dust-900: #563c38;
+		--color-rodeo-dust-950: #2e1e1c;
+	
+		--color-scorpion-50: #f7f7f8;
+		--color-scorpion-100: #efefef;
+		--color-scorpion-200: #dcdadd;
+		--color-scorpion-300: #bebabf;
+		--color-scorpion-400: #99959b;
+		--color-scorpion-500: #7c787f;
+		--color-scorpion-600: #605c62;
+		--color-scorpion-700: #534f55;
+		--color-scorpion-800: #464448;
+		--color-scorpion-900: #3e3b3f;
+		--color-scorpion-950: #29272a;
+	
+		--color-ironstone-50: #faf6f6;
+		--color-ironstone-100: #f6ebea;
+		--color-ironstone-200: #eedbda;
+		--color-ironstone-300: #e2c1bf;
+		--color-ironstone-400: #d09c99;
+		--color-ironstone-500: #bc7b77;
+		--color-ironstone-600: #a6605c;
+		--color-ironstone-700: #8a4e4b;
+		--color-ironstone-800: #7b4845;
+		--color-ironstone-900: #623c3a;
+		--color-ironstone-950: #331d1c;	
+	}
+}
+
+
+@plugin "daisyui/theme" {
+	name: "dark";
+
+	--color-base-100: var(--color-rodeo-dust-900);
+	--color-base-200: var(--color-rodeo-dust-800);
+	--color-base-300: var(--color-rodeo-dust-700);
+	--color-base-content: var(--color-rodeo-dust-50);
+	--color-primary: var(--color-rodeo-dust-600);
+	--color-primary-content: var(--color-scorpion-50);
+	--color-secondary: var(--color-scorpion-600);
+	--color-secondary-content: var(--color-scorpion-100);
+	--color-accent: var(--color-ironstone-500);
+	--color-accent-content: var(--color-ironstone-50);
+	--color-neutral: var(--color-rodeo-dust-700);
+	--color-neutral-content: var(--color-rodeo-dust-50);
+	--color-info: var(--color-scorpion-500);
+	--color-info-content: var(--color-scorpion-50);
+	--color-success: var(--color-ironstone-500);
+	--color-success-content: var(--color-ironstone-50);
+	--color-warning: var(--color-rodeo-dust-500);
+	--color-warning-content: var(--color-rodeo-dust-50);
+	--color-error: var(--color-ironstone-500);
+	--color-error-content: var(--color-ironstone-50);
+	
+	--radius-selector: 1.25rem;
+	--radius-field: 0.50rem;
+	--radius-box: 0.25rem;
+  
+	--size-selector: 0.25rem;
+	--size-field: 0.25rem;
+  
+	--border: 1em;
+  
+	--depth: 1;
+	--noise: 3;	
+}
+
+@plugin "daisyui/theme" {
+	name: "light";
+
+	--color-base-100: var(--color-rodeo-dust-50);
+	--color-base-200: var(--color-rodeo-dust-100);
+	--color-base-300: var(--color-rodeo-dust-200);
+	--color-base-content: var(--color-rodeo-dust-900);
+	--color-primary: var(--color-rodeo-dust-400);
+	--color-primary-content: var(--color-scorpion-900);
+	--color-secondary: var(--color-scorpion-400);
+	--color-secondary-content: var(--color-scorpion-900);
+	--color-accent: var(--color-ironstone-400);
+	--color-accent-content: var(--color-ironstone-900);
+	--color-neutral: var(--color-rodeo-dust-200);
+	--color-neutral-content: var(--color-rodeo-dust-900);
+	--color-info: var(--color-scorpion-400);
+	--color-info-content: var(--color-scorpion-900);
+	--color-success: var(--color-ironstone-400);
+	--color-success-content: var(--color-ironstone-900);
+	--color-warning: var(--color-rodeo-dust-400);
+	--color-warning-content: var(--color-rodeo-dust-900);
+	--color-error: var(--color-ironstone-400);
+	--color-error-content: var(--color-ironstone-900);
+	--radius-selector: 1.25rem;
+	--radius-field: 0.50rem;
+	--radius-box: 0.25rem;
+	--size-selector: 0.25rem;
+	--size-field: 0.25rem;
+	--border: 1em;
+	--depth: 1;
+	--noise: 3;
+}
+
+* {
+	box-sizing: border-box;
+}
+  
+:root {
+	font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+	line-height: 1.25;
+	font-weight: 500;
+
+	font-synthesis: none;
+	text-rendering: optimizeLegibility;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+a {
+	font-weight: 700;
+	color: var(--color-accent-content);
+	text-decoration: inherit;
+}
+a:hover {
+	color: var(--color-accent);
+}
+
+main {
+	margin: 0;
+	min-width: 320px;
+	min-height: 100vh;
+}

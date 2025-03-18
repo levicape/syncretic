@@ -21,14 +21,35 @@ export const FourtwoApplicationStackExportsZod = z
 				}),
 			}),
 		),
-		fourtwo_application_sns: z.record(
-			z.object({
+		fourtwo_application_sns: z.object({
+			catalog: z.object({
 				topic: z.object({
 					arn: z.string(),
 					name: z.string(),
 					id: z.string(),
 				}),
 			}),
-		),
+			changelog: z.object({
+				topic: z.object({
+					arn: z.string(),
+					name: z.string(),
+					id: z.string(),
+				}),
+			}),
+			finance: z.object({
+				topic: z.object({
+					arn: z.string(),
+					name: z.string(),
+					id: z.string(),
+				}),
+			}),
+			operations: z.object({
+				topic: z.object({
+					arn: z.string(),
+					name: z.string(),
+					id: z.string(),
+				}),
+			}),
+		}),
 	})
 	.passthrough();
