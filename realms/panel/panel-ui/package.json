@@ -1,49 +1,46 @@
 {
   "name": "@levicape/fourtwo-panel-ui",
-  "description": "Dashboard UI for Fourtwo",
   "version": "0.0.0-local.0",
   "author": "Pedro Cardona",
   "config": {
     "packagemanager": "pnpm",
     "packageexecutor": "pnpm exec",
     "packagescript": "pnpm run",
-    "outpaths": "./output",
-    "lintpaths": "./server ./src ./server.ts",
-    "server": "./server.ts",
-    "serverrender": "./render/server.tsx",
-    "staticwwwoutput": "./output/staticwww",
-    "staticwwwcanary": "module/canary/StaticWWW.mjs",
-    "webhttpoutput": "./output/webhttp",
-    "webhttpmodule": "./server.js"
+    "outpaths": "./dist",
+    "lintpaths": "./app ./src vite.config.mts",
+    "staticwwwoutput": "./dist",
+    "webcanary": "module/canary/StaticWWW.mjs"
   },
   "dependencies": {
-    "@aws-lambda-powertools/logger": "catalog:log-awspowertools",
-    "@cloudscape-design/components": "catalog:web-cloudscape",
-    "@cloudscape-design/global-styles": "catalog:web-cloudscape",
+    "@base-ui-components/react": "catalog:web-components",
+    "@hono/node-server": "catalog:hono",
+    "@hono/react-renderer": "catalog:hono",
+    "@levicape/fourtwo-panel-io": "workspace:",
     "@levicape/paloma": "catalog:",
+    "@levicape/spork": "catalog:",
     "@levicape/spork-atlas": "catalog:",
-    "@loglayer/transport-aws-lambda-powertools": "catalog:log-loglayer",
-    "@loglayer/transport-consola": "catalog:log-loglayer",
-    "consola": "catalog:log-consola",
+    "clsx": "catalog:web-style",
     "effect": "catalog:effect",
-    "express": "catalog:http-express",
-    "loglayer": "catalog:log-loglayer",
+    "hono": "catalog:hono",
+    "honox": "catalog:hono",
+    "jotai": "catalog:state",
     "react": "catalog:web-react",
     "react-dom": "catalog:web-react",
-    "serialize-error": "catalog:error",
-    "sirv": "catalog:http-express",
+    "react-router": "catalog:web-react-router",
+    "react-router-dom": "catalog:web-react-router",
     "std-env": "catalog:runtime-env",
-    "ulidx": "catalog:id",
     "verror": "catalog:error"
   },
   "devDependencies": {
     "@biomejs/biome": "catalog:lint",
+    "@hono/vite-build": "catalog:hono",
+    "@hono/vite-dev-server": "catalog:hono",
+    "@hono/vite-ssg": "catalog:hono",
     "@tailwindcss/vite": "catalog:web-tailwind",
-    "@types/express": "catalog:types",
     "@types/node": "catalog:types",
     "@types/react": "catalog:types",
     "@types/react-dom": "catalog:types",
-    "@vitejs/plugin-react-swc": "catalog:web-vite",
+    "daisyui": "catalog:web-tailwind",
     "tailwindcss": "catalog:web-tailwind",
     "typescript": "catalog:dev",
     "vite": "catalog:web-vite"
@@ -52,8 +49,8 @@
     "node": "22"
   },
   "files": [
-    "module",
-    "output"
+    "dist",
+    "module"
   ],
   "nx": {
     "targets": {
@@ -63,26 +60,30 @@
         ]
       },
       "build:tsc": {
-        "dependsOn": []
+        "dependsOn": [
+          "@levicape/spork:build:module",
+          "@levicape/spork-magmap-io:build:module",
+          "@levicape/spork-atlas:build:module"
+        ]
       },
       "staticwww:build": {
         "dependsOn": [
           "build:module"
         ]
       },
-      "webhttp:build": {
+      "serverwww:build": {
         "dependsOn": [
           "staticwww:build"
         ]
       },
-      "webhttp:dev": {
+      "serverwww:dev": {
         "dependsOn": [
-          "webhttp:build"
+          "serverwww:build"
         ]
       },
-      "webhttp:preview": {
+      "serverwww:preview": {
         "dependsOn": [
-          "webhttp:build"
+          "serverwww:build"
         ]
       },
       "dx:lint": {
@@ -119,7 +120,7 @@
         "dependsOn": [
           "build:module",
           "staticwww:build",
-          "webhttp:build"
+          "serverwww:build"
         ]
       },
       "nx:test": {
@@ -135,7 +136,6 @@
     "build:tsc": "$npm_package_config_packageexecutor tsc -b --verbose",
     "clean": "$npm_package_config_packageexecutor nx nx:clean --verbose",
     "clean:module": "rm -rf $npm_package_config_outpaths || true",
-    "dev": "$npm_package_config_packageexecutor nx webhttp:dev",
     "dx:noop": "true",
     "dx:precommit": "$npm_package_config_packageexecutor nx dx:precommit:pre && $npm_package_config_packageexecutor nx package:deps",
     "dx:precommit:pre": "echo \"Starting precommit dx. This will check package.json dependencies.\"",
@@ -154,14 +154,12 @@
     "prelint": "$npm_package_config_packageexecutor biome format $npm_package_config_lintpaths",
     "prepublishOnly": "$npm_package_config_packageexecutor publint --strict",
     "preview": "$npm_package_config_packageexecutor nx webhttp:preview",
-    "staticwww:build": "$npm_package_config_packageexecutor vite build --outDir $npm_package_config_staticwwwoutput --ssrManifest",
-    "staticwww:canary": "node $npm_package_config_staticwwwcanary",
-    "staticwww:dev": "$npm_package_config_packageexecutor vite --cors --debug --host --port ${PORT:-64128}",
-    "staticwww:preview": "$npm_package_config_packageexecutor vite preview --outDir $npm_package_config_staticwwwoutput --cors --debug --host --port $PORT",
+    "serverwww:build": "PORT=${PORT:-64128} $npm_package_config_packageexecutor vite build --outDir $npm_package_config_staticwwwoutput",
+    "serverwww:dev": "$npm_package_config_packageexecutor vite --cors --host --port ${PORT:-64128}",
+    "serverwww:preview": "$npm_package_config_packageexecutor vite preview --outDir $npm_package_config_staticwwwoutput --host --port ${PORT:-64128}",
+    "staticwww:build": "$npm_package_config_packageexecutor vite build --outDir $npm_package_config_staticwwwoutput --mode client",
     "test": "$npm_package_config_packageexecutor nx nx:test --verbose",
-    "webhttp:build": "SERVER_ENTRYPOINT=$npm_package_config_webhttpoutput/$npm_package_config_webhttpoutput CLIENT_OUTPUT=$npm_package_config_staticwwwoutput $npm_package_config_packageexecutor vite build --outDir $npm_package_config_webhttpoutput --ssr ./src/$npm_package_config_serverrender",
-    "webhttp:dev": "SERVER_ENTRYPOINT=./src/$npm_package_config_serverrender $npm_package_config_server",
-    "webhttp:preview": "NODE_ENV=production CLIENT_OUTPUT=$npm_package_config_staticwwwoutput SERVER_ENTRYPOINT=$npm_package_config_webhttpoutput/$npm_package_config_webhttpmodule $npm_package_config_server"
+    "web:canary": "node $npm_package_config_webcanary"
   },
   "type": "module"
 }

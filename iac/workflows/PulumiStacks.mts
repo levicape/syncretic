@@ -26,25 +26,30 @@ export const CODECATALYST_PULUMI_STACKS: Array<{
 		stack: "codestar",
 	},
 	{
-		stack: "cognito",
+		stack: "cognito/identity",
+		name: "cognito-identity",
+	},
+	{
+		stack: "cognito/users",
+		name: "cognito-users",
 	},
 	{
 		stack: "datalayer",
 	},
 	{
-		stack: "domains/panel/http",
+		stack: "scopes/panel/http",
 		name: "panel-http",
 	},
 	{
-		stack: "domains/panel/web",
+		stack: "scopes/panel/web",
 		name: "panel-web",
 	},
 	{
-		stack: "domains/panel/monitor",
+		stack: "scopes/panel/monitor",
 		name: "panel-monitor",
 	},
 	{
-		stack: "domains/panel/wwwroot",
+		stack: "scopes/panel/wwwroot",
 		name: "panel-wwwroot",
 	},
 ].map((stack) => ({ ...stack, output: stack.stack.replaceAll("/", "_") }));

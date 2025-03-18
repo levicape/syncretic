@@ -35,6 +35,7 @@ export = async () => {
 			application: new AppregistryApplication(_("servicecatalog"), {
 				description: DESCRIPTION,
 				tags: {
+					Name: _(PACKAGE_NAME),
 					PACKAGE_NAME,
 				},
 			}),
@@ -119,9 +120,9 @@ export = async () => {
 			});
 		};
 		return {
-			billing: topic("billing"),
 			catalog: topic("catalog"),
-			changes: topic("changes"),
+			changelog: topic("changelog"),
+			finance: topic("finance"),
 			operations: topic("operations"),
 		};
 	})();
@@ -183,21 +184,21 @@ export = async () => {
 				timeUnit: "DAILY",
 				threshold: 3,
 				notificationType: "ACTUAL",
-				subscriberSnsTopicArns: [sns.billing.arn],
+				subscriberSnsTopicArns: [sns.finance.arn],
 			}),
 			monthly_forecasted: budget("monthly-forecasted", {
 				limitAmount: "29",
 				timeUnit: "MONTHLY",
 				threshold: 13,
 				notificationType: "FORECASTED",
-				subscriberSnsTopicArns: [sns.billing.arn],
+				subscriberSnsTopicArns: [sns.finance.arn],
 			}),
 			monthly_absolute: budget("monthly-absolute", {
 				limitAmount: "100",
 				timeUnit: "MONTHLY",
 				threshold: 10,
 				notificationType: "ACTUAL",
-				subscriberSnsTopicArns: [sns.billing.arn],
+				subscriberSnsTopicArns: [sns.finance.arn],
 			}),
 		};
 	})();
@@ -282,9 +283,18 @@ export = async () => {
 							id: topic.id,
 						},
 					},
-				];
+				] as const;
 			}),
-		);
+		) as Record<
+			keyof typeof sns,
+			{
+				topic: {
+					arn: string;
+					name: string;
+					id: string;
+				};
+			}
+		>;
 	});
 
 	return all([servicecatalogOutput, resourcegroupsOutput, snsOutput]).apply(

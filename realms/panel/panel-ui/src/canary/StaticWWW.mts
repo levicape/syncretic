@@ -1,9 +1,9 @@
 import assert from "node:assert";
+import { PanelHttp } from "@levicape/fourtwo-panel-io/Atlas";
 import { Canary, PromiseActivity } from "@levicape/paloma";
 import { LoggingContext } from "@levicape/paloma/runtime/server/RuntimeContext";
 import { withStructuredLogging } from "@levicape/paloma/runtime/server/loglayer/LoggingContext";
 import { Context, Effect } from "effect";
-import { PanelWeb } from "./Atlas.mjs";
 
 // @ts-ignore
 const { trace } = await Effect.runPromise(
@@ -22,6 +22,11 @@ const { trace } = await Effect.runPromise(
 		Context.empty().pipe(withStructuredLogging({ prefix: "ExecutionPlan" })),
 	),
 );
+trace
+	?.withMetadata({
+		PanelHttp,
+	})
+	.info("Loaded service clients");
 
 export const healthcheck = new Canary(
 	"http-healthcheck",
@@ -55,9 +60,9 @@ export const healthcheck = new Canary(
 		},
 		async ({ events }) => {
 			trace.warn("Hello world");
-			trace.metadataOnly([events, PanelWeb["/"].url()]);
+			trace.metadataOnly([events, PanelHttp["/"].url()]);
 			{
-				const response = await fetch(PanelWeb["/"].url());
+				const response = await fetch(PanelHttp["/"].url());
 				const json = await response.text();
 				trace.withMetadata({ json }).info("Fetched");
 				assert(response.ok, `Response not ok: ${response.status}`);

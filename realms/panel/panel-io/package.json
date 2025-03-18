@@ -8,7 +8,7 @@
     "packageexecutor": "pnpm exec",
     "packagescript": "pnpm run",
     "binspork": "pnpm exec spork",
-    "binatlas": "node module/http/Atlas.mjs",
+    "binatlas": "node module/Atlas.mjs",
     "outpath": "./module",
     "srcpaths": "./src",
     "lintpaths": "./src",
@@ -28,6 +28,7 @@
     "hono": "catalog:hono",
     "jsonwebtoken": "catalog:crypto",
     "loglayer": "catalog:log-loglayer",
+    "oidc-client-ts": "catalog:oidc-client",
     "std-env": "catalog:runtime-env",
     "ts-proto": "catalog:protobuf"
   },
@@ -41,6 +42,9 @@
   },
   "engines": {
     "node": "22"
+  },
+  "exports": {
+    "./*": "./module/*.mjs"
   },
   "files": [
     "module",
