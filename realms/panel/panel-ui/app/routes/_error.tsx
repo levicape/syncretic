@@ -1,5 +1,5 @@
 import type { ErrorHandler } from "hono";
-import { SUSPENSE_GUARD } from "../ui/Client";
+import { SUSPENSE_GUARD } from "../ui/ClientSuspense";
 
 const handler: ErrorHandler = (e, c) => {
 	if ("getResponse" in e) {

@@ -26,13 +26,15 @@
     "staticwww:build": {
       "cache": true,
       "outputs": [
-        "{projectRoot}/output/staticwww"
+        "{projectRoot}/output/staticwww",
+        "{projectRoot}/dist"
       ]
     },    
-    "webhttp:build": {
+    "serverwww:build": {
       "cache": true,
       "outputs": [
-        "{projectRoot}/output/webhttp"
+        "{projectRoot}/output/serverwww",
+        "{projectRoot}/dist"
       ]
     }
   }

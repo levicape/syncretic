@@ -1,6 +1,6 @@
 import { SporkHonoHttpServer } from "@levicape/spork/router/hono/HonoHttpServerBuilder";
-import type { HonoException } from "@levicape/spork/router/hono/middleware/exception/HonoExceptionMiddleware";
 import { Hono } from "hono";
+import { HTTPException } from "hono/http-exception";
 import { HTTP_ROOT_PATH } from "../Atlas.mjs";
 
 export const { server, handler, stream } = await SporkHonoHttpServer((app) =>
@@ -10,13 +10,13 @@ export const { server, handler, stream } = await SporkHonoHttpServer((app) =>
 			return c.json({ message: `Hello, ${Hono.name}!` });
 		})
 		.get("/AnotherEndpoint", async (_c) => {
-			throw {
-				code: "AnotherEndpointError",
-				message: "This is another endpoint error!",
-				cause: null,
-				validations: [],
-				unrecoverable: false,
-			} as HonoException;
+			throw new HTTPException(400, {
+				res: new Response(
+					JSON.stringify({
+						error: "Hello, Hono!",
+					}),
+				),
+			});
 		}),
 );
 

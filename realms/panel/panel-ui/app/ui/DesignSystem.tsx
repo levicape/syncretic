@@ -1,5 +1,24 @@
 import clsx from "clsx";
 import type { PropsWithChildren } from "react";
+import { process } from "std-env";
+
+const ApplicationName = "Panel UI";
+export const ApplicationHead = {
+	title: {
+		template: `%s | ${ApplicationName}`,
+		default: ApplicationName,
+	},
+	description:
+		"Panel UI is a web-based user interface for viewing a Fourtwo principal's configuration and state.",
+	metadataBase:
+		(process?.env.URL !== undefined && new URL(process.env.URL)) || undefined,
+	openGraph: {
+		type: "website",
+		title: ApplicationName,
+		url: process.env.URL,
+		images: [`${process.env.URL}/static/social/splash.png`],
+	},
+} as const;
 
 export type DesignSystemProps = {
 	id?: string;

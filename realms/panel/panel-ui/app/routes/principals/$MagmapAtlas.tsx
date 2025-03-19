@@ -2,7 +2,7 @@
 import clsx from "clsx";
 import { type FC, Suspense, lazy, useCallback, useState } from "react";
 import { isNode } from "std-env";
-import { SuspenseGuard } from "../../ui/Client";
+import { SuspenseGuard } from "../../ui/ClientSuspense";
 import { DesignSystem } from "../../ui/DesignSystem";
 
 // const Magmap = hc<MagmapHonoApp>("");
