@@ -14,16 +14,23 @@ const { PORT } = env;
  */
 export default defineConfig(({ mode }) => {
 	if (mode === "client") {
+		const unixtime = Math.floor(Date.now() / 1000);
+		const timehash = unixtime.toString(16);
 		return {
 			build: {
+				sourcemap: true,
 				rollupOptions: {
-					input: ["./app/client.ts", "./app/style.css"],
+					input: ["./app/render.ts", "./app/style.css"],
 					output: {
-						entryFileNames: "static/client.js",
-						chunkFileNames: "static/assets/[name]-[hash].js",
+						entryFileNames: "static/[name].js",
+						chunkFileNames: () => `static/_c/${timehash}/$[name]$[hash].js`,
 						assetFileNames: "static/assets/[name].[ext]",
+						generatedCode: "es2015",
+						compact: true,
 					},
+					treeshake: "smallest",
 				},
+				manifest: true,
 			},
 			plugins: [tailwindcss()],
 		};
@@ -32,6 +39,7 @@ export default defineConfig(({ mode }) => {
 	return {
 		build: {
 			emptyOutDir: false,
+			ssrManifest: true,
 		},
 		ssr: {
 			external: [

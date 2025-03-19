@@ -1,1 +1,1 @@
-export const Router = () => <></>;
+export const AtomicRouter = () => <></>;

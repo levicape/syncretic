@@ -664,6 +664,9 @@ importers:
       verror:
         specifier: catalog:error
         version: 1.10.1
+      zod:
+        specifier: catalog:schema-zod
+        version: 3.24.2
     devDependencies:
       '@biomejs/biome':
         specifier: catalog:lint
