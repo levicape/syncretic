@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { type FC, type PropsWithChildren, Suspense } from "react";
+import { type FC, type PropsWithChildren, Suspense, useMemo } from "react";
 import { DesignSystem } from "./DesignSystem";
 import { CaptureTouchEvents } from "./behavior/$CaptureTouchEvents";
 import { HeaderLayout } from "./trim/header/HeaderLayout";
@@ -21,7 +21,14 @@ export const AppBody: FC<PropsWithChildren> = ({ children }) => (
 		)}
 	>
 		<Shell>
-			<HeaderLayout>
+			<HeaderLayout
+				vars={useMemo(
+					() => ({
+						appHeight: "--app-height",
+					}),
+					[],
+				)}
+			>
 				<Suspense fallback={<Fallback />}>
 					<Layout>{children}</Layout>
 				</Suspense>

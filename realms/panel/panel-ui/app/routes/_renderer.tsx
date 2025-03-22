@@ -1,9 +1,10 @@
 import { reactRenderer } from "@hono/react-renderer";
 import clsx from "clsx";
+import type { PropsWithChildren } from "react";
 import { AppBody } from "../ui/AppBody";
 import { ApplicationHead } from "../ui/DesignSystem";
 
-export default reactRenderer(({ children }) => {
+export default reactRenderer(({ children }: PropsWithChildren) => {
 	return (
 		<html className={clsx("overflow-x-hidden", "overscroll-contain")} lang="en">
 			{/* <!-- React-Helmet-Async-SSR --> */}

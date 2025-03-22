@@ -1,4 +1,5 @@
-
+volumes:
+  http_data:
 services:
   http:
     image: $ROOT_IMAGE
@@ -11,6 +12,7 @@ services:
       PORT: $PANEL_HTTP
     volumes: &workspace_volumes
       - ../../../../..:/workspace
+      - http_data:/vfs
     ports:
       - $PANEL_HTTP:$PANEL_HTTP
     healthcheck:

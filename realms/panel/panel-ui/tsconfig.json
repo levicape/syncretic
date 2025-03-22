@@ -30,6 +30,7 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
     "verbatimModuleSyntax": true,
+    "allowSyntheticDefaultImports": true,
     "importHelpers": true,
     "esModuleInterop": true,
   },

@@ -1,4 +1,5 @@
-
+volumes:
+  ui_data:
 services:
   ui:
     image: $ROOT_IMAGE
@@ -11,6 +12,7 @@ services:
       PORT: $PANEL_UI
     volumes: &workspace_volumes
       - ../../../../..:/workspace
+      - ui_data:/vfs
     ports:
       - $PANEL_UI:$PANEL_UI
     healthcheck:

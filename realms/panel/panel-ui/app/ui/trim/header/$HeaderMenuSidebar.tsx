@@ -1,6 +1,5 @@
 // import { useDiscord } from "@/sdk/discord/DiscordProvider";
 // import { useConfig } from "@/ui/data/ConfigProvider";
-// import { LanguageDropdown } from "@/ui/input/LanguageDropdown";
 import clsx from "clsx";
 import {
 	type FunctionComponent,
@@ -12,11 +11,13 @@ import {
 	useEffect,
 } from "react";
 import { env } from "std-env";
+import { useFormatMessage } from "../../../atoms/localization/I18nAtom";
 import { ApplicationHead } from "../../DesignSystem";
 import { Link } from "../../daisy/navigation/Link";
-import { DaisyMenu, DaisyMenuItem } from "../../daisy/navigation/Sidebar";
+import { DaisyMenu, DaisyMenuItem } from "../../daisy/navigation/Menu";
 import { QuestionMark_Icon } from "../../display/icons/QuestionMark";
 import { RightArrow_Icon } from "../../display/icons/RightArrow";
+import { LanguageDropdown } from "../../input/LanguageDropdown";
 import { HeaderMenuOpenContextExport } from "./HeaderContext";
 // import { FormattedMessage } from "react-intl";
 
@@ -27,6 +28,7 @@ const ARTIFACT_VERSION = env.ARTIFACT_VERSION;
 interface HeaderMenuLinkProps {
 	href: string;
 	messageI18nId: string;
+	i18nDescription: string;
 	icon: ReactNode;
 }
 
@@ -55,8 +57,10 @@ const HeaderMenuListItem: FunctionComponent<PropsWithChildren> = ({
 const HeaderMenuLink: FunctionComponent<HeaderMenuLinkProps> = ({
 	href,
 	messageI18nId,
+	i18nDescription,
 	icon,
 }) => {
+	const formatMessage = useFormatMessage();
 	const [, setHeaderMenuOpen] = useContext(HeaderMenuOpenContext);
 	return (
 		<Link
@@ -68,8 +72,10 @@ const HeaderMenuLink: FunctionComponent<HeaderMenuLinkProps> = ({
 				<div className={clsx("flex", "cursor-[inherit]")}>
 					{icon}
 					<span className={clsx("grow", "cursor-[inherit]")}>
-						{/* <FormattedMessage id={messageI18nId} /> */}
-						{messageI18nId}
+						{formatMessage({
+							id: messageI18nId,
+							description: i18nDescription,
+						})}
 					</span>
 					<div
 						className={clsx(
@@ -130,8 +136,8 @@ export const HeaderMenuSidebar: FunctionComponent = () => {
 				"w-64",
 				"border-t-0",
 				"bg-base-200",
-				menuOpen && configReady ? "visible translate-x-0" : "",
-				!menuOpen || !configReady ? "invisible -translate-x-64" : "",
+				menuOpen && configReady ? "visible translate-x-0" : undefined,
+				!menuOpen || !configReady ? "invisible -translate-x-64" : undefined,
 				"transition-[transform,visibility]",
 				"duration-200",
 				"ease-out",
@@ -146,7 +152,8 @@ export const HeaderMenuSidebar: FunctionComponent = () => {
 			</div>
 			<div>
 				<div className={clsx("px-2", "pb-2", "pt-1")}>
-					{/* <LanguageDropdown /> */}
+					<LanguageDropdown />
+					abced
 				</div>
 				<hr />
 				<nav>
@@ -154,6 +161,7 @@ export const HeaderMenuSidebar: FunctionComponent = () => {
 						<HeaderMenuLink
 							href={"/help/rules"}
 							messageI18nId={"lobby.howtoplay.header"}
+							i18nDescription={"How to play"}
 							icon={<QuestionMark_Icon />}
 						/>
 					</DaisyMenu>

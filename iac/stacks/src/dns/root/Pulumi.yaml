@@ -1,0 +1,10 @@
+description: |
+  Route53 Hosted Zone and ACM Certificate
+runtime:
+  name: nodejs
+  options:
+    packagemanager: pnpm
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: aws-typescript

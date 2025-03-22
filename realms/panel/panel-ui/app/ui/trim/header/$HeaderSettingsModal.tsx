@@ -6,7 +6,6 @@
 //   useContext,
 //   useEffect,
 // } from "react";
-// import { FormattedMessage } from "react-intl";
 // import { Direction, Range } from "react-range";
 // import { useStoreDispatch, useStoreSelector } from "@/ui/store/ReduxProvider";
 // import { getSettings } from "@/ui/store/settings/reducer";

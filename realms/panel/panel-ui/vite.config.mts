@@ -40,6 +40,14 @@ export default defineConfig(({ mode }) => {
 		build: {
 			emptyOutDir: false,
 			ssrManifest: true,
+			rollupOptions: {
+				output: {
+					generatedCode: "es2015",
+				},
+			},
+			commonjsOptions: {
+				include: ["cookie", "set-cookie-parser"],
+			},
 		},
 		ssr: {
 			external: [
@@ -48,6 +56,10 @@ export default defineConfig(({ mode }) => {
 				"prop-types",
 				"react-router-dom",
 				"fs-extra",
+				"react-intl",
+				"cookie",
+				"set-cookie-parser",
+				"react-router",
 			],
 		},
 		plugins: [
