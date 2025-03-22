@@ -7,7 +7,7 @@ import type {
 const ENVIRONMENT = "elm_pst_4";
 export const GITHUB_CI_MATRIX = [
 	{
-		name: "Dispatch: Preview, Deploy, Push",
+		name: `${ENVIRONMENT} Dispatch: Preview, Deploy, Push`,
 		region: "us-west-2",
 		triggers: {
 			workflow_dispatch: {},
@@ -26,7 +26,7 @@ export const GITHUB_CI_MATRIX = [
 		},
 	},
 	{
-		name: "on Schedule: Preview, Deploy",
+		name: `${ENVIRONMENT} on Schedule: Preview, Deploy`,
 		region: "us-west-2",
 		triggers: {
 			schedule: [
@@ -49,7 +49,7 @@ export const GITHUB_CI_MATRIX = [
 		},
 	},
 	{
-		name: "Dispatch: Preview",
+		name: `${ENVIRONMENT} Dispatch: Preview`,
 		region: "us-west-2",
 		triggers: {
 			workflow_dispatch: {},
@@ -68,7 +68,7 @@ export const GITHUB_CI_MATRIX = [
 		},
 	},
 	{
-		name: "Dispatch: Delete",
+		name: `${ENVIRONMENT} Dispatch: Delete`,
 		region: "us-west-2",
 		triggers: {
 			workflow_dispatch: {},

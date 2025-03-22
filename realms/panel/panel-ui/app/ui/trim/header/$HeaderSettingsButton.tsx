@@ -5,6 +5,7 @@ import {
 	useCallback,
 	useContext,
 } from "react";
+import { useFormatMessage } from "../../../atoms/localization/I18nAtom";
 import { Button } from "../../daisy/action/Button";
 import { Cog_Icon } from "../../display/icons/Cog";
 import {
@@ -17,6 +18,7 @@ const HeaderSettingsOpenContext = HeaderSettingsOpenContextExport();
 export const HeaderSettingsButton: FunctionComponent<
 	PropsWithChildren<{ className: string }>
 > = ({ children, className }) => {
+	const formatMessage = useFormatMessage();
 	const pathname =
 		typeof window !== "undefined" ? window.location?.pathname : "/";
 	//   const { ready: authReady } = useStoreSelector(getAuthentication);
@@ -32,10 +34,17 @@ export const HeaderSettingsButton: FunctionComponent<
 
 	return (
 		<Button
-			className={clsx("p-1", hide ? "invisible" : "", className)}
-			variant={"ghost"}
-			square
+			aria-label={formatMessage({
+				id: "ui.trim.header.settings.button.aria-label",
+				defaultMessage: "Open Settings Menu",
+				description: "aria-label for HeaderSettingsButton",
+			})}
+			className={clsx(hide ? "invisible" : undefined, className)}
+			color={"neutral"}
 			onClick={menuButtonOnClick}
+			square
+			role={"menubar"}
+			variant={"ghost"}
 		>
 			<Cog_Icon />
 			{children}

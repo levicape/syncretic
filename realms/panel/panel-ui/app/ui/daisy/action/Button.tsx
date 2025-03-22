@@ -43,46 +43,50 @@ export const Button: FunctionComponent<
 	const { xs, sm, md, lg, xl } = size
 		? ({ [size]: true } as Record<string, boolean>)
 		: {};
-	const { wide, block, square, circle } = buttonProps;
+
+	const { wide, block, square, circle, ...htmlProps } = buttonProps;
+
 	return (
 		<button
 			className={clsx(
 				"btn",
 				className,
-				neutral ? "btn-neutral" : "",
-				neutral && !supressContentColor ? "text-neutral-content" : "",
-				primary ? "btn-primary" : "",
-				primary && !supressContentColor ? "text-primary-content" : "",
-				secondary ? "btn-secondary" : "",
-				secondary && !supressContentColor ? "text-secondary-content" : "",
-				accent ? "btn-accent" : "",
-				accent && !supressContentColor ? "text-accent-content" : "",
-				info ? "btn-info" : "",
-				info && !supressContentColor ? "text-info-content" : "",
-				success ? "btn-success" : "",
-				success && !supressContentColor ? "text-success-content" : "",
-				warning ? "btn-warning" : "",
-				warning && !supressContentColor ? "text-warning-content" : "",
-				error ? "btn-error" : "",
-				error && !supressContentColor ? "text-error-content" : "",
-				outline ? "btn-outline" : "",
-				dash ? "btn-dash" : "",
-				soft ? "btn-soft" : "",
-				ghost ? "btn-ghost" : "",
-				link ? "btn-link" : "",
-				active ? "btn-active" : "",
-				disabled ? "btn-disabled" : "",
-				xs ? "btn-xs" : "",
-				sm ? "btn-sm" : "",
-				md ? "btn-md" : "",
-				lg ? "btn-lg" : "",
-				xl ? "btn-xl" : "",
-				wide ? "btn-wide" : "",
-				block ? "btn-block" : "",
-				square ? "btn-square" : "",
-				circle ? "btn-circle" : "",
+				neutral ? "btn-neutral" : undefined,
+				neutral && !supressContentColor ? "text-neutral-content" : undefined,
+				primary ? "btn-primary" : undefined,
+				primary && !supressContentColor ? "text-primary-content" : undefined,
+				secondary ? "btn-secondary" : undefined,
+				secondary && !supressContentColor
+					? "text-secondary-content"
+					: undefined,
+				accent ? "btn-accent" : undefined,
+				accent && !supressContentColor ? "text-accent-content" : undefined,
+				info ? "btn-info" : undefined,
+				info && !supressContentColor ? "text-info-content" : undefined,
+				success ? "btn-success" : undefined,
+				success && !supressContentColor ? "text-success-content" : undefined,
+				warning ? "btn-warning" : undefined,
+				warning && !supressContentColor ? "text-warning-content" : undefined,
+				error ? "btn-error" : undefined,
+				error && !supressContentColor ? "text-error-content" : undefined,
+				outline ? "btn-outline" : undefined,
+				dash ? "btn-dash" : undefined,
+				soft ? "btn-soft" : undefined,
+				ghost ? "btn-ghost" : undefined,
+				link ? "btn-link" : undefined,
+				active ? "btn-active" : undefined,
+				disabled ? "btn-disabled" : undefined,
+				xs ? "btn-xs" : undefined,
+				sm ? "btn-sm" : undefined,
+				md ? "btn-md" : undefined,
+				lg ? "btn-lg" : undefined,
+				xl ? "btn-xl" : undefined,
+				wide ? "btn-wide" : undefined,
+				block ? "btn-block" : undefined,
+				square ? "btn-square" : undefined,
+				circle ? "btn-circle" : undefined,
 			)}
-			{...buttonProps}
+			{...htmlProps}
 		>
 			{children}
 		</button>

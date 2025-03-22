@@ -208,6 +208,7 @@ catalogs:
     webpack: ^5.97.1
   web-components:
     "@base-ui-components/react": "1.0.0-alpha.6"
+    "react-range": "^1.10.0"
   web-cloudscape:
     '@cloudscape-design/board-components': ^3.0.92
     '@cloudscape-design/chat-components': ^1.0.28
@@ -219,6 +220,9 @@ catalogs:
     input-otp: ^1.4.1
     qrcode: ^1.5.4
     sonner: ^1.7.0
+  web-i18n:
+    "react-intl": "^7.1.6"
+    "intl-messageformat": "^10.7.15"
   web-polaris:
     '@shopify/polaris-icons': ^9.3.0
   web-react:

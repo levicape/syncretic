@@ -53,7 +53,10 @@ export namespace DesignSystem {
 		className,
 	}: PropsWithChildren<DesignSystemProps>) {
 		return (
-			<header id={id ?? DesignSystemComponents.Header} className={className}>
+			<header
+				id={id ?? DesignSystemComponents.Header}
+				className={clsx("text-2xl", "font-bold", className)}
+			>
 				{children}
 			</header>
 		);

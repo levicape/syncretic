@@ -1,5 +1,10 @@
 import { clsx } from "clsx";
-import type { PropsWithChildren, ReactElement } from "react";
+import type {
+	BaseHTMLAttributes,
+	Fragment,
+	PropsWithChildren,
+	ReactElement,
+} from "react";
 
 export type StatsDirection = "horizontal" | "vertical";
 export type StatsProps = {
@@ -10,7 +15,7 @@ export type StatsProps = {
 export type StatProps = {
 	className?: string;
 	valueClassName?: string;
-	title?: ReactElement;
+	title?: ReactElement | ReturnType<typeof Fragment>;
 	titleClassName?: string;
 	description?: ReactElement;
 	descriptionClassName?: string;
@@ -20,8 +25,10 @@ export type StatProps = {
 	actionsClassName?: string;
 };
 
-export const Stats = (props: PropsWithChildren<StatsProps>) => {
-	const { direction, children, className } = props;
+export const Stats = (
+	props: PropsWithChildren<StatsProps> & BaseHTMLAttributes<HTMLDivElement>,
+) => {
+	const { direction, children, className, ...htmlProps } = props;
 	const { horizontal, vertical } = direction
 		? ({ [direction]: true } as Record<string, boolean | undefined>)
 		: ({ horizontal: true } as Record<string, boolean | undefined>);
@@ -30,10 +37,11 @@ export const Stats = (props: PropsWithChildren<StatsProps>) => {
 		<div
 			className={clsx(
 				"stats",
-				horizontal ? "stats-horizontal" : "",
-				vertical ? "stats-vertical" : "",
+				horizontal ? "stats-horizontal" : undefined,
+				vertical ? "stats-vertical" : undefined,
 				className,
 			)}
+			{...htmlProps}
 		>
 			{children}
 		</div>
@@ -52,9 +60,11 @@ export const Stat = ({
 	valueClassName,
 	descriptionClassName,
 	actionsClassName,
-}: PropsWithChildren<StatProps>) => {
+	...htmlProps
+}: PropsWithChildren<StatProps> &
+	Omit<BaseHTMLAttributes<HTMLDivElement>, "title" | "children">) => {
 	return (
-		<div className={clsx("stat", className)}>
+		<div className={clsx("stat", className)} {...htmlProps}>
 			{icon ? (
 				<div className={clsx("stat-figure", iconClassName)}>{icon}</div>
 			) : null}

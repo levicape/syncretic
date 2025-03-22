@@ -1,5 +1,10 @@
 import clsx from "clsx";
-import type { FunctionComponent, PropsWithChildren, ReactNode } from "react";
+import type {
+	BaseHTMLAttributes,
+	FunctionComponent,
+	PropsWithChildren,
+	ReactNode,
+} from "react";
 
 export type NavbarProps = {
 	className?: string;
@@ -7,28 +12,68 @@ export type NavbarProps = {
 	text?: `text-${string}`;
 	shadow?: `shadow-${string}` | null;
 	start?: ReactNode;
+	startHtmlProps?: BaseHTMLAttributes<HTMLDivElement>;
+	startClassName?: string;
 	center?: ReactNode;
+	centerHtmlProps?: BaseHTMLAttributes<HTMLDivElement>;
+	centerClassName?: string;
 	end?: ReactNode;
+	endHtmlProps?: BaseHTMLAttributes<HTMLDivElement>;
+	endClassName?: string;
 };
 
-export const Navbar: FunctionComponent<PropsWithChildren<NavbarProps>> = (
-	props,
-) => {
-	const { background, text, shadow, start, center, end, children, className } =
-		props;
+export const Navbar: FunctionComponent<
+	PropsWithChildren<NavbarProps> & BaseHTMLAttributes<HTMLBaseElement>
+> = (props) => {
+	const {
+		background,
+		text,
+		shadow,
+		start,
+		center,
+		end,
+		children,
+		className,
+		startHtmlProps,
+		startClassName,
+		centerHtmlProps,
+		centerClassName,
+		endHtmlProps,
+		endClassName,
+		...htmlProps
+	} = props;
 	return (
 		<header
 			className={clsx(
 				"navbar",
 				background,
 				text,
-				shadow ? (shadow === null ? "" : shadow) : "shadow-sm",
+				shadow === null ? undefined : (shadow ?? "shadow-sm"),
 				className,
 			)}
+			{...htmlProps}
 		>
-			{start ? <div className={"navbar-start"}>{start}</div> : null}
-			{center ? <div className={"navbar-center"}>{center}</div> : null}
-			{end ? <div className={"navbar-end"}>{end}</div> : null}
+			{start ? (
+				<div
+					className={clsx("navbar-start", startClassName)}
+					{...startHtmlProps}
+				>
+					{start}
+				</div>
+			) : null}
+			{center ? (
+				<div
+					className={clsx("navbar-center", centerClassName)}
+					{...centerHtmlProps}
+				>
+					{center}
+				</div>
+			) : null}
+			{end ? (
+				<div className={clsx("navbar-end", endClassName)} {...endHtmlProps}>
+					{end}
+				</div>
+			) : null}
 			{children}
 		</header>
 	);

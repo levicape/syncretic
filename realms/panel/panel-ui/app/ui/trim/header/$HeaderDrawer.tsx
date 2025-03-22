@@ -1,14 +1,13 @@
 import { clsx } from "clsx";
 import { useAtomValue } from "jotai/react";
-import type React from "react";
 import {
 	type FunctionComponent,
 	type PropsWithChildren,
 	useCallback,
 	useState,
 } from "react";
-import { AuthenticationAtom } from "../../../atoms/authentication/AuthenticationAtom";
-import { ApplicationHead, DesignSystem } from "../../DesignSystem";
+import { AuthenticationAtom } from "../../../atoms/authentication/OauthClientAtom";
+import { DesignSystem } from "../../DesignSystem";
 import { Navbar } from "../../daisy/navigation/Navbar";
 import { HeaderMenuButton } from "./$HeaderMenuButton";
 import { HeaderMenuSidebar } from "./$HeaderMenuSidebar";
@@ -22,7 +21,16 @@ import {
 const HeaderMenuOpenContext = HeaderMenuOpenContextExport();
 const HeaderSettingsOpenContext = HeaderSettingsOpenContextExport();
 
-export const HeaderDrawer: FunctionComponent<PropsWithChildren> = () => {
+export type HeaderDrawerProps = {
+	vars: {
+		appHeight: string;
+	};
+};
+
+export const HeaderDrawer: FunctionComponent<
+	PropsWithChildren<HeaderDrawerProps>
+> = (props) => {
+	const { children, vars } = props;
 	const pathname =
 		typeof window !== "undefined" ? window.location.pathname : "/";
 	const [menuOpen, setMenuOpen] = useState<boolean>(false);
@@ -96,17 +104,17 @@ export const HeaderDrawer: FunctionComponent<PropsWithChildren> = () => {
 					className={clsx(
 						"relative",
 						"z-40",
-						menuOpen ? "translate-x-64" : "",
+						menuOpen ? "translate-x-64" : undefined,
 						"transition-transform",
 						"duration-200",
 						"ease-out",
 						"will-change-transform",
-						"sticky",
 					)}
 				>
 					<Navbar
+						role={"navigation"}
 						background={"bg-base-200"}
-						text={"text-primary-content"}
+						text={"text-base-content"}
 						shadow={"shadow-sm"}
 						className={clsx(
 							"flex",
@@ -115,14 +123,12 @@ export const HeaderDrawer: FunctionComponent<PropsWithChildren> = () => {
 							"backdrop-blur-lg",
 							"to-base-300",
 						)}
-						start={<HeaderMenuButton />}
-						center={
-							<DesignSystem.Header className={clsx("text-2xl", "font-bold")}>
-								{ApplicationHead.title.default}
-							</DesignSystem.Header>
-						}
+						start={<HeaderMenuButton className={clsx("p-1")} />}
+						center={<DesignSystem.Header>{children}</DesignSystem.Header>}
 						end={
-							<HeaderSettingsButton className={clsx("hidden", "md:block")}>
+							<HeaderSettingsButton
+								className={clsx("p-1", "md:block", "md:relative")}
+							>
 								{/* <HeaderSettingsModal /> */}
 								{a}
 							</HeaderSettingsButton>
@@ -150,16 +156,10 @@ export const HeaderDrawer: FunctionComponent<PropsWithChildren> = () => {
 				/>
 				<style>
 					{`:root {
-						${windowHeight ? `--app-height: ${windowHeight + 10}px;` : ""}
+						${windowHeight ? `${vars.appHeight}: ${windowHeight + 10}px;` : ""}
 					}`}
 				</style>
 			</HeaderSettingsOpenContext.Provider>
 		</HeaderMenuOpenContext.Provider>
 	);
 };
-
-/*
-{			
-
-}
-*/

@@ -73,6 +73,7 @@ const cd = (matrix: GithubWorkflowProps<boolean, boolean>) => {
 						}),
 						{},
 					),
+				...register("NPM_DEFAULT", _$_("vars.NPM_MIRROR")),
 				...register("LEVICAPE_REGISTRY_HOST", "npm.pkg.github.com/"),
 				...register("LEVICAPE_REGISTRY", "https://npm.pkg.github.com"),
 				...register("LEVICAPE_TOKEN", secret("GITHUB_TOKEN")),
@@ -88,6 +89,8 @@ const cd = (matrix: GithubWorkflowProps<boolean, boolean>) => {
 				...register("AWS_PAGER", ""),
 				...register("AWS_REGION", matrix.region),
 				...register("AWS_PROFILE", matrix.pipeline.environment.name),
+				...register("PULUMI_STACK_FILTER", _$_("vars.STACK_FILTER")),
+				...register("DOCKER_NO_IMAGE", _$_("vars.NO_IMAGE")),
 			}}
 		>
 			{
@@ -117,8 +120,10 @@ const cd = (matrix: GithubWorkflowProps<boolean, boolean>) => {
 									<>
 										{/* Verdaccio NPM mirror https://verdaccio.org */}
 										<GithubStepX
-											name="Set NPM Registry to Verdaccio:31313"
-											run={["pnpm set registry http://localhost:31313"]}
+											name="Set NPM Registry to Verdaccio:31313 or NPM_MIRROR"
+											run={[
+												"pnpm set registry ${NPM_DEFAULT:-http://localhost:31313}",
+											]}
 										/>
 										{/* Install */}
 										<GithubStepNodeInstallX {...node} />
@@ -126,7 +131,9 @@ const cd = (matrix: GithubWorkflowProps<boolean, boolean>) => {
 										<GithubStepX
 											name="Build image"
 											run={[
-												"pnpm exec nx pack:build iac-images-application --verbose",
+												`if [ -z "\$DOCKER_NO_IMAGE" ]; then 
+													pnpm exec nx pack:build iac-images-application --verbose; 
+												fi`,
 											]}
 										/>
 										{/* AWS CLI credentials */}
@@ -282,11 +289,46 @@ source .pulumi-helper.sh`,
 														"aws:skipMetadataApiCheck": false,
 														"context:stack.environment.isProd": false,
 														"context:stack.environment.features": "aws",
-														//   "frontend:stack.dns.hostnames[0]": `${{ env.CI_ENVIRONMENT }}.${root || APPLICATION}.${{ env.FRONTEND_HOSTNAME }}`,
-														//   "frontend:stack.dns.hostnames[1]": `${PULUMI_PROJECT}.${{ env.CI_ENVIRONMENT }}.${root || APPLICATION}.${{ env.FRONTEND_HOSTNAME }}`,
+														"frontend:stack.dns.hostnames[0]": `${matrix.pipeline.environment.name}.${root ?? APPLICATION}.$FRONTEND_HOSTNAME`,
 													})
 														.map(([k, v]) => `${k}=${v}`)
 														.join("\n");
+													// STACK_FILTER:
+													// -> * will deploy every stack
+													// -> (head, next...): comma delimited list of stacks to deploy
+													const STACK_FILTER = `
+													if [ -n "\$PULUMI_STACK_FILTER" ]; then
+														if [ "\$PULUMI_STACK_FILTER" = "*" ]; then
+															echo "Running all stacks due to wildcard filter"
+															true
+														elif [ "\$PULUMI_STACK_FILTER" = "${PULUMI_PROJECT}" ]; then
+															echo "Stack ${PULUMI_PROJECT} matched in filter"
+															true
+														elif echo ",\$PULUMI_STACK_FILTER," | grep -q ",${PULUMI_PROJECT},"; then
+															echo "Stack ${PULUMI_PROJECT} found in comma-separated list"
+															true
+														else
+															echo "Stack ${PULUMI_PROJECT} not in filter '\$PULUMI_STACK_FILTER', skipping"
+															false
+														fi
+													else
+														echo "No stack filter specified, processing all stacks"
+														true
+													fi &&`;
+
+													// DIFF_FILTER:
+													// Only applied if STACK_FILTER is empty or not set
+													// Will "git diff" the location at PULUMI_STACK_CWD, and only issue commands if there are any changes
+													// const DIFF_FILTER = `if [ -z "\$PULUMI_STACK_FILTER" ]; then
+													// 		if git diff --quiet HEAD HEAD~1 -- "${PULUMI_STACK_CWD}"; then
+													// 			echo "No changes detected in ${PULUMI_PROJECT}, skipping."
+													// 			false
+													// 		else
+													// 			echo "Changes detected in ${PULUMI_PROJECT}, proceeding..."
+													// 		fi
+													// 	fi &&`;
+
+													const FILTERBASH = `${STACK_FILTER}`;
 
 													return [
 														`configure_stack "${STEP}" "${PULUMI_STACK_NAME}" "${PULUMI_STACK_CWD}" "${PULUMI_PROJECT}" "${PULUMI_STACK_OUTPUT}"`,
@@ -301,7 +343,11 @@ source .pulumi-helper.sh`,
 																	`capture_outputs "${PULUMI_STACK_CWD}" "${PULUMI_STACK_OUTPUT}"`,
 																]
 															: []),
-													];
+													]
+														.map((bash) => `${FILTERBASH} ${bash}`)
+														.concat([
+															`echo "Stack ${PULUMI_STACK_NAME} processed"`,
+														]);
 												}),
 											]}
 										/>
@@ -316,12 +362,20 @@ source .pulumi-helper.sh`,
 													<GithubStepX
 														name={`Tag and push image with ${tag}`}
 														run={[
+															`
+															if [[ -z "\$PULUMI_STACK_FILTER" || "\$PULUMI_STACK_FILTER" == "*" || "\$PULUMI_STACK_FILTER" =~ "codestar" ]]; then
+																echo "Codestar output found, deploying image"
+																true
+															else
+																echo "Please verify PULUMI_STACK_FILTER: \$PULUMI_STACK_FILTER \n This should include codestar for the image push mechanism"
+																exit 0
+															fi`,
 															...[
 																`ls -la ${OUTPUT_PULUMI_PATH} || true`,
 																...CODECATALYST_PULUMI_STACKS.flatMap(
 																	({ output }) => [
-																		`cat ${OUTPUT_PULUMI_PATH}/${output}.sh`,
-																		`source ${OUTPUT_PULUMI_PATH}/${output}.sh`,
+																		`[ -f ${OUTPUT_PULUMI_PATH}/${output}.sh ] && cat ${OUTPUT_PULUMI_PATH}/${output}.sh`,
+																		`[ -f ${OUTPUT_PULUMI_PATH}/${output}.sh ] && source ${OUTPUT_PULUMI_PATH}/${output}.sh`,
 																	],
 																),
 																`echo "Verify imported environment variables"`,

@@ -26,3 +26,4 @@ ignores:
 - "jose"
 - "jotai"
 - "react-router"
+- "react-range"

@@ -240,6 +240,16 @@ catalogs:
     '@base-ui-components/react':
       specifier: 1.0.0-alpha.6
       version: 1.0.0-alpha.6
+    react-range:
+      specifier: ^1.10.0
+      version: 1.10.0
+  web-i18n:
+    intl-messageformat:
+      specifier: ^10.7.15
+      version: 10.7.15
+    react-intl:
+      specifier: ^7.1.6
+      version: 7.1.6
   web-react:
     react:
       specifier: ^19
@@ -249,9 +259,6 @@ catalogs:
       version: 19.0.0
   web-react-router:
     react-router:
-      specifier: ^7.3.0
-      version: 7.3.0
-    react-router-dom:
       specifier: ^7.3.0
       version: 7.3.0
   web-style:
@@ -643,19 +650,28 @@ importers:
       honox:
         specifier: catalog:hono
         version: 0.1.38(hono@4.7.4)
+      intl-messageformat:
+        specifier: catalog:web-i18n
+        version: 10.7.15
       jotai:
         specifier: catalog:state
         version: 2.12.2(@types/react@19.0.10)(react@19.0.0)
+      oidc-client-ts:
+        specifier: catalog:oidc-client
+        version: 3.2.0
       react:
         specifier: catalog:web-react
         version: 19.0.0
       react-dom:
         specifier: catalog:web-react
         version: 19.0.0(react@19.0.0)
+      react-intl:
+        specifier: catalog:web-i18n
+        version: 7.1.6(react@19.0.0)(typescript@5.8.2)
+      react-range:
+        specifier: catalog:web-components
+        version: 1.10.0(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       react-router:
-        specifier: catalog:web-react-router
-        version: 7.3.0(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
-      react-router-dom:
         specifier: catalog:web-react-router
         version: 7.3.0(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       std-env:
@@ -1284,6 +1300,14 @@ packages:
 
   '@formatjs/intl-localematcher@0.6.0':
     resolution: {integrity: sha512-4rB4g+3hESy1bHSBG3tDFaMY2CH67iT7yne1e+0CLTsGLDcmoEWWpJjjpWVaYgYfYuohIRuo0E+N536gd2ZHZA==}
+
+  '@formatjs/intl@3.1.4':
+    resolution: {integrity: sha512-MBwjnRtDG+E3/QauEi2swZqikDQJjrP9vH6Hl1EtGVsQFZUAWsljtXaz2s1KBrtQEtFDJ0y/mGBHEdFwcUsvqQ==}
+    peerDependencies:
+      typescript: '5'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
 
   '@grpc/grpc-js@1.12.6':
     resolution: {integrity: sha512-JXUj6PI0oqqzTGvKtzOkxtpsyPRNsrmhh41TtIz/zEB6J+AUiZZ0dxWzcMwO9Ns5rmSPuMdghlTbUuqIM48d3Q==}
@@ -2480,6 +2504,9 @@ packages:
   '@types/google-protobuf@3.15.12':
     resolution: {integrity: sha512-40um9QqwHjRS92qnOaDpL7RmDK15NuZYo9HihiJRbYkMQZlWnuH8AdvbMy8/o6lgLmKbDUKa+OALCltHdbOTpQ==}
 
+  '@types/hoist-non-react-statics@3.3.6':
+    resolution: {integrity: sha512-lPByRJUer/iN/xa4qpyL0qmL11DqNW81iU/IG1S3uvRUq4oKagz8VCxZjiWkumgt66YT3vOdDgZ0o32sGKtCEw==}
+
   '@types/http-cache-semantics@4.0.4':
     resolution: {integrity: sha512-1m0bIFVc7eJWyve9S0RnuRgcQqF/Xd5QsUZAZeQFr1Q3/p9JWoQQEqmVy+DPTNpGXwhgIetAoYF8JSc33q29QA==}
 
@@ -3480,6 +3507,9 @@ packages:
 
   help-me@5.0.0:
     resolution: {integrity: sha512-7xgomUX6ADmcYzFik0HzAxh/73YlKR9bmFzf51CZwR+b6YtzU2m0u49hQCqV6SvlqIqsaxovfwdvbnsw3b/zpg==}
+
+  hoist-non-react-statics@3.3.2:
+    resolution: {integrity: sha512-/gGivxi8JPKWNm/W0jSmzcMPpfpPLc3dY/6GxhX2hQ9iGj3aDfklV4ET7NjKpSinLpJ5vafa9iiGIEZg10SfBw==}
 
   homedir-polyfill@1.0.3:
     resolution: {integrity: sha512-eSmmWE5bZTK2Nou4g0AI3zZ9rswp7GRKoKXS1BLUkvPviOqs4YTN1djQIqrXy9k5gEtdLPy86JjRwsNM9tnDcA==}
@@ -4587,18 +4617,26 @@ packages:
     peerDependencies:
       react: ^19.0.0
 
+  react-intl@7.1.6:
+    resolution: {integrity: sha512-TgyzN0GJDILl4EIjbBWJddp+zRMx7IrYXeeUBwDisXfuglJaafAUVYYTx9wTWMRJrm2LubaCeH3L68mIPTmUYA==}
+    peerDependencies:
+      react: ^16.6.0 || 17 || 18 || 19
+      typescript: '5'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+
   react-is@16.13.1:
     resolution: {integrity: sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==}
 
   react-is@18.3.1:
     resolution: {integrity: sha512-/LLMVyas0ljjAtoYiPqYiL8VWXzUUdThrmU5+n20DZv+a+ClRoevUzw5JxU+Ieh5/c87ytoTBV9G1FiKfNJdmg==}
 
-  react-router-dom@7.3.0:
-    resolution: {integrity: sha512-z7Q5FTiHGgQfEurX/FBinkOXhWREJIAB2RiU24lvcBa82PxUpwqvs/PAXb9lJyPjTs2jrl6UkLvCZVGJPeNuuQ==}
-    engines: {node: '>=20.0.0'}
+  react-range@1.10.0:
+    resolution: {integrity: sha512-kDo0LiBUHIQIP8menx0UoxTnHr7UXBYpIYl/DR9jCaO1o29VwvCLpkP/qOTNQz5hkJadPg1uEM07XJcJ1XGoKw==}
     peerDependencies:
-      react: '>=18'
-      react-dom: '>=18'
+      react: '*'
+      react-dom: '*'
 
   react-router@7.3.0:
     resolution: {integrity: sha512-466f2W7HIWaNXTKM5nHTqNxLrHTyXybm7R0eBlVSt0k/u55tTCDO194OIx/NrYD4TS5SXKTNekXfT37kMKUjgw==}
@@ -6359,6 +6397,16 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
+  '@formatjs/intl@3.1.4(typescript@5.8.2)':
+    dependencies:
+      '@formatjs/ecma402-abstract': 2.3.3
+      '@formatjs/fast-memoize': 2.2.6
+      '@formatjs/icu-messageformat-parser': 2.11.1
+      intl-messageformat: 10.7.15
+      tslib: 2.8.1
+    optionalDependencies:
+      typescript: 5.8.2
+
   '@grpc/grpc-js@1.12.6':
     dependencies:
       '@grpc/proto-loader': 0.7.13
@@ -7886,6 +7934,11 @@ snapshots:
 
   '@types/google-protobuf@3.15.12': {}
 
+  '@types/hoist-non-react-statics@3.3.6':
+    dependencies:
+      '@types/react': 19.0.10
+      hoist-non-react-statics: 3.3.2
+
   '@types/http-cache-semantics@4.0.4': {}
 
   '@types/ini@4.1.1': {}
@@ -8810,7 +8863,7 @@ snapshots:
       fs.realpath: 1.0.0
       inflight: 1.0.6
       inherits: 2.0.4
-      minimatch: 3.0.8
+      minimatch: 3.1.2
       once: 1.4.0
       path-is-absolute: 1.0.1
 
@@ -8891,6 +8944,10 @@ snapshots:
       function-bind: 1.1.2
 
   help-me@5.0.0: {}
+
+  hoist-non-react-statics@3.3.2:
+    dependencies:
+      react-is: 16.13.1
 
   homedir-polyfill@1.0.3:
     dependencies:
@@ -10064,15 +10121,28 @@ snapshots:
       react: 19.0.0
       scheduler: 0.25.0
 
+  react-intl@7.1.6(react@19.0.0)(typescript@5.8.2):
+    dependencies:
+      '@formatjs/ecma402-abstract': 2.3.3
+      '@formatjs/icu-messageformat-parser': 2.11.1
+      '@formatjs/intl': 3.1.4(typescript@5.8.2)
+      '@types/hoist-non-react-statics': 3.3.6
+      '@types/react': 19.0.10
+      hoist-non-react-statics: 3.3.2
+      intl-messageformat: 10.7.15
+      react: 19.0.0
+      tslib: 2.8.1
+    optionalDependencies:
+      typescript: 5.8.2
+
   react-is@16.13.1: {}
 
   react-is@18.3.1: {}
 
-  react-router-dom@7.3.0(react-dom@19.0.0(react@19.0.0))(react@19.0.0):
+  react-range@1.10.0(react-dom@19.0.0(react@19.0.0))(react@19.0.0):
     dependencies:
       react: 19.0.0
       react-dom: 19.0.0(react@19.0.0)
-      react-router: 7.3.0(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
 
   react-router@7.3.0(react-dom@19.0.0(react@19.0.0))(react@19.0.0):
     dependencies:
