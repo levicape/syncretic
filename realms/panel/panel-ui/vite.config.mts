@@ -46,7 +46,7 @@ export default defineConfig(({ mode }) => {
 				},
 			},
 			commonjsOptions: {
-				include: ["cookie", "set-cookie-parser"],
+				include: ["cookie", "set-cookie-parser", "oidc-client-ts"],
 			},
 		},
 		ssr: {
@@ -60,6 +60,7 @@ export default defineConfig(({ mode }) => {
 				"cookie",
 				"set-cookie-parser",
 				"react-router",
+				"oidc-client-ts",
 			],
 		},
 		plugins: [

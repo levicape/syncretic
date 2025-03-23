@@ -14,14 +14,15 @@ export default reactRenderer(({ children }: PropsWithChildren) => {
 				<meta charSet="UTF-8" />
 				<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 				<link rel="icon" href={"/favicon.ico"} type="image/png" />
+				<script type="module" src="/_window/oidc.js" />
 				{import.meta.env.PROD ? (
 					<>
-						<script type="module" src="/static/render.js" />
+						<script type="module" src="/static/render.js" defer />
 						<link href="/static/assets/style.css" rel="stylesheet" />
 					</>
 				) : (
 					<>
-						<script type="module" src="/app/render.ts" />
+						<script type="module" src="/app/render.ts" defer />
 						<link href="/app/style.css" rel="stylesheet" />
 					</>
 				)}

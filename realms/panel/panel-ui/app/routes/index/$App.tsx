@@ -1,8 +1,5 @@
 import { clsx } from "clsx";
-import { useAtom } from "jotai/react";
-import { useResetAtom } from "jotai/utils";
 import { Suspense, use, useCallback, useMemo, useState } from "react";
-import { AuthenticationAtom } from "../../atoms/authentication/OauthClientAtom";
 import { SuspenseGuard } from "../../ui/ClientSuspense";
 import { DesignSystem } from "../../ui/DesignSystem";
 import { Button } from "../../ui/daisy/action/Button";
@@ -15,12 +12,9 @@ const ExpensiveComponent = ({ wait }: { wait: Promise<unknown> }) => {
 	const [count, setCount] = useState(0);
 
 	use(wait);
-	const [a, setA] = useAtom(AuthenticationAtom);
-	const reset = useResetAtom(AuthenticationAtom);
 	const increment = useCallback(() => {
 		setCount((current) => current + 1);
-		setA((current) => current + 1);
-	}, [setA]);
+	}, []);
 	const resetState = useCallback(() => {
 		setCount(0);
 	}, []);
@@ -47,19 +41,13 @@ const ExpensiveComponent = ({ wait }: { wait: Promise<unknown> }) => {
 			</object>
 			<Stats>
 				<Stat
-					title={<>Total clicks</>}
-					actions={
-						<Button color={"secondary"} onClick={reset} variant={"soft"}>
-							Reset
-						</Button>
-					}
-				>
-					{String(a)}
-				</Stat>
-				<Stat
 					title={<>Times clicked</>}
 					actions={
-						<Button color={"secondary"} variant={"soft"} onClick={resetState}>
+						<Button
+							color={"secondary"}
+							variant={"outline"}
+							onClick={resetState}
+						>
 							Reset
 						</Button>
 					}

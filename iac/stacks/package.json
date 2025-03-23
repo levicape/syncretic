@@ -7,6 +7,7 @@
     "lintpaths": "./src"
   },
   "dependencies": {
+    "@aws-sdk/client-codebuild": "catalog:aws",
     "@levicape/fourtwo": "workspace:",
     "@levicape/fourtwo-builders": "workspace:",
     "@levicape/fourtwo-pulumi": "workspace:",

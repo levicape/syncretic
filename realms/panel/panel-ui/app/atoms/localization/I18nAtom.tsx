@@ -25,18 +25,21 @@ const intlConfig: Omit<Parameters<typeof createIntl>[0], "locale"> = {
 	textComponent: PlaceholderText,
 } as const;
 
+const initializeIntl = (locale: string) =>
+	createIntl(
+		{
+			locale,
+			...intlConfig,
+		},
+		I18nIntlCache,
+	);
+
 export const I18nIntlCache = createIntlCache();
 export const I18nAtom = atomWithStorage(
 	String(I18nAtomSymbol),
 	{
 		selectedLanguage: "en" as I18nSupportedLanguage,
-		intl: createIntl(
-			{
-				locale: "en",
-				...intlConfig,
-			},
-			I18nIntlCache,
-		),
+		intl: initializeIntl("en"),
 	} as I18nAtomState,
 	{
 		getItem(key, initialValue) {
@@ -45,24 +48,12 @@ export const I18nAtom = atomWithStorage(
 				const parsedValue = JSON.parse(storedValue ?? "");
 				return {
 					...parsedValue,
-					intl: createIntl(
-						{
-							locale: parsedValue.selectedLanguage,
-							...intlConfig,
-						},
-						I18nIntlCache,
-					),
+					intl: initializeIntl(parsedValue.selectedLanguage),
 				};
 			} catch {
 				return {
 					...initialValue,
-					intl: createIntl(
-						{
-							locale: initialValue.selectedLanguage,
-							...intlConfig,
-						},
-						I18nIntlCache,
-					),
+					intl: initializeIntl(initialValue.selectedLanguage),
 				};
 			}
 		},
@@ -95,13 +86,7 @@ export const I18nAtom = atomWithStorage(
 					}
 					callback({
 						...newValue,
-						intl: createIntl(
-							{
-								locale: newValue.selectedLanguage,
-								...intlConfig,
-							},
-							I18nIntlCache,
-						),
+						intl: initializeIntl(newValue.selectedLanguage),
 					});
 				}
 			};

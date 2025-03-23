@@ -39,12 +39,20 @@ import {
 import { FourtwoCodestarStackExportsZod } from "../../../codestar/exports";
 import { FourtwoDatalayerStackExportsZod } from "../../../datalayer/exports";
 import {
+	FourtwoPanelClientOauthRoutes,
+	FourtwoPanelClientStackExportsZod,
+	FourtwoPanelClientStackrefRoot,
+} from "../client/exports";
+import {
 	FourtwoPanelHttpStackExportsZod,
 	FourtwoPanelHttpStackrefRoot,
 } from "../http/exports";
+import { FourtwoPanelWWWRootSubdomain } from "../wwwroot/exports";
 import type { FourtwoPanelWebStackExportsZod } from "./exports";
 
 const PACKAGE_NAME = "@levicape/fourtwo-panel-ui" as const;
+const SUBDOMAIN =
+	process.env["STACKREF_SUBDOMAIN"] ?? FourtwoPanelWWWRootSubdomain;
 const DEPLOY_DIRECTORY = "dist" as const;
 const MANIFEST_PATH = "/_web/routemap.json" as const;
 
@@ -81,6 +89,12 @@ const STACKREF_CONFIG = {
 			refs: {
 				routemap:
 					FourtwoPanelHttpStackExportsZod.shape.fourtwo_panel_http_routemap,
+			},
+		},
+		[FourtwoPanelClientStackrefRoot]: {
+			refs: {
+				cognito:
+					FourtwoPanelClientStackExportsZod.shape.fourtwo_panel_client_cognito,
 			},
 		},
 	},
@@ -375,6 +389,12 @@ export = async () => {
 		const artifactIdentifier = `${deployStage}_${deployAction}`;
 
 		const { codeartifact, ssm } = dereferenced$.codestar;
+		// TODO (stackref) => client; // Allow customizing the OIDC.js output
+		const { client: oidcClient, domain } =
+			dereferenced$[FourtwoPanelClientStackrefRoot].cognito.operations;
+		const { clientId, userPoolId } = oidcClient;
+		let { domain: domainName } = domain ?? {};
+		domainName = domainName?.split(".").slice(2).join(".");
 		const buildspec = (() => {
 			const content = stringify(
 				new CodeBuildBuildspecBuilder()
@@ -478,6 +498,31 @@ export = async () => {
 								`ls -al $CODEBUILD_SRC_DIR/.${deployAction} || true`,
 								`ls -al $CODEBUILD_SRC_DIR/.${deployAction}/${DEPLOY_DIRECTORY} || true`,
 								`du -sh $CODEBUILD_SRC_DIR/.${deployAction}/${DEPLOY_DIRECTORY} || true`,
+								// OIDC
+								...(domainName !== undefined
+									? [
+											...Object.entries({
+												OAUTH_PUBLIC_OIDC_AUTHORITY: `https://cognito-idp.${context?.environment?.aws?.region}.amazonaws.com/${userPoolId}`,
+												OAUTH_PUBLIC_OIDC_CLIENT_ID: clientId,
+												OAUTH_PUBLIC_OIDC_REDIRECT_URI: `https://${domainName}/${FourtwoPanelClientOauthRoutes.callback}`,
+												OAUTH_PUBLIC_OIDC_RESPONSE_TYPE: "code",
+												OAUTH_PUBLIC_OIDC_SCOPE: "openid profile email",
+												OAUTH_PUBLIC_OIDC_POST_LOGOUT_REDIRECT_URI: `https://${domainName}/${FourtwoPanelClientOauthRoutes.logout}`,
+												OAUTH_PUBLIC_OIDC_SILENT_REDIRECT_URI: `https://${domainName}/${FourtwoPanelClientOauthRoutes.renew}`,
+											}).flatMap(([key, value]) => [
+												`export ${key}="${value}"`,
+												`echo $${key}`,
+											]),
+											`cat $CODEBUILD_SRC_DIR/.${deployAction}/${DEPLOY_DIRECTORY}/_window/oidc.js || true`,
+											`cat $CODEBUILD_SRC_DIR/.${deployAction}/${DEPLOY_DIRECTORY}/_window/oidc.js | envsubst  > $CODEBUILD_SRC_DIR/.${deployAction}/${DEPLOY_DIRECTORY}/_window/oidc.js.tmp`,
+											`echo "oidc.js: $CODEBUILD_SRC_DIR/.${deployAction}/${DEPLOY_DIRECTORY}/_window/oidc.js"`,
+											`cat $CODEBUILD_SRC_DIR/.${deployAction}/${DEPLOY_DIRECTORY}/_window/oidc.js || true`,
+											`echo "oidc.js.tmp: $CODEBUILD_SRC_DIR/.${deployAction}/${DEPLOY_DIRECTORY}/_window/oidc.js.tmp"`,
+											`cat $CODEBUILD_SRC_DIR/.${deployAction}/${DEPLOY_DIRECTORY}/_window/oidc.js.tmp || true`,
+											`mv $CODEBUILD_SRC_DIR/.${deployAction}/${DEPLOY_DIRECTORY}/_window/oidc.js.tmp $CODEBUILD_SRC_DIR/.${deployAction}/${DEPLOY_DIRECTORY}/_window/oidc.js`,
+											`cat $CODEBUILD_SRC_DIR/.${deployAction}/${DEPLOY_DIRECTORY}/_window/oidc.js`,
+										]
+									: []),
 								"aws s3 ls s3://$S3_STATICWWW_BUCKET",
 							]),
 					})
@@ -581,7 +626,7 @@ export = async () => {
 
 	const publishchange = (() => {
 		const deployStage = "staticwww";
-		const deployAction = "publishchange";
+		const deployAction = "publishchangelog";
 		const artifactIdentifier = `${deployStage}_${deployAction}`;
 
 		const buildspec = (() => {
@@ -658,6 +703,121 @@ export = async () => {
 							{
 								name: "SNS_CHANGELOG_TOPIC",
 								value: dereferenced$.application.sns.changelog.topic.arn,
+								type: "PLAINTEXT",
+							},
+						],
+					},
+					source: {
+						type: "CODEPIPELINE",
+						buildspec: buildspec.content,
+					},
+					tags: {
+						Name: _(artifactIdentifier),
+						StackRef: STACKREF_ROOT,
+						PackageName: PACKAGE_NAME,
+						DeployStage: deployStage,
+						Action: deployAction,
+					},
+				},
+				{
+					dependsOn: [buildspec.upload, s3.staticwww.bucket],
+				},
+			);
+
+			return {
+				project,
+			};
+		})();
+
+		return {
+			...project,
+			spec: {
+				artifactIdentifier,
+				buildspec,
+			},
+		};
+	})();
+
+	const publishrevalidate = (() => {
+		const deployStage = "staticwww";
+		const deployAction = "publishrevalidate";
+		const artifactIdentifier = `${deployStage}_${deployAction}`;
+
+		const buildspec = (() => {
+			const content = stringify(
+				new CodeBuildBuildspecBuilder()
+					.setVersion("0.2")
+					.setEnv(
+						new CodeBuildBuildspecEnvBuilder().setVariables({
+							SOURCE_IMAGE_REPOSITORY: "<SOURCE_IMAGE_REPOSITORY>",
+							SOURCE_IMAGE_URI: "<SOURCE_IMAGE_URI>",
+							SNS_REVALIDATE_TOPIC: "<SNS_REVALIDATE_TOPIC>",
+						}),
+					)
+					.setPhases({
+						build:
+							new CodeBuildBuildspecResourceLambdaPhaseBuilder().setCommands([
+								"env",
+								"set -o noglob",
+								[
+									"aws",
+									"sns",
+									"publish",
+									"--topic-arn ${SNS_REVALIDATE_TOPIC}",
+									`--message "${PACKAGE_NAME}|/*|${SUBDOMAIN}"`,
+									"--region $AWS_REGION",
+								].join(" "),
+							]),
+					})
+					.build(),
+			);
+
+			const upload = new BucketObjectv2(
+				_(`${artifactIdentifier}-buildspec-upload`),
+				{
+					bucket: s3.artifacts.bucket.bucket,
+					content,
+					key: `${artifactIdentifier}/Buildspec.yml`,
+				},
+			);
+
+			return {
+				content,
+				upload,
+			};
+		})();
+
+		const project = (() => {
+			const project = new Project(
+				_(artifactIdentifier),
+				{
+					description: `(${PACKAGE_NAME}) Deploy pipeline "${deployStage}" stage: "${deployAction}"`,
+					buildTimeout: 14,
+					queuedTimeout: 60 * 8,
+					concurrentBuildLimit: 1,
+					serviceRole: automationRole.arn,
+					artifacts: {
+						type: "CODEPIPELINE",
+						artifactIdentifier,
+					},
+					environment: {
+						type: "ARM_CONTAINER",
+						computeType: AwsCodeBuildContainerRoundRobin.next().value,
+						image: "aws/codebuild/amazonlinux-aarch64-standard:3.0",
+						environmentVariables: [
+							{
+								name: "SOURCE_IMAGE_REPOSITORY",
+								value: "SourceImage.RepositoryName",
+								type: "PLAINTEXT",
+							},
+							{
+								name: "SOURCE_IMAGE_URI",
+								value: "SourceImage.ImageUri",
+								type: "PLAINTEXT",
+							},
+							{
+								name: "SNS_REVALIDATE_TOPIC",
+								value: dereferenced$.application.sns.revalidate.topic.arn,
 								type: "PLAINTEXT",
 							},
 						],
@@ -818,8 +978,8 @@ export = async () => {
 							},
 							{
 								runOrder: 3,
-								name: "PublishChange",
-								namespace: "StaticWWWPublishChange",
+								name: "PublishChangelog",
+								namespace: "StaticWWWPublishChangelog",
 								category: "Build",
 								owner: "AWS",
 								provider: "CodeBuild",
@@ -844,6 +1004,41 @@ export = async () => {
 													name: "SNS_CHANGELOG_TOPIC",
 													value:
 														dereferenced$.application.sns.changelog.topic.arn,
+													type: "PLAINTEXT",
+												},
+											]),
+										};
+									},
+								),
+							},
+							{
+								runOrder: 3,
+								name: "PublishRevalidate",
+								namespace: "StaticWWWPublishRevalidate",
+								category: "Build",
+								owner: "AWS",
+								provider: "CodeBuild",
+								version: "1",
+								inputArtifacts: ["source_image"],
+								configuration: all([publishrevalidate.project.name]).apply(
+									([projectName]) => {
+										return {
+											ProjectName: projectName,
+											EnvironmentVariables: JSON.stringify([
+												{
+													name: "SOURCE_IMAGE_REPOSITORY",
+													value: "#{SourceImage.RepositoryName}",
+													type: "PLAINTEXT",
+												},
+												{
+													name: "SOURCE_IMAGE_URI",
+													value: "#{SourceImage.ImageURI}",
+													type: "PLAINTEXT",
+												},
+												{
+													name: "SNS_REVALIDATE_TOPIC",
+													value:
+														dereferenced$.application.sns.revalidate.topic.arn,
 													type: "PLAINTEXT",
 												},
 											]),

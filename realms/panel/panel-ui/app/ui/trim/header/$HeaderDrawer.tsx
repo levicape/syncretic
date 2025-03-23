@@ -1,12 +1,10 @@
 import { clsx } from "clsx";
-import { useAtomValue } from "jotai/react";
 import {
 	type FunctionComponent,
 	type PropsWithChildren,
 	useCallback,
 	useState,
 } from "react";
-import { AuthenticationAtom } from "../../../atoms/authentication/OauthClientAtom";
 import { DesignSystem } from "../../DesignSystem";
 import { Navbar } from "../../daisy/navigation/Navbar";
 import { HeaderMenuButton } from "./$HeaderMenuButton";
@@ -16,6 +14,8 @@ import {
 	HeaderMenuOpenContextExport,
 	HeaderSettingsOpenContextExport,
 } from "./HeaderContext";
+// import { useAtomValue } from "jotai/react";
+// import { AuthenticationAtom } from "../../../atoms/authentication/OidcClientAtom";
 // import { HeaderSettingsModal } from "./HeaderSettingsModal";
 
 const HeaderMenuOpenContext = HeaderMenuOpenContextExport();
@@ -93,7 +93,7 @@ export const HeaderDrawer: FunctionComponent<
 		[showOverlay],
 	);
 
-	const a = useAtomValue(AuthenticationAtom);
+	// const a = useAtomValue(AuthenticationAtom);
 	return (
 		<HeaderMenuOpenContext.Provider value={[menuOpen, menuOpenOnChange]}>
 			<HeaderSettingsOpenContext.Provider
@@ -130,7 +130,6 @@ export const HeaderDrawer: FunctionComponent<
 								className={clsx("p-1", "md:block", "md:relative")}
 							>
 								{/* <HeaderSettingsModal /> */}
-								{a}
 							</HeaderSettingsButton>
 						}
 					/>
