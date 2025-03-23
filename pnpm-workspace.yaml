@@ -14,6 +14,7 @@ catalog:
 catalogs:
   aws:
     '@aws/codecatalyst-workflows-sdk': ^0.1.5-preview.6
+    '@aws-sdk/client-codebuild': ^3.772.0
     '@aws-sdk/client-dynamodb': ^3.758.0
     '@aws-sdk/client-secrets-manager': ^3.758.0
     '@aws-sdk/client-sqs': ^3.758.0
@@ -47,7 +48,7 @@ catalogs:
     knex: ^3.1.0
     slonik: ^46.4.0
   database-sqlite:
-    better-sqlite3: ^11.9.0
+    better-sqlite3: ^11.9.1
   data-column-arrow:
     '@apache-arrow/esnext-esm': ^19.0.0
     '@apache-arrow/ts': ^19.0.0
@@ -61,9 +62,9 @@ catalogs:
     ts-node: ^10.9.2
     typescript: ^5.8.2
   effect:
-    effect: ^3.13.10
-    '@effect/platform': ^0.79.1
-    '@effect/platform-node': ^0.75.1
+    effect: ^3.14.1
+    '@effect/platform': ^0.80.1
+    '@effect/platform-node': ^0.76.2
   error:
     serialize-error: ^12.0.0
     verror: ^1.10.0
@@ -107,7 +108,7 @@ catalogs:
   log-awspowertools:
     '@aws-lambda-powertools/logger': ^2.16.0
   log-consola:
-    consola: ^3.4.0
+    consola: ^3.4.2
   log-loglayer:
     '@loglayer/transport-aws-lambda-powertools': ^3.0.3
     '@loglayer/transport-consola': ^2.0.3
@@ -139,7 +140,7 @@ catalogs:
     js-yaml: ^4.1.0
     yaml: ^2.7.0
   project-nx:
-    nx: ^20.5.0
+    nx: ^20.6.2
   protobuf:
     '@bufbuild/protobuf': ^2.2.3
     '@bufbuild/buf': ^1.44.0
@@ -187,7 +188,7 @@ catalogs:
     '@types/jsonwebtoken': ^9.0.9
     '@types/klaw': ^3.0.6
     '@types/module-alias': ^2.0.4
-    '@types/node': ^22.13.10
+    '@types/node': ^22.13.11
     '@types/qrcode': ^1.5.5
     '@types/react': ^19.0.1
     '@types/react-dom': ^19.0.1

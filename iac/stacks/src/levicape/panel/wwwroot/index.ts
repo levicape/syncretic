@@ -12,7 +12,7 @@ import { Distribution } from "@pulumi/aws/cloudfront/distribution";
 import { OriginAccessIdentity } from "@pulumi/aws/cloudfront/originAccessIdentity";
 import { Project } from "@pulumi/aws/codebuild";
 import { getRole } from "@pulumi/aws/iam/getRole";
-import { Permission } from "@pulumi/aws/lambda";
+import { CallbackFunction, Permission, Runtime } from "@pulumi/aws/lambda";
 import { Provider } from "@pulumi/aws/provider";
 import { Record as DnsRecord } from "@pulumi/aws/route53";
 import { Bucket } from "@pulumi/aws/s3/bucket";
@@ -23,9 +23,11 @@ import { BucketOwnershipControls } from "@pulumi/aws/s3/bucketOwnershipControls"
 import { BucketPublicAccessBlock } from "@pulumi/aws/s3/bucketPublicAccessBlock";
 import { BucketServerSideEncryptionConfigurationV2 } from "@pulumi/aws/s3/bucketServerSideEncryptionConfigurationV2";
 import { BucketVersioningV2 } from "@pulumi/aws/s3/bucketVersioningV2";
+import { type TopicEvent, TopicEventSubscription } from "@pulumi/aws/sns";
+import { Topic } from "@pulumi/aws/sns/topic";
 import { CannedAcl } from "@pulumi/aws/types/enums/s3";
 import { Command } from "@pulumi/command/local";
-import { Output, all, interpolate } from "@pulumi/pulumi";
+import { Output, all, interpolate, log } from "@pulumi/pulumi";
 import { error, warn } from "@pulumi/pulumi/log";
 import { RandomId } from "@pulumi/random/RandomId";
 import VError from "verror";
@@ -41,6 +43,7 @@ import {
 	FourtwoApplicationRoot,
 	FourtwoApplicationStackExportsZod,
 } from "../../../application/exports";
+import { FourtwoDatalayerStackExportsZod } from "../../../datalayer/exports";
 import {
 	FourtwoDnsRootStackExportsZod,
 	FourtwoDnsRootStackrefRoot,
@@ -85,6 +88,12 @@ const STACKREF_CONFIG = {
 				servicecatalog:
 					FourtwoApplicationStackExportsZod.shape
 						.fourtwo_application_servicecatalog,
+				sns: FourtwoApplicationStackExportsZod.shape.fourtwo_application_sns,
+			},
+		},
+		datalayer: {
+			refs: {
+				iam: FourtwoDatalayerStackExportsZod.shape.fourtwo_datalayer_iam,
 			},
 		},
 		[FourtwoDnsRootStackrefRoot]: {
@@ -818,9 +827,92 @@ function handler(event) {
 	//
 
 	/////
-	/// Lambda handler for changelog SNS topic
+	/// Lambda handler for revalidate SNS topic
 	//
-	//
+	const { iam } = dereferenced$["datalayer"];
+	const { automation } = iam.roles;
+	(() => {
+		const revalidateTopicArn =
+			dereferenced$["application"].sns.revalidate.topic.arn;
+		const topic = Topic.get(_("revalidate-topic"), revalidateTopicArn);
+
+		if (topic) {
+			log.info(
+				JSON.stringify({
+					Revalidate: {
+						event: "Registering revalidate handler",
+						timestamp: new Date().toISOString(),
+					},
+				}),
+			);
+
+			new TopicEventSubscription(
+				_("revalidate-on-event"),
+				topic,
+				new CallbackFunction(_("revalidate-lambda"), {
+					description: `(${WORKSPACE_PACKAGE_NAME}) ${context.prefix} - revalidate topic handler`,
+					architectures: ["arm64"],
+					callback: async (event: TopicEvent, context) => {
+						const codebuild = await import("@aws-sdk/client-codebuild");
+						const { CODEBUILD_INVALIDATE_PROJECT_NAME } = process.env;
+						console.log({
+							Revalidate: {
+								event: JSON.stringify(event),
+								context: JSON.stringify(context),
+								codebuild,
+								env: {
+									CODEBUILD_INVALIDATE_PROJECT_NAME,
+								},
+							},
+						});
+
+						const client = new codebuild.CodeBuildClient({});
+						const response = await client.send(
+							new codebuild.StartBuildCommand({
+								projectName: CODEBUILD_INVALIDATE_PROJECT_NAME,
+							}),
+						);
+
+						console.log({
+							Revalidate: {
+								response: JSON.stringify(response),
+							},
+						});
+					},
+					environment: {
+						variables: {
+							NODE_ENV: "production",
+							LOG_LEVEL: "5",
+							CODEBUILD_INVALIDATE_PROJECT_NAME:
+								codebuild.invalidate.project.name,
+						},
+					},
+					loggingConfig: {
+						logFormat: "JSON",
+						applicationLogLevel: "DEBUG",
+						systemLogLevel: "DEBUG",
+					},
+					role: automation.arn,
+					runtime: Runtime.NodeJS22dX,
+					tags: {
+						Name: _("revalidate-lambda"),
+						StackRef: STACKREF_ROOT,
+						WORKSPACE_PACKAGE_NAME,
+					},
+					timeout: 15,
+				}),
+			);
+		} else {
+			log.warn(
+				JSON.stringify({
+					Revalidate: {
+						message: "Revalidate topic not found",
+						timestamp: new Date().toISOString(),
+					},
+				}),
+			);
+		}
+	})();
 
 	// DNS Record
 	const route53 = dereferenced$[FourtwoDnsRootStackrefRoot].route53;

@@ -32,8 +32,7 @@
     "react-range": "catalog:web-components",
     "react-router": "catalog:web-react-router",
     "std-env": "catalog:runtime-env",
-    "verror": "catalog:error",
-    "zod": "catalog:schema-zod"
+    "verror": "catalog:error"
   },
   "devDependencies": {
     "@biomejs/biome": "catalog:lint",

@@ -35,6 +35,5 @@ export const AppBody: FC<PropsWithChildren> = ({ children }) => (
 			</HeaderLayout>
 		</Shell>
 		<CaptureTouchEvents />
-		{/* <AtomicRouter /> */}
 	</body>
 );

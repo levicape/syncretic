@@ -121,9 +121,9 @@ export = async () => {
 		};
 		return {
 			catalog: topic("catalog"),
+			capacity: topic("capacity"),
 			changelog: topic("changelog"),
-			finance: topic("finance"),
-			operations: topic("operations"),
+			revalidate: topic("revalidate"),
 		};
 	})();
 
@@ -184,21 +184,21 @@ export = async () => {
 				timeUnit: "DAILY",
 				threshold: 3,
 				notificationType: "ACTUAL",
-				subscriberSnsTopicArns: [sns.finance.arn],
+				subscriberSnsTopicArns: [sns.capacity.arn],
 			}),
 			monthly_forecasted: budget("monthly-forecasted", {
 				limitAmount: "29",
 				timeUnit: "MONTHLY",
 				threshold: 13,
 				notificationType: "FORECASTED",
-				subscriberSnsTopicArns: [sns.finance.arn],
+				subscriberSnsTopicArns: [sns.capacity.arn],
 			}),
 			monthly_absolute: budget("monthly-absolute", {
 				limitAmount: "100",
 				timeUnit: "MONTHLY",
 				threshold: 10,
 				notificationType: "ACTUAL",
-				subscriberSnsTopicArns: [sns.finance.arn],
+				subscriberSnsTopicArns: [sns.capacity.arn],
 			}),
 		};
 	})();

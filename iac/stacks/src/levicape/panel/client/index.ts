@@ -27,13 +27,15 @@ import {
 } from "../../../identity/users/exports";
 import { FourtwoPanelWWWRootSubdomain } from "../wwwroot/exports";
 import {
-	FourtwoPanelClientOauthCallbackRoute,
+	FourtwoPanelClientOauthRoutes,
 	FourtwoPanelClientStackExportsZod,
 } from "./exports";
 
 const PACKAGE_NAME = "@levicape/fourtwo";
 const SUBDOMAIN =
 	process.env["STACKREF_SUBDOMAIN"] ?? FourtwoPanelWWWRootSubdomain;
+const COGNITO_ROOT_DOMAIN = `azc`;
+
 const STACKREF_ROOT = process.env["STACKREF_ROOT"] ?? FourtwoApplicationRoot;
 const STACKREF_CONFIG = {
 	[STACKREF_ROOT]: {
@@ -87,7 +89,7 @@ export = async () => {
 	/**
 	 * Certificate for *.azc domain
 	 */
-	const cognitoDomain = `azc.${SUBDOMAIN}.${domainName}`;
+	const cognitoDomain = `${COGNITO_ROOT_DOMAIN}.${SUBDOMAIN}.${domainName}`;
 
 	let cognitoCertificate: Certificate | undefined;
 	let cognitoCertificateValidations:
@@ -168,22 +170,36 @@ export = async () => {
 			/**
 			 * Subdomain relative to the hosted zone
 			 */
-			const fullSubdomain = `${name}.azc.${SUBDOMAIN}`;
-			const domainFqdn = `${fullSubdomain}.${domainName}`;
+			const callbackDomain = `${SUBDOMAIN}.${domainName}`;
 			const client = new UserPoolClient(_(`${name}-client`), {
 				userPoolId,
-				callbackUrls: [`https://${domainFqdn}`].map(
-					(url) => `${url}/${FourtwoPanelClientOauthCallbackRoute}`,
-				),
-				allowedOauthFlowsUserPoolClient: true,
 				allowedOauthFlows: ["code", "implicit"],
-				allowedOauthScopes: ["email", "openid", "profile"],
+				allowedOauthScopes: [
+					"email",
+					"openid",
+					"profile",
+					"aws.cognito.signin.user.admin",
+				],
+				authSessionValidity: 7,
+				callbackUrls: [`https://${callbackDomain}`].flatMap((url) =>
+					Object.values(FourtwoPanelClientOauthRoutes).map(
+						(route) => `${url}/${route}`,
+					),
+				),
+				enableTokenRevocation: true,
+				logoutUrls: [
+					`https://${callbackDomain}/${FourtwoPanelClientOauthRoutes.logout}`,
+				],
+				preventUserExistenceErrors: "ENABLED",
 				supportedIdentityProviders: ["COGNITO"],
 				...(config ?? {}),
 			});
 
 			if (cognitoCertificate !== undefined) {
 				if (route53.zone !== undefined && route53.zone !== null) {
+					const fullSubdomain = `${name}.${COGNITO_ROOT_DOMAIN}.${SUBDOMAIN}`;
+					const domainFqdn = `${fullSubdomain}.${domainName}`;
+
 					const required = new DnsRecord(_(`${name}-dns-azc`), {
 						zoneId: route53.zone.hostedZoneId,
 						name: fullSubdomain.split(".").slice(1).join("."),
@@ -267,9 +283,9 @@ export = async () => {
 				name,
 				all([
 					all([client.id, client.name, client.userPoolId]).apply(
-						([id, clientId, userPoolId]) => ({
-							id,
+						([clientId, name, userPoolId]) => ({
 							clientId,
+							name,
 							userPoolId,
 						}),
 					),

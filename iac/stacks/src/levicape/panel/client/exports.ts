@@ -1,13 +1,19 @@
 import { z } from "zod";
 
-export const FourtwoPanelClientOauthCallbackRoute = "~oauth2/callback";
+export const FourtwoPanelClientOauthRoutes = {
+	callback: "~oidc/callback",
+	renew: "~oidc/renew",
+	logout: "~oidc/logout",
+} as const;
+
+export const FourtwoPanelClientStackrefRoot = "panel-client";
 
 export const FourtwoPanelClientStackExportsZod = z
 	.object({
 		fourtwo_panel_client_cognito: z.object({
 			operations: z.object({
 				client: z.object({
-					id: z.string(),
+					name: z.string(),
 					clientId: z.string(),
 					userPoolId: z.string(),
 				}),

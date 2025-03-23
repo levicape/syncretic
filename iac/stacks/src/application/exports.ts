@@ -36,14 +36,14 @@ export const FourtwoApplicationStackExportsZod = z
 					id: z.string(),
 				}),
 			}),
-			finance: z.object({
+			capacity: z.object({
 				topic: z.object({
 					arn: z.string(),
 					name: z.string(),
 					id: z.string(),
 				}),
 			}),
-			operations: z.object({
+			revalidate: z.object({
 				topic: z.object({
 					arn: z.string(),
 					name: z.string(),
