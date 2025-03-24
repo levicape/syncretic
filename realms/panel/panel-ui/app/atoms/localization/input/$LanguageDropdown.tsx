@@ -8,17 +8,17 @@ import {
 	type SelectHTMLAttributes,
 	useCallback,
 } from "react";
+import { Select, type SelectProps } from "../../../ui/daisy/field/Select";
+import {
+	LanguageGlyphs_Icon,
+	type LanguageGlyphs_IconProps,
+} from "../../../ui/display/icons/LanguageGlyphs";
 import {
 	I18nAtomActions,
 	type I18nSupportedLanguage,
 	I18nSupportedLanguages,
 	useI18nAtom,
-} from "../../atoms/localization/I18nAtom";
-import { Select, type SelectProps } from "../daisy/field/Select";
-import {
-	LanguageGlyphs_Icon,
-	type LanguageGlyphs_IconProps,
-} from "../display/icons/LanguageGlyphs";
+} from "../I18nAtom";
 
 const languageText: Record<I18nSupportedLanguage, string> = {
 	en: "English",

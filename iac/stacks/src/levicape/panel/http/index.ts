@@ -511,7 +511,7 @@ export = async () => {
 		const memorySize = context.environment.isProd ? 512 : 256;
 		const timeout = context.environment.isProd ? 18 : 11;
 		const lambda = new LambdaFn(
-			_("function"),
+			_("fn"),
 			{
 				description: `(${PACKAGE_NAME}) "${DESCRIPTION ?? `HTTP lambda`}" in #${stage}`,
 				role: roleArn,
@@ -618,7 +618,7 @@ export = async () => {
 					},
 				),
 				tags: {
-					Name: _("function"),
+					Name: _("fn"),
 					StackRef: STACKREF_ROOT,
 					Handler: "Http",
 					PackageName: PACKAGE_NAME,

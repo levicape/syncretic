@@ -1,4 +1,4 @@
-description: State bucket and associated SSM parameters
+description: ECR Repository, CodeArtifact NPM mirror, CodeDeploy, AppConfig
 runtime:
   name: nodejs
   options:

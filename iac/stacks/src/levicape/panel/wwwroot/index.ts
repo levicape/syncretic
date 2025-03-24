@@ -49,6 +49,10 @@ import {
 	FourtwoDnsRootStackrefRoot,
 } from "../../../dns/root/exports";
 import {
+	FourtwoPanelChannelsStackExportsZod,
+	FourtwoPanelChannelsStackrefRoot,
+} from "../channels/exports";
+import {
 	FourtwoPanelHttpStackExportsZod,
 	FourtwoPanelHttpStackrefRoot,
 } from "../http/exports";
@@ -100,6 +104,12 @@ const STACKREF_CONFIG = {
 			refs: {
 				route53: FourtwoDnsRootStackExportsZod.shape.fourtwo_dns_root_route53,
 				acm: FourtwoDnsRootStackExportsZod.shape.fourtwo_dns_root_acm,
+			},
+		},
+		[FourtwoPanelChannelsStackrefRoot]: {
+			refs: {
+				sns: FourtwoPanelChannelsStackExportsZod.shape
+					.fourtwo_panel_channels_sns,
 			},
 		},
 		[FourtwoPanelHttpStackrefRoot]: {
@@ -833,7 +843,7 @@ function handler(event) {
 	const { automation } = iam.roles;
 	(() => {
 		const revalidateTopicArn =
-			dereferenced$["application"].sns.revalidate.topic.arn;
+			dereferenced$[FourtwoPanelChannelsStackrefRoot].sns.revalidate.topic.arn;
 		const topic = Topic.get(_("revalidate-topic"), revalidateTopicArn);
 
 		if (topic) {
@@ -849,7 +859,7 @@ function handler(event) {
 			new TopicEventSubscription(
 				_("revalidate-on-event"),
 				topic,
-				new CallbackFunction(_("revalidate-lambda"), {
+				new CallbackFunction(_("revalidate"), {
 					description: `(${WORKSPACE_PACKAGE_NAME}) ${context.prefix} - revalidate topic handler`,
 					architectures: ["arm64"],
 					callback: async (event: TopicEvent, context) => {

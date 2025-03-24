@@ -861,6 +861,118 @@ jobs:
           														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
           															echo "Running all stacks due to wildcard filter"
           															true
+          														elif [ "$PULUMI_STACK_FILTER" = "fourtwo-panel-channels" ]; then
+          															echo "Stack fourtwo-panel-channels matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",fourtwo-panel-channels,"; then
+          															echo "Stack fourtwo-panel-channels found in comma-separated list"
+          															true
+          														else
+          															echo "Stack fourtwo-panel-channels not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "No stack filter specified, processing all stacks"
+          														true
+          													fi && configure_stack "Deploy" "fourtwo-panel-channels.elm_pst_4" "$(pwd)/iac/stacks/src/levicape/panel/channels" "fourtwo-panel-channels" "_pulumi/levicape_panel_channels";
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "fourtwo-panel-channels" ]; then
+          															echo "Stack fourtwo-panel-channels matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",fourtwo-panel-channels,"; then
+          															echo "Stack fourtwo-panel-channels found in comma-separated list"
+          															true
+          														else
+          															echo "Stack fourtwo-panel-channels not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "No stack filter specified, processing all stacks"
+          														true
+          													fi && setup_stack "fourtwo-panel-channels.elm_pst_4" "$(pwd)/iac/stacks/src/levicape/panel/channels";
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "fourtwo-panel-channels" ]; then
+          															echo "Stack fourtwo-panel-channels matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",fourtwo-panel-channels,"; then
+          															echo "Stack fourtwo-panel-channels found in comma-separated list"
+          															true
+          														else
+          															echo "Stack fourtwo-panel-channels not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "No stack filter specified, processing all stacks"
+          														true
+          													fi && configure_stack_settings "$(pwd)/iac/stacks/src/levicape/panel/channels" 'aws:skipMetadataApiCheck=false
+          context:stack.environment.isProd=false
+          context:stack.environment.features=aws
+          frontend:stack.dns.hostnames[0]=elm_pst_4.fourtwo.$FRONTEND_HOSTNAME';
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "fourtwo-panel-channels" ]; then
+          															echo "Stack fourtwo-panel-channels matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",fourtwo-panel-channels,"; then
+          															echo "Stack fourtwo-panel-channels found in comma-separated list"
+          															true
+          														else
+          															echo "Stack fourtwo-panel-channels not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "No stack filter specified, processing all stacks"
+          														true
+          													fi && refresh_and_preview "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/levicape/panel/channels" --non-interactive --suppress-progress --diff --json;
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "fourtwo-panel-channels" ]; then
+          															echo "Stack fourtwo-panel-channels matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",fourtwo-panel-channels,"; then
+          															echo "Stack fourtwo-panel-channels found in comma-separated list"
+          															true
+          														else
+          															echo "Stack fourtwo-panel-channels not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "No stack filter specified, processing all stacks"
+          														true
+          													fi && deploy_stack "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/levicape/panel/channels" --non-interactive --suppress-progress --diff --json;
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "fourtwo-panel-channels" ]; then
+          															echo "Stack fourtwo-panel-channels matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",fourtwo-panel-channels,"; then
+          															echo "Stack fourtwo-panel-channels found in comma-separated list"
+          															true
+          														else
+          															echo "Stack fourtwo-panel-channels not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "No stack filter specified, processing all stacks"
+          														true
+          													fi && capture_outputs "$(pwd)/iac/stacks/src/levicape/panel/channels" "_pulumi/levicape_panel_channels";
+          echo "Stack fourtwo-panel-channels.elm_pst_4 processed";
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "Running all stacks due to wildcard filter"
+          															true
           														elif [ "$PULUMI_STACK_FILTER" = "fourtwo-panel-client" ]; then
           															echo "Stack fourtwo-panel-client matched in filter"
           															true
@@ -1440,6 +1552,8 @@ jobs:
           [ -f _pulumi/datalayer.sh ] && source _pulumi/datalayer.sh;
           [ -f _pulumi/dns_root.sh ] && cat _pulumi/dns_root.sh;
           [ -f _pulumi/dns_root.sh ] && source _pulumi/dns_root.sh;
+          [ -f _pulumi/levicape_panel_channels.sh ] && cat _pulumi/levicape_panel_channels.sh;
+          [ -f _pulumi/levicape_panel_channels.sh ] && source _pulumi/levicape_panel_channels.sh;
           [ -f _pulumi/levicape_panel_client.sh ] && cat _pulumi/levicape_panel_client.sh;
           [ -f _pulumi/levicape_panel_client.sh ] && source _pulumi/levicape_panel_client.sh;
           [ -f _pulumi/levicape_panel_http.sh ] && cat _pulumi/levicape_panel_http.sh;
@@ -1483,6 +1597,8 @@ jobs:
           [ -f _pulumi/datalayer.sh ] && source _pulumi/datalayer.sh;
           [ -f _pulumi/dns_root.sh ] && cat _pulumi/dns_root.sh;
           [ -f _pulumi/dns_root.sh ] && source _pulumi/dns_root.sh;
+          [ -f _pulumi/levicape_panel_channels.sh ] && cat _pulumi/levicape_panel_channels.sh;
+          [ -f _pulumi/levicape_panel_channels.sh ] && source _pulumi/levicape_panel_channels.sh;
           [ -f _pulumi/levicape_panel_client.sh ] && cat _pulumi/levicape_panel_client.sh;
           [ -f _pulumi/levicape_panel_client.sh ] && source _pulumi/levicape_panel_client.sh;
           [ -f _pulumi/levicape_panel_http.sh ] && cat _pulumi/levicape_panel_http.sh;
@@ -1512,7 +1628,7 @@ jobs:
 ########################################
 #**:_$~- {"$$":"head","filename":"[wd][dispatch] - CD - [elm_pst_4 Dispatch: Preview, Deploy, Push].yml","source":"iac/workflows/github/workflow_dispatch/CD.js"}
 #**:_$~- {"$$":"script","generator":"codegen/github/GenerateGithubWorkflow.mts"}
-#**:_$~- {"$$":"body","hashed":"4fb0752cd64a145d65e2a24a9b37cf1086c59f8fbabcfd942e6d9e8bc0c7d482"}
-#**:_$~- {"$$":"footer","started":"2025-03-22T08:50:54.438Z","now":"2025-03-22T08:50:54.449Z","elapsed":"11ms"}
+#**:_$~- {"$$":"body","hashed":"b808406faafea5eb70a96690e3492b0fced0020fd80b46f369b64857743a304f"}
+#**:_$~- {"$$":"footer","started":"2025-03-23T11:27:24.891Z","now":"2025-03-23T11:27:24.898Z","elapsed":"7ms"}
 # END OF GENERATED FILE
 

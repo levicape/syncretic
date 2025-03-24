@@ -12,12 +12,12 @@ import {
 } from "react";
 import { env } from "std-env";
 import { useFormatMessage } from "../../../atoms/localization/I18nAtom";
+import { LanguageDropdown } from "../../../atoms/localization/input/$LanguageDropdown";
 import { ApplicationHead } from "../../DesignSystem";
 import { Link } from "../../daisy/navigation/Link";
 import { DaisyMenu, DaisyMenuItem } from "../../daisy/navigation/Menu";
 import { QuestionMark_Icon } from "../../display/icons/QuestionMark";
 import { RightArrow_Icon } from "../../display/icons/RightArrow";
-import { LanguageDropdown } from "../../input/LanguageDropdown";
 import { HeaderMenuOpenContextExport } from "./HeaderContext";
 // import { FormattedMessage } from "react-intl";
 

@@ -116,14 +116,13 @@ export = async () => {
 			return new Topic(_(`topic-${name}`), {
 				tags: {
 					awsApplication,
+					PackageName: PACKAGE_NAME,
 				},
 			});
 		};
 		return {
-			catalog: topic("catalog"),
 			capacity: topic("capacity"),
 			changelog: topic("changelog"),
-			revalidate: topic("revalidate"),
 		};
 	})();
 
