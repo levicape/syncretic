@@ -1,5 +1,5 @@
-import { AuthnCallback } from "../../../atoms/authentication/behavior/$AuthnCallback";
 import { OidcPage } from "../__OidcPage";
+import { AuthnCallback } from "./$AuthnCallback";
 import { CallbackProgress } from "./$CallbackProgress";
 
 export default async function Callback() {

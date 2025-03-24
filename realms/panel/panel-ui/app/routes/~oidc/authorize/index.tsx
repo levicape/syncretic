@@ -1,5 +1,5 @@
-import { AuthnRedirect } from "../../../atoms/authentication/behavior/$AuthnRedirect";
 import { OidcPage } from "../__OidcPage";
+import { AuthnAuthorize } from "./$AuthnAuthorize";
 import { AuthorizeProgress } from "./$AuthorizeProgress";
 
 export default async function Authorize() {
@@ -8,7 +8,7 @@ export default async function Authorize() {
 			<OidcPage>
 				<AuthorizeProgress />
 			</OidcPage>
-			<AuthnRedirect />
+			<AuthnAuthorize />
 		</>
 	);
 }

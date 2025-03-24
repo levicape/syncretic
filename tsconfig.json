@@ -99,7 +99,8 @@
       "verbatimModuleSyntax": true,
       "isolatedModules": true,
       // "isolatedDeclarations": true,                     /* Requires all exports to be annotated. */
-      "resolvePackageJsonExports": true
+      "resolvePackageJsonExports": true,
+      "rewriteRelativeImportExtensions": true
     },
     "include": [
       "src/**/*",

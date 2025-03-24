@@ -8,45 +8,34 @@ import { HeaderLayout } from "./trim/header/HeaderLayout";
 const { Shell, Layout, Fallback } = DesignSystem;
 
 export const AppBody: FC<PropsWithChildren> = ({ children }) => (
-	<body
-		id="app"
-		className={clsx(
-			"bg-base-100",
-			"overflow-hidden",
-			"min-h-screen",
-			"bg-fixed",
-			"text-base-content",
-			"antialiased",
-			"background-body",
-		)}
-	>
-		<div
-			aria-hidden
-			className={clsx(
-				"absolute",
-				"w-full",
-				"h-full",
-				"bg-neutral/10",
-				"to-accent/25",
-				"bg-gradient-to-b",
-				"opacity-15",
-			)}
-		>
+	<body id="app">
+		<Shell>
 			<div
 				aria-hidden
 				className={clsx(
+					"absolute",
 					"w-full",
 					"h-full",
-					"bg-primary/15",
-					"to-neutral/70",
-					"bg-gradient-to-t",
-					"blur-xl",
-					"dark:mix-blend-color-dodge",
-					"light:mix-blend-color-burn",
+					"bg-neutral/10",
+					"to-accent/25",
+					"bg-gradient-to-b",
+					"opacity-15",
 				)}
-			/>
-		</div>
-		<Shell>
+			>
+				<div
+					aria-hidden
+					className={clsx(
+						"w-full",
+						"h-full",
+						"bg-primary/15",
+						"to-neutral/70",
+						"bg-gradient-to-t",
+						"blur-xl",
+						"dark:mix-blend-color-dodge",
+						"light:mix-blend-color-burn",
+					)}
+				/>
+			</div>
 			<HeaderLayout
 				vars={useMemo(
 					() => ({

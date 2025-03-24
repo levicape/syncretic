@@ -57,6 +57,7 @@ export const CaptureTouchEvents: FunctionComponent = (): JSX.Element => {
 			style={style}
 			typeof="CaptureTouchEvents"
 			data-mounted={String(mounted)}
+			suppressHydrationWarning
 		/>
 	);
 };

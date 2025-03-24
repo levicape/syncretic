@@ -181,11 +181,12 @@ export = async () => {
 					"aws.cognito.signin.user.admin",
 				],
 				authSessionValidity: 7,
-				callbackUrls: [`https://${callbackDomain}`].flatMap((url) =>
-					Object.values(FourtwoPanelClientOauthRoutes).map(
+				callbackUrls: [`https://${callbackDomain}`].flatMap((url) => [
+					url.endsWith("/") ? url.slice(0, -1) : url,
+					...Object.values(FourtwoPanelClientOauthRoutes).map(
 						(route) => `${url}/${route}`,
 					),
-				),
+				]),
 				enableTokenRevocation: true,
 				logoutUrls: [
 					`https://${callbackDomain}/${FourtwoPanelClientOauthRoutes.logout}`,

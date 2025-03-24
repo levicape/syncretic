@@ -1,5 +1,5 @@
-import { AuthnLogout } from "../../../atoms/authentication/behavior/$AuthnLogout";
 import { OidcPage } from "../__OidcPage";
+import { AuthnLogout } from "./$AuthnLogout";
 import { LogoutProgress } from "./$LogoutProgress";
 
 export default async function Callback() {

@@ -2,14 +2,14 @@ import clsx from "clsx";
 import type { PropsWithChildren } from "react";
 import { process } from "std-env";
 
-const ApplicationName = "Panel UI";
+const ApplicationName = "Panel";
 export const ApplicationHead = {
 	title: {
 		template: `%s | ${ApplicationName}`,
 		default: ApplicationName,
 	},
 	description:
-		"Panel UI is a web-based user interface for viewing a Fourtwo principal's configuration and state.",
+		"Panel is a web-based user interface for viewing a Fourtwo principal's configuration and state.",
 	metadataBase:
 		(process?.env.URL !== undefined && new URL(process.env.URL)) || undefined,
 	openGraph: {
@@ -26,11 +26,13 @@ export type DesignSystemProps = {
 };
 
 export const DesignSystemComponents = {
-	Header: "#Header",
-	Menubar: "#Menubar",
-	Commandline: "#Commandline",
-	Layout: "#Layout",
-	Footer: "#Footer",
+	Shell: "Shell",
+	ShellBackground: "ShellBackground",
+	Header: "Header",
+	Menubar: "Menubar",
+	Commandline: "Commandline",
+	Layout: "Layout",
+	Footer: "Footer",
 };
 export type DesignSystemId =
 	(typeof DesignSystemComponents)[keyof typeof DesignSystemComponents];
@@ -41,8 +43,59 @@ export namespace DesignSystem {
 	/**
 	 * css: body > Shell
 	 */
-	export function Shell({ children }: PropsWithChildren) {
-		return <>{children}</>;
+	export function Shell({
+		children,
+		className,
+	}: PropsWithChildren<{ className?: string }>) {
+		return (
+			<div
+				id={DesignSystemComponents.Shell}
+				className={clsx(
+					"bg-base-100",
+					"overflow-hidden",
+					"min-h-screen",
+					"bg-fixed",
+					"text-base-content",
+					className,
+				)}
+			>
+				{children}
+			</div>
+		);
+	}
+	/**
+	 * css: Shell > #ShellBackground
+	 */
+	export function ShellBackground() {
+		return (
+			<div
+				id={DesignSystemComponents.ShellBackground}
+				aria-hidden
+				className={clsx(
+					"absolute",
+					"w-full",
+					"h-full",
+					"bg-neutral/10",
+					"to-accent/25",
+					"bg-gradient-to-b",
+					"opacity-15",
+				)}
+			>
+				<div
+					aria-hidden
+					className={clsx(
+						"w-full",
+						"h-full",
+						"bg-primary/15",
+						"to-neutral/70",
+						"bg-gradient-to-t",
+						"blur-xl",
+						"dark:mix-blend-color-dodge",
+						"light:mix-blend-color-burn",
+					)}
+				/>
+			</div>
+		);
 	}
 	/**
 	 * css: Shell > #Header
@@ -109,7 +162,6 @@ export namespace DesignSystem {
 					"border-ironstone-500",
 					"rounded-full",
 					"animate-spin",
-					"transition-all",
 					"duration-500",
 					"ease-in-out",
 					"delay-150",
@@ -134,7 +186,22 @@ export namespace DesignSystem {
 	 * css: Shell > Layout
 	 */
 	export function Layout({ children }: PropsWithChildren) {
-		return <>{children}</>;
+		return (
+			<div
+				id={DesignSystemComponents.Layout}
+				className={clsx(
+					"antialiased",
+					"min-h-50",
+					"bg-base-200/30",
+					"md:rounded-4xl",
+					"bg-gradient-to-t",
+					"from-base-100/80",
+					"to-base-200/20",
+				)}
+			>
+				{children}
+			</div>
+		);
 	}
 
 	/**
