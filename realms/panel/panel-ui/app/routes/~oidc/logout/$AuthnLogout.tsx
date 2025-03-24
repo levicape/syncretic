@@ -1,6 +1,5 @@
-import type { SessionStatus } from "oidc-client-ts";
-import { useEffect } from "react";
-import { useOidcClient } from "../OidcClientAtom";
+import { useEffect, useMemo } from "react";
+import { useOidcClient } from "../../../atoms/authentication/OidcClientAtom";
 
 export const AuthnLogout = () => {
 	const [oidc] = useOidcClient();
@@ -9,29 +8,30 @@ export const AuthnLogout = () => {
 	useEffect(() => {
 		if (!discordEnabled) {
 			console.debug({
-				AuthnCallback: {
+				AuthnLogout: {
 					message: "Processing logout callback",
 				},
 			});
 
-			oidc?.userManager.signoutCallback().then(async () => {
-				let status: SessionStatus | null | undefined;
+			oidc?.userManager.signoutCallback().finally(async () => {
 				let signoutError: unknown;
 				try {
-					status = await oidc?.userManager.querySessionStatus();
+					await oidc?.userManager.clearStaleState();
 				} catch (error) {
 					signoutError = error;
 				}
 				console.debug({
-					AuthnCallback: {
+					AuthnLogout: {
 						message: "Navigating to root after sign-out",
-						status,
 						signoutError,
 					},
 				});
 				setTimeout(
 					() => {
-						location.assign("/");
+						location.replace("/");
+						setTimeout(() => {
+							location.reload();
+						}, 3);
 					},
 					Math.random() * 100 + 20,
 				);
@@ -39,11 +39,29 @@ export const AuthnLogout = () => {
 		}
 	}, [oidc, discordEnabled]);
 
+	const style: React.CSSProperties = useMemo(
+		() => ({
+			display: "none",
+			pointerEvents: "none",
+			touchAction: "none",
+			position: "fixed",
+			visibility: "hidden",
+			width: 0,
+			height: 0,
+			top: 0,
+			left: 0,
+			zIndex: -1,
+		}),
+		[],
+	);
+
 	return (
 		<object
 			aria-hidden
+			style={style}
 			typeof={"AuthnLogout"}
 			data-oidc={oidc ? "true" : "false"}
+			suppressHydrationWarning
 		/>
 	);
 };

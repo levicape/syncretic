@@ -1,6 +1,6 @@
-import { AuthnRenew } from "../../../atoms/authentication/behavior/$AuthnRenew";
 import { Loading } from "../../../ui/daisy/feedback/Loading";
 import { OidcPage } from "../__OidcPage";
+import { AuthnRenew } from "./$AuthnRenew";
 
 export default async function Renew() {
 	return (

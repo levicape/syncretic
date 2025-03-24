@@ -1,6 +1,6 @@
 import { useAtom } from "jotai/react";
 import { atomWithStorage } from "jotai/utils";
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import { type IntlShape, createIntl, createIntlCache } from "react-intl";
 import { PlaceholderText } from "../../ui/display/PlaceholderText";
 
@@ -141,11 +141,7 @@ export const useFormatMessage = () => {
 
 	return useCallback(
 		(parameters: Parameters<IntlShape["formatMessage"]>[0]) => {
-			const memoized = useMemo(
-				() => intl.formatMessage(parameters),
-				[parameters],
-			);
-			return memoized;
+			return intl.formatMessage(parameters);
 		},
 		[intl],
 	);

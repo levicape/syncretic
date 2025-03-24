@@ -7,7 +7,6 @@ import {
 } from "react";
 import { useFormatMessage } from "../../../atoms/localization/I18nAtom";
 import { Button } from "../../daisy/action/Button";
-import { Cog_Icon } from "../../display/icons/Cog";
 import {
 	HeaderMenuOpenContextExport,
 	HeaderSettingsOpenContextExport,
@@ -51,7 +50,6 @@ export const HeaderSettingsButton: FunctionComponent<
 			role={"menubar"}
 			variant={"ghost"}
 		>
-			<Cog_Icon />
 			{children}
 		</Button>
 	);

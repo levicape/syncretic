@@ -1,107 +1,101 @@
 import { clsx } from "clsx";
-import { Suspense, use, useCallback, useMemo, useState } from "react";
+import { Suspense } from "react";
 import { useOidcClient } from "../../atoms/authentication/OidcClientAtom";
-import { SuspenseGuard } from "../../ui/ClientSuspense";
+import { useFormatMessage } from "../../atoms/localization/I18nAtom";
 import { DesignSystem } from "../../ui/DesignSystem";
 import { Button } from "../../ui/daisy/action/Button";
-import { Stat, Stats } from "../../ui/daisy/data/Stat";
-import { Link } from "../../ui/daisy/navigation/Link";
+import { Users_Icon } from "../../ui/display/icons/Users";
 const { Fallback } = DesignSystem;
 
-const ExpensiveComponent = ({ wait }: { wait: Promise<unknown> }) => {
-	SuspenseGuard();
-
-	const [count, setCount] = useState(0);
-
-	use(wait);
-	const increment = useCallback(() => {
-		setCount((current) => current + 1);
-	}, []);
-	const resetState = useCallback(() => {
-		setCount(0);
-	}, []);
-
-	return (
-		<>
-			<header>
-				<h3
-					className={clsx(
-						"font-bold",
-						"text-lg",
-						"mb-2",
-						"flex",
-						"justify-center",
-					)}
-				>
-					<span>The time has come to...</span>
-				</h3>
-			</header>
-			<object className={clsx("flex", "justify-end", "gap-2", "mt-2")}>
-				<Button wide color={"primary"} onClick={increment}>
-					PUSH THE BUTTON
-				</Button>
-			</object>
-			<Stats>
-				<Stat
-					title={<>Times clicked</>}
-					actions={
-						<Button
-							color={"secondary"}
-							variant={"outline"}
-							onClick={resetState}
-						>
-							Reset
-						</Button>
-					}
-				>
-					{String(count)}
-				</Stat>
-			</Stats>
-		</>
-	);
-};
-
 export const App = () => {
-	const [oidc, user] = useOidcClient();
-	const wait = useMemo(
-		() =>
-			new Promise((resolve) => {
-				setTimeout(resolve, 300);
-			}),
-		[],
-	);
-
-	const logout = useCallback(() => {
-		oidc?.userManager.signoutRedirect();
-	}, [oidc]);
-
+	const [_, user] = useOidcClient();
+	const formatMessage = useFormatMessage();
+	const username = user?.profile["cognito:username"] ?? user?.profile.sub;
 	return (
 		<>
-			{user ? (
-				<div className={clsx("join join-vertical gap-4")}>
-					<h2
-						className={clsx("text-xl", "join-item", "flex", "justify-center")}
-					>
-						{`Welcome, ${JSON.stringify(user.profile)}`}
-					</h2>
+			<section
+				className={clsx(
+					"card",
+					"card-sm",
+					"card-border",
+					"border-2",
+					"border-success/30",
+					"border-dashed",
+				)}
+			>
+				<h2 className={clsx("card-title", "pt-4", "justify-center")}>
+					<Users_Icon
+						height={"h-12"}
+						width={"w-12"}
+						stroke={user ? "stroke-accent/80" : "stroke-gray-400"}
+						fill={"fill-accent-content/40"}
+						className={clsx(user ? "animate-pulse" : undefined)}
+					/>
+				</h2>
+				{user ? (
 					<Suspense fallback={<Fallback />}>
-						<section
-							className={clsx(
-								"card join-item p-2 bg-ironstone-300 border-8 rounded-lg",
-							)}
-						>
-							<ExpensiveComponent wait={wait} />
-						</section>
+						<>
+							<p className={clsx("card-body", "px-12")}>
+								{formatMessage({
+									id: "authentication.user._some.logout.button",
+									description: "User island welcome",
+									defaultMessage: `Welcome${username ? "," : ""} ${username ?? ""}`,
+								})}
+							</p>
+							<footer
+								className={clsx(
+									"card-actions",
+									"join-item",
+									"px-8",
+									"py-4",
+									"border-info/80",
+									"border-double",
+								)}
+							>
+								<Button
+									size={"sm"}
+									color={"error"}
+									href={"/~oidc/close"}
+									renderAs={"a"}
+									variant={"soft"}
+									supressContentColor
+									block
+								>
+									{formatMessage({
+										id: "authentication.user._some.logout.button",
+										description: "User island logout",
+										defaultMessage: "Sign out",
+									})}
+								</Button>
+							</footer>
+						</>
 					</Suspense>
-					<Button color={"error"} onClick={logout}>
-						Logout
-					</Button>
-				</div>
-			) : (
-				<div className={"card border-primary"}>
-					<Link href="/~oidc/authorize">Login</Link>
-				</div>
-			)}
+				) : (
+					<footer
+						className={clsx(
+							"card-actions",
+							"card-border",
+							"join-item",
+							"p-8",
+							"border-info/80",
+							"border-double",
+						)}
+					>
+						<Button
+							color={"primary"}
+							href={"/~oidc/authorize"}
+							renderAs={"a"}
+							wide
+						>
+							{formatMessage({
+								id: "authentication.user._none.login.button",
+								description: "User island greetings",
+								defaultMessage: "Sign in",
+							})}
+						</Button>
+					</footer>
+				)}
+			</section>
 		</>
 	);
 };

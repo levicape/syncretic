@@ -1,19 +1,29 @@
 import { useEffect, useMemo } from "react";
-import { useOidcClient } from "../OidcClientAtom";
+import { useOidcClient } from "../../../atoms/authentication/OidcClientAtom";
 
-export const AuthnRedirect = () => {
+export const AuthnClose = () => {
 	const [oidc] = useOidcClient();
 	const { enabled: discordEnabled } = {} as Record<string, unknown>; //useDiscord();
 
 	useEffect(() => {
 		if (!discordEnabled) {
-			oidc?.userManager.signinRedirect().then(() => {
-				console.debug({
-					AuthnRedirect: {
-						message: "Sign-in initiated",
-					},
-				});
+			console.debug({
+				AuthnClose: {
+					message: "Processing auth close",
+				},
 			});
+			oidc?.userManager
+				.signoutPopup({
+					extraQueryParams: {
+						client_id: oidc?.userManager.settings.client_id,
+						authority: oidc?.userManager.settings.authority,
+						scope: oidc?.userManager.settings.scope,
+						response_type: oidc?.userManager.settings.response_type,
+					},
+				})
+				.finally(() => {
+					location.replace("/~oidc/logout");
+				});
 		}
 	}, [oidc, discordEnabled]);
 
@@ -37,8 +47,9 @@ export const AuthnRedirect = () => {
 		<object
 			aria-hidden
 			style={style}
-			typeof={"AuthnRedirect"}
+			typeof={"AuthnClose"}
 			data-oidc={oidc ? "true" : "false"}
+			suppressHydrationWarning
 		/>
 	);
 };

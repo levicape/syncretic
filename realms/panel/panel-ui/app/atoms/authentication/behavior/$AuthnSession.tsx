@@ -56,7 +56,7 @@ export const AuthnSession = () => {
 				? JSON.stringify(sessionUser.expired)
 				: "",
 			"data-session-expires-at": sessionUser?.expires_at
-				? JSON.stringify(sessionUser?.expires_at)
+				? JSON.stringify(sessionUser.expires_at)
 				: "",
 			"data-session-expires-in": sessionUser?.expires_in
 				? JSON.stringify(sessionUser.expires_in)
@@ -82,6 +82,7 @@ export const AuthnSession = () => {
 			aria-hidden
 			style={style}
 			typeof={"AuthnSession"}
+			suppressHydrationWarning
 			{...dataAttributes}
 		/>
 	);

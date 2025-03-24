@@ -1,57 +1,24 @@
 import { clsx } from "clsx";
 import { useFormatMessage } from "../../../atoms/localization/I18nAtom";
-import { Loading } from "../../../ui/daisy/feedback/Loading";
+import { Alert } from "../../../ui/daisy/feedback/Alert";
 import { ShieldCheckmark_Icon } from "../../../ui/display/icons/ShieldCheckmark";
 import { DiscordLogo_Icon } from "../../../ui/display/icons/logos/DiscordLogo";
 
-export const AuthorizeProgress = () => {
+export const CloseProgress = () => {
 	const { enabled: discordEnabled } = {} as Record<string, unknown>; //useDiscord();
-
 	const formatMessage = useFormatMessage();
 	return !discordEnabled ? (
-		<>
-			<div className={clsx("flex", "justify-center", "items-center")}>
-				<Loading
-					className={clsx(
-						"bg-clip-content",
-						"loading-infinity",
-						"stroke-accent",
-						"fill-primary",
-						"text-accent-content",
-						"blur-2xl",
-						"w-14",
-						"animate-[loader var(--tw-duration) var(--tw-ease)]",
-						"duration-500",
-						"delay-700",
-						"ease-out",
-					)}
-					size={"xl"}
-				/>
-			</div>
-			<div
-				className={clsx(
-					"pt-4",
-					"text-info",
-					"font-bold",
-					"animate-pulse",
-					"min-h-12",
-					"min-w-8",
-				)}
+		<Alert color={"info"} variant={"outline"} role={"alert"}>
+			<span
+				className={clsx("text-primary-content", "font-bold", "animate-pulse")}
 			>
 				{formatMessage({
-					id: "oidc.authorize.login.alert",
-					description: "Login in progress",
-					defaultMessage: "Signing in",
+					id: "oidc.close.logout.alert",
+					description: "Logout in progress",
+					defaultMessage: "Signing out",
 				})}
-			</div>
-			<style>{`
-@keyframes loader {
-  75%, 100% {
-    transform: scale(2);
-    opacity: 0;
-}
-			`}</style>
-		</>
+			</span>
+		</Alert>
 	) : (
 		<div className={clsx("flex", "items-center")}>
 			<div>

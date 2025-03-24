@@ -1,17 +1,11 @@
 import { clsx } from "clsx";
 import type { BaseHTMLAttributes, PropsWithChildren } from "react";
 
-export type AlertColor = "info" | "success" | "warning" | "error";
-
-export type AlertVariant = "outline" | "dash" | "soft";
-
-export type AlertDirection = "horizontal" | "vertical";
-
 export type AlertProps = {
 	className?: string;
-	color?: AlertColor;
-	variant?: AlertVariant;
-	direction?: AlertDirection;
+	color?: "info" | "success" | "warning" | "error";
+	variant?: "outline" | "dash" | "soft";
+	direction?: "horizontal" | "vertical";
 };
 
 export const Alert = ({

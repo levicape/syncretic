@@ -1,10 +1,14 @@
 import { clsx } from "clsx";
-import { type FunctionComponent, useCallback, useContext } from "react";
+import {
+	type FunctionComponent,
+	type PropsWithChildren,
+	useCallback,
+	useContext,
+} from "react";
+import { useOidcClient } from "../../../atoms/authentication/OidcClientAtom";
 import { useFormatMessage } from "../../../atoms/localization/I18nAtom";
 import { Button } from "../../daisy/action/Button";
-import { Bars4_Icon } from "../../display/icons/Bars4";
 import { HeaderMenuOpenContextExport } from "./HeaderContext";
-// import { LanguageDropdown } from "@/ui/input/LanguageDropdown";
 
 const HeaderMenuOpenContext = HeaderMenuOpenContextExport();
 
@@ -12,22 +16,14 @@ export type HeaderMenuButtonProps = {
 	className?: string;
 };
 
-export const HeaderMenuButton: FunctionComponent<HeaderMenuButtonProps> = (
-	props,
-) => {
-	// const { ready: authReady } = useStoreSelector(getAuthentication);
+export const HeaderMenuButton: FunctionComponent<
+	PropsWithChildren<HeaderMenuButtonProps>
+> = (props) => {
+	const [oidc] = useOidcClient();
 	const formatMessage = useFormatMessage();
 	const [menuOpen, setHeaderMenuOpen] = useContext(HeaderMenuOpenContext);
 
-	const { className } = props;
-
-	// if (authReady !== true) {
-	//   return (
-	//     <span className={"self-center px-2"}>
-	//       <LanguageDropdown />
-	//     </span>
-	//   );
-	// }
+	const { className, children } = props;
 
 	const menuButtonOnClick = useCallback(() => {
 		setHeaderMenuOpen();
@@ -44,10 +40,14 @@ export const HeaderMenuButton: FunctionComponent<HeaderMenuButtonProps> = (
 			color={"neutral"}
 			variant={"ghost"}
 			square
-			className={clsx(menuOpen ? "invisible" : undefined, className)}
+			className={clsx(
+				menuOpen ? "invisible" : "visible",
+				oidc ? clsx("opacity-100") : clsx("opacity-0"),
+				className,
+			)}
 			onClick={menuButtonOnClick}
 		>
-			<Bars4_Icon />
+			{children}
 		</Button>
 	);
 };

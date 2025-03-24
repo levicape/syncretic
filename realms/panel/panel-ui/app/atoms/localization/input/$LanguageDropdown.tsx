@@ -52,10 +52,6 @@ export const LanguageDropdown: FunctionComponent = ({
 	optionProps,
 	...htmlProps
 }: LanguageDropdownProps & BaseHTMLAttributes<HTMLDivElement>) => {
-	//   const { language } = useStoreSelector(getSettings);
-	//   const { ready } = useStoreSelector(getAuthentication);
-	//   const dispatch = useStoreDispatch();
-
 	const [i18nState, dispatch] = useI18nAtom();
 	const { selectedLanguage: language } = i18nState;
 
@@ -67,10 +63,6 @@ export const LanguageDropdown: FunctionComponent = ({
 		},
 		[dispatch],
 	);
-
-	//   if (ready === null) {
-	//     return null;
-	//   }
 
 	const Glyph =
 		glyph === undefined

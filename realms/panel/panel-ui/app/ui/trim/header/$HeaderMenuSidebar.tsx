@@ -84,7 +84,9 @@ const HeaderMenuLink: FunctionComponent<HeaderMenuLinkProps> = ({
 							"cursor-[inherit]",
 							"opacity-20",
 							"transition-opacity",
+							"will-change-[opacity]",
 							"group-hover:opacity-100",
+							"transform-3d",
 						)}
 					>
 						<RightArrow_Icon />
@@ -95,9 +97,9 @@ const HeaderMenuLink: FunctionComponent<HeaderMenuLinkProps> = ({
 	);
 };
 
-export const HeaderMenuSidebar: FunctionComponent = () => {
-	// const { ready: configReady } = useConfig();
-	const configReady = true;
+export const HeaderMenuSidebar: FunctionComponent<{ className?: string }> = ({
+	className,
+}) => {
 	const [menuOpen, setMenuOpen] = useContext(HeaderMenuOpenContext);
 
 	const preventDefault: MouseEventHandler<HTMLElement> = useCallback(
@@ -136,12 +138,13 @@ export const HeaderMenuSidebar: FunctionComponent = () => {
 				"w-64",
 				"border-t-0",
 				"bg-base-200",
-				menuOpen && configReady ? "visible translate-x-0" : undefined,
-				!menuOpen || !configReady ? "invisible -translate-x-64" : undefined,
-				"transition-[transform,visibility]",
-				"duration-200",
-				"ease-out",
-				"will-change-transform",
+				"transform-gpu",
+				menuOpen
+					? clsx("visible", "translate-x-0")
+					: clsx("invisible", "-translate-x-64"),
+				"transition-[transform,translate,visibility]",
+				"will-change-[transform,translate,visibility]",
+				className,
 			)}
 			onClick={preventDefault}
 		>

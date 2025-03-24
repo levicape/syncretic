@@ -4,6 +4,19 @@ import type { PropsWithChildren } from "react";
 import { AppBody } from "../ui/AppBody";
 import { ApplicationHead } from "../ui/DesignSystem";
 
+const foafStyle: React.CSSProperties = {
+	display: "none",
+	pointerEvents: "none",
+	touchAction: "none",
+	position: "fixed",
+	visibility: "hidden",
+	width: 0,
+	height: 0,
+	top: 0,
+	left: 0,
+	zIndex: -1,
+};
+
 export default reactRenderer(({ children }: PropsWithChildren) => {
 	return (
 		<html className={clsx("overflow-x-hidden", "overscroll-contain")} lang="en">
@@ -32,6 +45,16 @@ export default reactRenderer(({ children }: PropsWithChildren) => {
 				{/* <!-- Body --> */}
 				{children}
 			</AppBody>
+			<object
+				suppressHydrationWarning
+				typeof="foaf:Document"
+				style={foafStyle}
+				aria-hidden
+				data-base-uri={ApplicationHead.metadataBase?.href}
+				data-meta-base-url={import.meta.env.BASE_URL}
+				data-open-graph-url={ApplicationHead.openGraph.url}
+				data-rendered={new Date().toISOString()}
+			/>
 		</html>
 	);
 });

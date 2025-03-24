@@ -1,23 +1,36 @@
 import { useEffect, useMemo } from "react";
-import { useOidcClient } from "../OidcClientAtom";
+import { useOidcClient } from "../../../atoms/authentication/OidcClientAtom";
 
-export const AuthnRenew = () => {
+export const AuthnCallback = () => {
 	const [oidc] = useOidcClient();
 	const { enabled: discordEnabled } = {} as Record<string, unknown>; //useDiscord();
 
 	useEffect(() => {
 		if (!discordEnabled) {
 			console.debug({
-				AuthnRenew: {
-					message: "Renew requested",
+				AuthnCallback: {
+					message: "Processing auth callback",
 				},
 			});
-			oidc?.userManager.signinSilent().then((user) => {
+
+			oidc?.userManager.signinCallback().then(async (status) => {
+				let signinError: unknown;
 				console.debug({
-					AuthnRenew: {
-						user,
+					AuthnCallback: {
+						message: "Navigating to root after sign-in",
+						status: {
+							sessionState: status?.session_state,
+							state: status?.state,
+						},
+						signinError,
 					},
 				});
+				setTimeout(
+					() => {
+						location.assign("/");
+					},
+					Math.random() * 100 + 20,
+				);
 			});
 		}
 	}, [oidc, discordEnabled]);
@@ -41,9 +54,10 @@ export const AuthnRenew = () => {
 	return (
 		<object
 			aria-hidden
-			style={style}
-			typeof={"AuthnRenew"}
+			typeof={"AuthnCallback"}
 			data-oidc={oidc ? "true" : "false"}
+			style={style}
+			suppressHydrationWarning
 		/>
 	);
 };
