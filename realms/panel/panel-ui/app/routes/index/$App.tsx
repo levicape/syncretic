@@ -62,7 +62,7 @@ const ExpensiveComponent = ({ wait }: { wait: Promise<unknown> }) => {
 };
 
 export const App = () => {
-	const [_, user] = useOidcClient();
+	const [oidc, user] = useOidcClient();
 	const wait = useMemo(
 		() =>
 			new Promise((resolve) => {
@@ -71,6 +71,10 @@ export const App = () => {
 		[],
 	);
 
+	const logout = useCallback(() => {
+		oidc?.userManager.signoutRedirect();
+	}, [oidc]);
+
 	return (
 		<>
 			{user ? (
@@ -78,7 +82,7 @@ export const App = () => {
 					<h2
 						className={clsx("text-xl", "join-item", "flex", "justify-center")}
 					>
-						{`Welcome, ${user.profile.name}`}
+						{`Welcome, ${JSON.stringify(user.profile)}`}
 					</h2>
 					<Suspense fallback={<Fallback />}>
 						<section
@@ -89,6 +93,9 @@ export const App = () => {
 							<ExpensiveComponent wait={wait} />
 						</section>
 					</Suspense>
+					<Button color={"error"} onClick={logout}>
+						Logout
+					</Button>
 				</div>
 			) : (
 				<div className={"card border-primary"}>
