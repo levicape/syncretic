@@ -41,6 +41,10 @@ export const CODECATALYST_PULUMI_STACKS: Array<{
 		name: "dns-root",
 	},
 	{
+		stack: "levicape/panel/channels",
+		name: "panel-channels",
+	},
+	{
 		stack: "levicape/panel/client",
 		name: "panel-client",
 	},

@@ -116,6 +116,7 @@ export const I18nReducer = (
 			return {
 				...state,
 				selectedLanguage: action.payload,
+				intl: initializeIntl(action.payload),
 			};
 		default:
 			return state;

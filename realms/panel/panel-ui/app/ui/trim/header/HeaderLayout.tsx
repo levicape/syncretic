@@ -1,3 +1,4 @@
+import { useRequestContext } from "@hono/react-renderer";
 import { clsx } from "clsx";
 import { type FunctionComponent, type PropsWithChildren, useMemo } from "react";
 import { ApplicationHead } from "../../DesignSystem";
@@ -10,6 +11,8 @@ export const HeaderLayout: FunctionComponent<
 		};
 	}>
 > = ({ children, vars }) => {
+	const c = useRequestContext();
+
 	return (
 		<div
 			style={useMemo(
@@ -17,7 +20,9 @@ export const HeaderLayout: FunctionComponent<
 				[vars.appHeight],
 			)}
 		>
-			<HeaderDrawer vars={vars}>{ApplicationHead.title.default}</HeaderDrawer>
+			<HeaderDrawer vars={vars} requestPath={c?.req?.path}>
+				{ApplicationHead.title.default}
+			</HeaderDrawer>
 			<div
 				className={clsx(
 					"m-auto",

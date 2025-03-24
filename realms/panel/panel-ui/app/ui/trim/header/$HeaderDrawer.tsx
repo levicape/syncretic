@@ -3,25 +3,23 @@ import {
 	type FunctionComponent,
 	type PropsWithChildren,
 	useCallback,
+	useEffect,
 	useState,
 } from "react";
 import { DesignSystem } from "../../DesignSystem";
 import { Navbar } from "../../daisy/navigation/Navbar";
 import { HeaderMenuButton } from "./$HeaderMenuButton";
 import { HeaderMenuSidebar } from "./$HeaderMenuSidebar";
-import { HeaderSettingsButton } from "./$HeaderSettingsButton";
 import {
 	HeaderMenuOpenContextExport,
 	HeaderSettingsOpenContextExport,
 } from "./HeaderContext";
-// import { useAtomValue } from "jotai/react";
-// import { AuthenticationAtom } from "../../../atoms/authentication/OidcClientAtom";
-// import { HeaderSettingsModal } from "./HeaderSettingsModal";
 
 const HeaderMenuOpenContext = HeaderMenuOpenContextExport();
 const HeaderSettingsOpenContext = HeaderSettingsOpenContextExport();
 
 export type HeaderDrawerProps = {
+	requestPath?: string;
 	vars: {
 		appHeight: string;
 	};
@@ -30,9 +28,12 @@ export type HeaderDrawerProps = {
 export const HeaderDrawer: FunctionComponent<
 	PropsWithChildren<HeaderDrawerProps>
 > = (props) => {
-	const { children, vars } = props;
+	const { children, vars, requestPath } = props;
 	const pathname =
-		typeof window !== "undefined" ? window.location.pathname : "/";
+		typeof window !== "undefined"
+			? window.location.pathname
+			: (requestPath ?? "/");
+	const [loading, setLoading] = useState<boolean>(true);
 	const [menuOpen, setMenuOpen] = useState<boolean>(false);
 	const [settingsOpen, setSettingsOpen] = useState<boolean>(false);
 	const [windowHeight, setWindowHeight] = useState<number | null>(null);
@@ -47,16 +48,12 @@ export const HeaderDrawer: FunctionComponent<
 
 	const menuOpenOnChange = useCallback(
 		(value?: boolean) => {
-			if (pathname.startsWith("/~oidc")) {
-				return;
-			}
-
 			scrollToTop();
 			setMenuOpen(value || !menuOpen);
 			setSettingsOpen(false);
 			setWindowHeight(menuOpen === false ? window.innerHeight : null);
 		},
-		[scrollToTop, pathname, menuOpen],
+		[scrollToTop, menuOpen],
 	);
 
 	const settingsOpenOnChange = useCallback(
@@ -93,6 +90,21 @@ export const HeaderDrawer: FunctionComponent<
 		[showOverlay],
 	);
 
+	if (pathname.startsWith("/~")) {
+		return <div className={clsx("min-h-12")} />;
+	}
+
+	useEffect(() => {
+		const update = () => {
+			setLoading(false);
+		};
+
+		const immediate = setTimeout(update, 10);
+		return () => {
+			clearTimeout(immediate);
+		};
+	}, []);
+
 	// const a = useAtomValue(AuthenticationAtom);
 	return (
 		<HeaderMenuOpenContext.Provider value={[menuOpen, menuOpenOnChange]}>
@@ -101,14 +113,15 @@ export const HeaderDrawer: FunctionComponent<
 			>
 				<HeaderMenuSidebar />
 				<div
+					suppressHydrationWarning
 					className={clsx(
 						"relative",
 						"z-40",
 						menuOpen ? "translate-x-64" : undefined,
 						"transition-transform",
-						"duration-200",
+						"duration-600",
 						"ease-out",
-						"will-change-transform",
+						"will-change-auto",
 					)}
 				>
 					<Navbar
@@ -120,17 +133,23 @@ export const HeaderDrawer: FunctionComponent<
 							"flex",
 							"min-h-[2.5rem]",
 							"bg-gradient-to-b",
-							"backdrop-blur-lg",
 							"to-base-300",
+							"transition-all",
+							"transition-discrete",
+							"will-change-auto",
+							...(loading ? ["opacity-40", "blur-xl"] : []),
 						)}
-						start={<HeaderMenuButton className={clsx("p-1")} />}
+						start={
+							!loading ? <HeaderMenuButton className={clsx("p-1")} /> : null
+						}
 						center={<DesignSystem.Header>{children}</DesignSystem.Header>}
 						end={
-							<HeaderSettingsButton
-								className={clsx("p-1", "md:block", "md:relative")}
-							>
-								{/* <HeaderSettingsModal /> */}
-							</HeaderSettingsButton>
+							pathname
+							// <HeaderSettingsButton
+							// 	className={clsx("p-1", "md:block", "md:relative")}
+							// >
+							// 	{/* <HeaderSettingsModal /> */}
+							// </HeaderSettingsButton>
 						}
 					/>
 				</div>

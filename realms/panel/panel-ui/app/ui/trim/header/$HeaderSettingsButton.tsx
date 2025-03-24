@@ -16,11 +16,16 @@ import {
 const HeaderMenuOpenContext = HeaderMenuOpenContextExport();
 const HeaderSettingsOpenContext = HeaderSettingsOpenContextExport();
 export const HeaderSettingsButton: FunctionComponent<
-	PropsWithChildren<{ className: string }>
-> = ({ children, className }) => {
+	PropsWithChildren<{
+		className: string;
+		requestPath?: string;
+	}>
+> = ({ children, className, requestPath }) => {
 	const formatMessage = useFormatMessage();
 	const pathname =
-		typeof window !== "undefined" ? window.location?.pathname : "/";
+		typeof window !== "undefined"
+			? window.location?.pathname
+			: (requestPath ?? "/");
 	//   const { ready: authReady } = useStoreSelector(getAuthentication);
 	const [menuOpen] = useContext(HeaderMenuOpenContext);
 	const [, setHeaderSettingsOpen] = useContext(HeaderSettingsOpenContext);

@@ -1,6 +1,12 @@
 import { useAtom } from "jotai/react";
 import { atom } from "jotai/vanilla";
-import { OidcClient, UserManager } from "oidc-client-ts";
+import {
+	type OidcClient,
+	type User,
+	UserManager,
+	WebStorageStateStore,
+} from "oidc-client-ts";
+import { useEffect } from "react";
 
 export type OauthClientAtomState = {
 	oidcClient: OidcClient | null;
@@ -23,7 +29,6 @@ declare global {
 		"~oidc_usermanager":
 			| {
 					revalidate: boolean;
-					oidcClient: OidcClient;
 					userManager: UserManager;
 			  }
 			| undefined;
@@ -33,8 +38,14 @@ declare global {
 const initializeOidcClient = () => {
 	if (typeof window !== "undefined") {
 		if (window["~oidc"]) {
-			if (window["~oidc_usermanager"]) {
+			if (window["~oidc_usermanager"]?.userManager) {
 				if (window?.["~oidc_usermanager"]?.revalidate !== true) {
+					console.debug({
+						OidcClientAtom: {
+							message: "OIDC client found in window",
+							window: window["~oidc"],
+						},
+					});
 					return window["~oidc_usermanager"];
 				}
 			}
@@ -52,30 +63,24 @@ const initializeOidcClient = () => {
 				OAUTH_PUBLIC_OIDC_POST_LOGOUT_REDIRECT_URI,
 				OAUTH_PUBLIC_OIDC_SILENT_REDIRECT_URI,
 			} = window["~oidc"];
-			const oidcClient = new OidcClient({
-				authority: OAUTH_PUBLIC_OIDC_AUTHORITY ?? "",
-				client_id: OAUTH_PUBLIC_OIDC_CLIENT_ID ?? "",
-				redirect_uri: OAUTH_PUBLIC_OIDC_REDIRECT_URI ?? "",
-				post_logout_redirect_uri:
-					OAUTH_PUBLIC_OIDC_POST_LOGOUT_REDIRECT_URI ?? "",
-				response_type: "code",
-				scope: "openid profile email",
-			});
 
 			const userManager = new UserManager({
-				authority: OAUTH_PUBLIC_OIDC_AUTHORITY ?? "",
-				client_id: OAUTH_PUBLIC_OIDC_CLIENT_ID ?? "",
-				redirect_uri: OAUTH_PUBLIC_OIDC_REDIRECT_URI ?? "",
-				post_logout_redirect_uri:
-					OAUTH_PUBLIC_OIDC_POST_LOGOUT_REDIRECT_URI ?? "",
-				silent_redirect_uri: OAUTH_PUBLIC_OIDC_SILENT_REDIRECT_URI ?? "",
+				authority: OAUTH_PUBLIC_OIDC_AUTHORITY,
+				client_id: OAUTH_PUBLIC_OIDC_CLIENT_ID,
+				redirect_uri: OAUTH_PUBLIC_OIDC_REDIRECT_URI,
+				post_logout_redirect_uri: OAUTH_PUBLIC_OIDC_POST_LOGOUT_REDIRECT_URI,
+				silent_redirect_uri: OAUTH_PUBLIC_OIDC_SILENT_REDIRECT_URI,
 				response_type: "code",
 				scope: "openid profile email",
-				automaticSilentRenew: true,
+				automaticSilentRenew: false,
+				accessTokenExpiringNotificationTimeInSeconds: 20,
+				stateStore: new WebStorageStateStore({
+					prefix: "oidc-user-manager",
+					store: window.localStorage,
+				}),
 			});
 
 			const windowObj = {
-				oidcClient,
 				userManager,
 				revalidate: false,
 			};
@@ -95,9 +100,19 @@ const initializeOidcClient = () => {
 	return null;
 };
 
-export const OidcClientAtom = atom(initializeOidcClient());
+const client = initializeOidcClient();
+export const OidcClientAtom = atom(client);
+export const OidcUserAtom = atom<User | null | undefined>(undefined);
 
 export const useOidcClient = () => {
-	const [state] = useAtom(OidcClientAtom);
-	return [state] as const;
+	const [oidc] = useAtom(OidcClientAtom);
+	const [user, setUser] = useAtom(OidcUserAtom);
+
+	useEffect(() => {
+		if (oidc?.userManager) {
+			oidc.userManager.getUser().then(setUser);
+		}
+	}, [oidc, setUser]);
+
+	return [oidc, user] as const;
 };

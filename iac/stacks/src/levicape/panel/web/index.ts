@@ -39,6 +39,10 @@ import {
 import { FourtwoCodestarStackExportsZod } from "../../../codestar/exports";
 import { FourtwoDatalayerStackExportsZod } from "../../../datalayer/exports";
 import {
+	FourtwoPanelChannelsStackExportsZod,
+	FourtwoPanelChannelsStackrefRoot,
+} from "../channels/exports";
+import {
 	FourtwoPanelClientOauthRoutes,
 	FourtwoPanelClientStackExportsZod,
 	FourtwoPanelClientStackrefRoot,
@@ -83,6 +87,12 @@ const STACKREF_CONFIG = {
 			refs: {
 				props: FourtwoDatalayerStackExportsZod.shape.fourtwo_datalayer_props,
 				iam: FourtwoDatalayerStackExportsZod.shape.fourtwo_datalayer_iam,
+			},
+		},
+		[FourtwoPanelChannelsStackrefRoot]: {
+			refs: {
+				sns: FourtwoPanelChannelsStackExportsZod.shape
+					.fourtwo_panel_channels_sns,
 			},
 		},
 		[FourtwoPanelHttpStackrefRoot]: {
@@ -702,7 +712,7 @@ export = async () => {
 							},
 							{
 								name: "SNS_CHANGELOG_TOPIC",
-								value: dereferenced$.application.sns.changelog.topic.arn,
+								value: "<SNS_CHANGELOG_TOPIC>",
 								type: "PLAINTEXT",
 							},
 						],
@@ -817,7 +827,7 @@ export = async () => {
 							},
 							{
 								name: "SNS_REVALIDATE_TOPIC",
-								value: dereferenced$.application.sns.revalidate.topic.arn,
+								value: "<SNS_REVALIDATE_TOPIC>",
 								type: "PLAINTEXT",
 							},
 						],
@@ -1038,7 +1048,8 @@ export = async () => {
 												{
 													name: "SNS_REVALIDATE_TOPIC",
 													value:
-														dereferenced$.application.sns.revalidate.topic.arn,
+														dereferenced$[FourtwoPanelChannelsStackrefRoot].sns
+															.revalidate.topic.arn,
 													type: "PLAINTEXT",
 												},
 											]),

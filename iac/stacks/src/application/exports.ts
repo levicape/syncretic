@@ -22,13 +22,6 @@ export const FourtwoApplicationStackExportsZod = z
 			}),
 		),
 		fourtwo_application_sns: z.object({
-			catalog: z.object({
-				topic: z.object({
-					arn: z.string(),
-					name: z.string(),
-					id: z.string(),
-				}),
-			}),
 			changelog: z.object({
 				topic: z.object({
 					arn: z.string(),
@@ -37,13 +30,6 @@ export const FourtwoApplicationStackExportsZod = z
 				}),
 			}),
 			capacity: z.object({
-				topic: z.object({
-					arn: z.string(),
-					name: z.string(),
-					id: z.string(),
-				}),
-			}),
-			revalidate: z.object({
 				topic: z.object({
 					arn: z.string(),
 					name: z.string(),

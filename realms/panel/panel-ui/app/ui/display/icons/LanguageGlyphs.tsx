@@ -34,7 +34,7 @@ export const LanguageGlyphs_Icon: FunctionComponent<
 	return (
 		<svg
 			role={"img"}
-			aria-label={"LanguageGlyphs Icon"}
+			aria-label={"Language Glyphs icon"}
 			xmlns="http://www.w3.org/2000/svg"
 			viewBox={viewBox ?? "0 0 24 24"}
 			strokeWidth={1.29}

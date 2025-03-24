@@ -128,18 +128,3 @@
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
 }
-
-a {
-	font-weight: 700;
-	color: var(--color-accent-content);
-	text-decoration: inherit;
-}
-a:hover {
-	color: var(--color-accent);
-}
-
-main {
-	margin: 0;
-	min-width: 320px;
-	min-height: 100vh;
-}

@@ -1,0 +1,9 @@
+description: State bucket and associated SSM parameters
+runtime:
+  name: nodejs
+  options:
+    packagemanager: pnpm
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: aws-typescript

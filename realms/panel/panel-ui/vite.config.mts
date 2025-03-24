@@ -22,9 +22,9 @@ export default defineConfig(({ mode }) => {
 				rollupOptions: {
 					input: ["./app/render.ts", "./app/style.css"],
 					output: {
-						entryFileNames: "static/[name].js",
-						chunkFileNames: () => `static/_c/${timehash}/$[name]$[hash].js`,
-						assetFileNames: "static/assets/[name].[ext]",
+						entryFileNames: "!/!!/[name].js",
+						chunkFileNames: `!/!!/_c/${timehash}/[name]-[hash].js`,
+						assetFileNames: "!/!!/_a/[name].[ext]",
 						generatedCode: "es2015",
 						compact: true,
 					},

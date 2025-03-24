@@ -1,9 +1,11 @@
 import { clsx } from "clsx";
 import { Suspense, use, useCallback, useMemo, useState } from "react";
+import { useOidcClient } from "../../atoms/authentication/OidcClientAtom";
 import { SuspenseGuard } from "../../ui/ClientSuspense";
 import { DesignSystem } from "../../ui/DesignSystem";
 import { Button } from "../../ui/daisy/action/Button";
 import { Stat, Stats } from "../../ui/daisy/data/Stat";
+import { Link } from "../../ui/daisy/navigation/Link";
 const { Fallback } = DesignSystem;
 
 const ExpensiveComponent = ({ wait }: { wait: Promise<unknown> }) => {
@@ -60,6 +62,7 @@ const ExpensiveComponent = ({ wait }: { wait: Promise<unknown> }) => {
 };
 
 export const App = () => {
+	const [_, user] = useOidcClient();
 	const wait = useMemo(
 		() =>
 			new Promise((resolve) => {
@@ -69,21 +72,29 @@ export const App = () => {
 	);
 
 	return (
-		<article className={clsx("hero-content")}>
-			<div className={clsx("join join-vertical gap-4")}>
-				<h2 className={clsx("text-xl", "join-item", "flex", "justify-center")}>
-					World
-				</h2>
-				<Suspense fallback={<Fallback />}>
-					<section
-						className={clsx(
-							"card join-item p-2 bg-ironstone-300 border-8 rounded-lg",
-						)}
+		<>
+			{user ? (
+				<div className={clsx("join join-vertical gap-4")}>
+					<h2
+						className={clsx("text-xl", "join-item", "flex", "justify-center")}
 					>
-						<ExpensiveComponent wait={wait} />
-					</section>
-				</Suspense>
-			</div>
-		</article>
+						{`Welcome, ${user.profile.name}`}
+					</h2>
+					<Suspense fallback={<Fallback />}>
+						<section
+							className={clsx(
+								"card join-item p-2 bg-ironstone-300 border-8 rounded-lg",
+							)}
+						>
+							<ExpensiveComponent wait={wait} />
+						</section>
+					</Suspense>
+				</div>
+			) : (
+				<div className={"card border-primary"}>
+					<Link href="/~oidc/authorize">Login</Link>
+				</div>
+			)}
+		</>
 	);
 };

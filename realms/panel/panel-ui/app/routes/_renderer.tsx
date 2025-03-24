@@ -7,8 +7,9 @@ import { ApplicationHead } from "../ui/DesignSystem";
 export default reactRenderer(({ children }: PropsWithChildren) => {
 	return (
 		<html className={clsx("overflow-x-hidden", "overscroll-contain")} lang="en">
-			{/* <!-- React-Helmet-Async-SSR --> */}
+			{/* <!-- Root --> */}
 			<head>
+				{/* <!-- Head --> */}
 				<title>{ApplicationHead.title.default}</title>
 				<meta name="description" content={ApplicationHead.description} />
 				<meta charSet="UTF-8" />
@@ -17,8 +18,8 @@ export default reactRenderer(({ children }: PropsWithChildren) => {
 				<script type="module" src="/_window/oidc.js" />
 				{import.meta.env.PROD ? (
 					<>
-						<script type="module" src="/static/render.js" defer />
-						<link href="/static/assets/style.css" rel="stylesheet" />
+						<script type="module" src="/!/!!/render.js" defer />
+						<link href="/!/!!/_a/style.css" rel="stylesheet" />
 					</>
 				) : (
 					<>
@@ -27,7 +28,10 @@ export default reactRenderer(({ children }: PropsWithChildren) => {
 					</>
 				)}
 			</head>
-			<AppBody>{children}</AppBody>
+			<AppBody>
+				{/* <!-- Body --> */}
+				{children}
+			</AppBody>
 		</html>
 	);
 });

@@ -3,6 +3,7 @@ import {
 	type JSX,
 	useCallback,
 	useEffect,
+	useMemo,
 	useState,
 } from "react";
 
@@ -34,9 +35,26 @@ export const CaptureTouchEvents: FunctionComponent = (): JSX.Element => {
 		};
 	}, [noop]);
 
+	const style: React.CSSProperties = useMemo(
+		() => ({
+			display: "none",
+			pointerEvents: "none",
+			touchAction: "none",
+			position: "fixed",
+			visibility: "hidden",
+			width: 0,
+			height: 0,
+			top: 0,
+			left: 0,
+			zIndex: -1,
+		}),
+		[],
+	);
+
 	return (
 		<object
 			aria-hidden
+			style={style}
 			typeof="CaptureTouchEvents"
 			data-mounted={String(mounted)}
 		/>
