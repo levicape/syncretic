@@ -7,6 +7,7 @@ import {
 } from "@levicape/fourtwo-builders/commonjs/index.cjs";
 import { Context } from "@levicape/fourtwo-pulumi/commonjs/context/Context.cjs";
 import { EventRule, EventTarget } from "@pulumi/aws/cloudwatch";
+import { LogGroup } from "@pulumi/aws/cloudwatch/logGroup";
 import { Project } from "@pulumi/aws/codebuild";
 import { Pipeline } from "@pulumi/aws/codepipeline";
 import { getRole } from "@pulumi/aws/iam/getRole";
@@ -25,6 +26,7 @@ import { error, warn } from "@pulumi/pulumi/log";
 import { RandomId } from "@pulumi/random/RandomId";
 import { stringify } from "yaml";
 import type { z } from "zod";
+import { objectEntries } from "../../../Object";
 import { AwsCodeBuildContainerRoundRobin } from "../../../RoundRobin";
 import type {
 	Route,
@@ -38,6 +40,10 @@ import {
 } from "../../../application/exports";
 import { FourtwoCodestarStackExportsZod } from "../../../codestar/exports";
 import { FourtwoDatalayerStackExportsZod } from "../../../datalayer/exports";
+import {
+	FourtwoIdpUsersStackExportsZod,
+	FourtwoIdpUsersStackrefRoot,
+} from "../../../idp/users/exports";
 import {
 	FourtwoPanelChannelsStackExportsZod,
 	FourtwoPanelChannelsStackrefRoot,
@@ -57,6 +63,7 @@ import type { FourtwoPanelWebStackExportsZod } from "./exports";
 const PACKAGE_NAME = "@levicape/fourtwo-panel-ui" as const;
 const SUBDOMAIN =
 	process.env["STACKREF_SUBDOMAIN"] ?? FourtwoPanelWWWRootSubdomain;
+const APPLICATION_IMAGE_NAME = FourtwoApplicationRoot;
 const DEPLOY_DIRECTORY = "dist" as const;
 const MANIFEST_PATH = "/_web/routemap.json" as const;
 
@@ -89,6 +96,17 @@ const STACKREF_CONFIG = {
 				iam: FourtwoDatalayerStackExportsZod.shape.fourtwo_datalayer_iam,
 			},
 		},
+		[FourtwoIdpUsersStackrefRoot]: {
+			refs: {
+				cognito: FourtwoIdpUsersStackExportsZod.shape.fourtwo_idp_users_cognito,
+			},
+		},
+		[FourtwoPanelClientStackrefRoot]: {
+			refs: {
+				cognito:
+					FourtwoPanelClientStackExportsZod.shape.fourtwo_panel_client_cognito,
+			},
+		},
 		[FourtwoPanelChannelsStackrefRoot]: {
 			refs: {
 				sns: FourtwoPanelChannelsStackExportsZod.shape
@@ -99,12 +117,6 @@ const STACKREF_CONFIG = {
 			refs: {
 				routemap:
 					FourtwoPanelHttpStackExportsZod.shape.fourtwo_panel_http_routemap,
-			},
-		},
-		[FourtwoPanelClientStackrefRoot]: {
-			refs: {
-				cognito:
-					FourtwoPanelClientStackExportsZod.shape.fourtwo_panel_client_cognito,
 			},
 		},
 	},
@@ -131,12 +143,32 @@ export = async () => {
 		name ? `${context.prefix}-${name}` : context.prefix;
 	context.resourcegroups({ _ });
 
-	const stage = process.env.CI_ENVIRONMENT ?? "unknown";
+	const stage = process.env.APPLICATION_ENVIRONMENT ?? "unknown";
 	const automationRole = await getRole({
 		name: datalayer.iam.roles.automation.name,
 	});
 
 	const routemap = ROUTE_MAP(dereferenced$);
+
+	// Logging
+	const cloudwatch = (() => {
+		const loggroup = (name: string) => {
+			const loggroup = new LogGroup(_(`${name}-logs`), {
+				retentionInDays: context.environment.isProd ? 180 : 60,
+				tags: {
+					Name: _(`${name}-logs`),
+					StackRef: STACKREF_ROOT,
+					PackageName: PACKAGE_NAME,
+				},
+			});
+
+			return { loggroup };
+		};
+
+		return {
+			build: loggroup("build"),
+		};
+	})();
 
 	// Object Store
 	const s3 = (() => {
@@ -396,19 +428,23 @@ export = async () => {
 	const extractimage = (() => {
 		const deployStage = "staticwww";
 		const deployAction = "extractimage";
+		const DEPLOY_SENTINEL = "procfile deploy complete" as const;
 		const artifactIdentifier = `${deployStage}_${deployAction}`;
 
 		const { codeartifact, ssm } = dereferenced$.codestar;
 		// TODO (stackref) => client; // Allow customizing the OIDC.js output
-		const { client: oidcClient, domain } =
-			dereferenced$[FourtwoPanelClientStackrefRoot].cognito.operations;
+		const { domain } =
+			dereferenced$[FourtwoIdpUsersStackrefRoot].cognito.operators; // *.idp.az.
+		const { client: oidcClient } =
+			dereferenced$[FourtwoPanelClientStackrefRoot].cognito.operators;
 		const { clientId, userPoolId } = oidcClient;
 		let { domain: domainName } = domain ?? {};
-		domainName = domainName?.split(".").slice(2).join(".");
+		domainName = domainName?.split(".").slice(3).join("."); // *.
+		domainName = `${SUBDOMAIN}.${domainName}`; // SUBDOMAIN.
 		const buildspec = (() => {
 			const content = stringify(
 				new CodeBuildBuildspecBuilder()
-					.setVersion("0.2")
+					.setVersion(0.2)
 					.setArtifacts(
 						new CodeBuildBuildspecArtifactsBuilder()
 							.setFiles(["**/*"])
@@ -499,11 +535,20 @@ export = async () => {
 									"> .container",
 								].join(" "),
 								"docker ps -al",
-								...[2, 6, 2].flatMap((i) => [
-									`cat .container`,
-									`sleep ${i}s`,
-									`docker container logs $(cat .container)`,
-								]),
+								"export DEPLOY_COMPLETE=0",
+								"echo 'Waiting for procfile deploy'",
+								...[4, 16, 20, 16, 4, 2, 8, 10, 8, 2, 1, 4, 5, 4, 1].flatMap(
+									(i) => [
+										`cat .container`,
+										`if [ "$DEPLOY_COMPLETE" != "0" ];
+											then echo "Deploy completed. Skipping ${i}s wait";
+											else echo "Sleeping for ${i}s..."; echo "..."; 
+												sleep ${i}s; docker container logs $(cat .container);
+												export DEPLOY_COMPLETE=$(docker container logs $(cat .container) | grep -c "${DEPLOY_SENTINEL}");
+										fi`,
+										`echo "DEPLOY_COMPLETE: $DEPLOY_COMPLETE"`,
+									],
+								),
 								`docker cp $(cat .container):/tmp/${deployAction} $CODEBUILD_SRC_DIR/.${deployAction}`,
 								`ls -al $CODEBUILD_SRC_DIR/.${deployAction} || true`,
 								`ls -al $CODEBUILD_SRC_DIR/.${deployAction}/${DEPLOY_DIRECTORY} || true`,
@@ -511,7 +556,7 @@ export = async () => {
 								// OIDC
 								...(domainName !== undefined
 									? [
-											...Object.entries({
+											...objectEntries({
 												OAUTH_PUBLIC_OIDC_AUTHORITY: `https://cognito-idp.${context?.environment?.aws?.region}.amazonaws.com/${userPoolId}`,
 												OAUTH_PUBLIC_OIDC_CLIENT_ID: clientId,
 												OAUTH_PUBLIC_OIDC_REDIRECT_URI: `https://${domainName}/${FourtwoPanelClientOauthRoutes.callback}`,
@@ -603,6 +648,16 @@ export = async () => {
 							},
 						],
 					},
+					logsConfig: {
+						cloudwatchLogs: {
+							groupName: cloudwatch.build.loggroup.name,
+							streamName: `${artifactIdentifier}`,
+						},
+						// s3Logs: {
+						// 	status: "ENABLED",
+						// 	location: s3.build.bucket,
+						// },
+					},
 					source: {
 						type: "CODEPIPELINE",
 						buildspec: buildspec.content,
@@ -642,7 +697,7 @@ export = async () => {
 		const buildspec = (() => {
 			const content = stringify(
 				new CodeBuildBuildspecBuilder()
-					.setVersion("0.2")
+					.setVersion(0.2)
 					.setEnv(
 						new CodeBuildBuildspecEnvBuilder().setVariables({
 							SOURCE_IMAGE_REPOSITORY: "<SOURCE_IMAGE_REPOSITORY>",
@@ -717,6 +772,16 @@ export = async () => {
 							},
 						],
 					},
+					logsConfig: {
+						cloudwatchLogs: {
+							groupName: cloudwatch.build.loggroup.name,
+							streamName: `${artifactIdentifier}`,
+						},
+						// s3Logs: {
+						// 	status: "ENABLED",
+						// 	location: s3.build.bucket,
+						// },
+					},
 					source: {
 						type: "CODEPIPELINE",
 						buildspec: buildspec.content,
@@ -756,7 +821,7 @@ export = async () => {
 		const buildspec = (() => {
 			const content = stringify(
 				new CodeBuildBuildspecBuilder()
-					.setVersion("0.2")
+					.setVersion(0.2)
 					.setEnv(
 						new CodeBuildBuildspecEnvBuilder().setVariables({
 							SOURCE_IMAGE_REPOSITORY: "<SOURCE_IMAGE_REPOSITORY>",
@@ -832,6 +897,16 @@ export = async () => {
 							},
 						],
 					},
+					logsConfig: {
+						cloudwatchLogs: {
+							groupName: cloudwatch.build.loggroup.name,
+							streamName: `${artifactIdentifier}`,
+						},
+						// s3Logs: {
+						// 	status: "ENABLED",
+						// 	location: s3.build.bucket,
+						// },
+					},
 					source: {
 						type: "CODEPIPELINE",
 						buildspec: buildspec.content,
@@ -863,6 +938,7 @@ export = async () => {
 		};
 	})();
 
+	const imageTag = `${APPLICATION_IMAGE_NAME}-${stage}`;
 	const codepipeline = (() => {
 		const randomid = new RandomId(_("deploy-id"), {
 			byteLength: 4,
@@ -897,7 +973,7 @@ export = async () => {
 									([repositoryName]) => {
 										return {
 											RepositoryName: repositoryName,
-											ImageTag: stage,
+											ImageTag: imageTag,
 										};
 									},
 								),
@@ -1083,31 +1159,45 @@ export = async () => {
 
 	// Eventbridge will trigger on ecr push
 	const eventbridge = (() => {
-		const { name } = codestar.ecr.repository;
-
-		const rule = new EventRule(_("on-ecr-push"), {
-			description: `(${PACKAGE_NAME}) ECR image deploy pipeline trigger for tag "${name}"`,
-			state: "ENABLED",
-			eventPattern: JSON.stringify({
-				source: ["aws.ecr"],
-				"detail-type": ["ECR Image Action"],
-				detail: {
-					"repository-name": [name],
-					"action-type": ["PUSH"],
-					result: ["SUCCESS"],
-					"image-tag": [stage],
+		const { name: codestarRepositoryName } = codestar.ecr.repository;
+		const rule = new EventRule(
+			_("on-ecr-push"),
+			{
+				description: `(${PACKAGE_NAME}) ECR image deploy pipeline trigger for tag "${imageTag}"`,
+				state: "ENABLED",
+				eventPattern: JSON.stringify({
+					source: ["aws.ecr"],
+					"detail-type": ["ECR Image Action"],
+					detail: {
+						"repository-name": [codestarRepositoryName],
+						"action-type": ["PUSH"],
+						result: ["SUCCESS"],
+						"image-tag": [imageTag],
+					},
+				}),
+				tags: {
+					Name: _(`on-ecr-push`),
+					StackRef: STACKREF_ROOT,
+					Stage: stage,
+					ImageTag: imageTag,
 				},
-			}),
-			tags: {
-				Name: _(`on-ecr-push`),
-				StackRef: STACKREF_ROOT,
 			},
-		});
-		const pipeline = new EventTarget(_("on-ecr-deploy"), {
-			rule: rule.name,
-			arn: codepipeline.pipeline.arn,
-			roleArn: automationRole.arn,
-		});
+			{
+				deleteBeforeReplace: true,
+			},
+		);
+
+		const pipeline = new EventTarget(
+			_("on-ecr-deploy"),
+			{
+				rule: rule.name,
+				arn: codepipeline.pipeline.arn,
+				roleArn: automationRole.arn,
+			},
+			{
+				deleteBeforeReplace: true,
+			},
+		);
 
 		return {
 			EcrImageAction: {

@@ -20,6 +20,7 @@ import { error, warn } from "@pulumi/pulumi/log";
 import { Output, all, interpolate } from "@pulumi/pulumi/output";
 import { RandomId } from "@pulumi/random/RandomId";
 import type { z } from "zod";
+import { objectEntries, objectFromEntries } from "../Object";
 import { $deref } from "../Stack";
 import {
 	FourtwoApplicationRoot,
@@ -382,8 +383,8 @@ export = async () => {
 	const codeartifactOutput = Output.create(codeartifact).apply(
 		({ domain, repository }) => {
 			const repositoryOutput = Output.create(
-				Object.fromEntries(
-					Object.entries(repository).map(([key, value]) => [
+				objectFromEntries(
+					objectEntries(repository).map(([key, value]) => [
 						key,
 						all([
 							value.arn,

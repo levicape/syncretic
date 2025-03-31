@@ -1,6 +1,6 @@
 import VError from "verror";
 
-export type CodeBuildBuildspecVersion = "0.2";
+export type CodeBuildBuildspecVersion = 0.2;
 export type CodeBuildBuildSpecStringBoolean = "yes" | "no";
 
 export type CodeBuildBuildspecResourceLambdaPhaseSpec = {
@@ -405,7 +405,7 @@ export class CodeBuildBuildspecBuilder {
 	} = {};
 
 	constructor() {
-		this._version = "0.2";
+		this._version = 0.2;
 	}
 
 	setVersion(version: CodeBuildBuildspecVersion) {

@@ -1,10 +1,10 @@
 import { z } from "zod";
 
-export const FourtwoIdentityOidcStackrefRoot = "identity-oidc";
+export const FourtwoIdpOidcStackrefRoot = "idp-oidc";
 
-export const FourtwoIdentityOidcStackExportsZod = z
+export const FourtwoIdpOidcStackExportsZod = z
 	.object({
-		fourtwo_identity_oidc_cognito: z.object({
+		fourtwo_idp_oidc_cognito: z.object({
 			pool: z.object({
 				arn: z.string(),
 				identityPoolName: z.string(),

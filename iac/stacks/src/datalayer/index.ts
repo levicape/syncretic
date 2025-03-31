@@ -346,8 +346,6 @@ export = async () => {
 									"events.amazonaws.com",
 									"lambda.amazonaws.com",
 									"servicediscovery.amazonaws.com",
-									"sns.amazonaws.com",
-									"sqs.amazonaws.com",
 								],
 							},
 							Action: "sts:AssumeRole",
