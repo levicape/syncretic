@@ -9,8 +9,8 @@ packages:
   - realms/*/*
 catalog:
   '@levicape/paloma': 0.3.7-main.16
-  '@levicape/spork': 0.9.2-main.6
-  '@levicape/spork-atlas': 0.9.2-main.6
+  '@levicape/spork': 0.10.0-main.7
+  '@levicape/spork-atlas': 0.10.0-main.7
 catalogs:
   aws:
     '@aws/codecatalyst-workflows-sdk': ^0.1.5-preview.6
@@ -41,6 +41,8 @@ catalogs:
     crypto-js: ^4.2.0
     crypto.js: ^3.2.2
     jsonwebtoken: ^9.0.2
+  crypto-jwk:
+    jose: "^6.0.10"
   database-postgres:
     pg: ^8.13.1
   database-sql:
@@ -49,6 +51,8 @@ catalogs:
     slonik: ^46.4.0
   database-sqlite:
     better-sqlite3: ^11.9.1
+  database-unstorage:
+    unstorage: "^1.15.0"
   data-column-arrow:
     '@apache-arrow/esnext-esm': ^19.0.0
     '@apache-arrow/ts': ^19.0.0
@@ -230,8 +234,9 @@ catalogs:
     '@conform-to/react': ^1.2.2
     '@uidotdev/usehooks': ^2.4.1
     ahooks: ^3.8.1
-    react: ^19
-    react-dom: ^19
+    react: ^19.1.0
+    react-dom: ^19.1.0
+    react-error-boundary: ^5.0.0
     react-is: ^18.3.1
     react-keyed-flatten-children: ^3.0.2
   web-react-router:

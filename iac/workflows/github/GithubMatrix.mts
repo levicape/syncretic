@@ -4,10 +4,10 @@ import type {
 	GithubWorkflowExpressions,
 } from "@levicape/fourtwo/github";
 
-const ENVIRONMENT = "elm_pst_4";
+const ENVIRONMENT = "sage";
 export const GITHUB_CI_MATRIX = [
 	{
-		name: `${ENVIRONMENT} Dispatch: Preview, Deploy, Push`,
+		name: `Dispatch: Preview, Deploy, Push`,
 		region: "us-west-2",
 		triggers: {
 			workflow_dispatch: {},
@@ -18,7 +18,7 @@ export const GITHUB_CI_MATRIX = [
 				boolean
 			>["pipeline"]["install"],
 			environment: {
-				name: ENVIRONMENT,
+				name: "${{ vars.CI_ENVIRONMENT }}",
 			},
 			preview: true as const,
 			deploy: true as const,
@@ -26,30 +26,7 @@ export const GITHUB_CI_MATRIX = [
 		},
 	},
 	{
-		name: `${ENVIRONMENT} on Schedule: Preview, Deploy`,
-		region: "us-west-2",
-		triggers: {
-			schedule: [
-				{
-					cron: "0 0 * * *",
-				},
-			],
-		} satisfies GithubOn,
-		pipeline: {
-			install: undefined as unknown as GithubWorkflowProps<
-				boolean,
-				boolean
-			>["pipeline"]["install"],
-			environment: {
-				name: ENVIRONMENT,
-			},
-			preview: true as const,
-			deploy: true as const,
-			push: false as const,
-		},
-	},
-	{
-		name: `${ENVIRONMENT} Dispatch: Preview`,
+		name: `Dispatch: Delete`,
 		region: "us-west-2",
 		triggers: {
 			workflow_dispatch: {},
@@ -60,31 +37,81 @@ export const GITHUB_CI_MATRIX = [
 				boolean
 			>["pipeline"]["install"],
 			environment: {
-				name: ENVIRONMENT,
+				name: "${{ vars.CI_ENVIRONMENT }}",
 			},
-			preview: true as const,
-			deploy: false as const,
-			push: false as const,
-		},
-	},
-	{
-		name: `${ENVIRONMENT} Dispatch: Delete`,
-		region: "us-west-2",
-		triggers: {
-			workflow_dispatch: {},
-		} satisfies GithubOn,
-		pipeline: {
-			install: undefined as unknown as GithubWorkflowProps<
-				boolean,
-				boolean
-			>["pipeline"]["install"],
-			environment: {
-				name: ENVIRONMENT,
-			},
+			// 		approval: true as const,
 			preview: true as const,
 			delete: true as const,
 		},
 	},
+	// {
+	// 	name: `on Push: Preview, Deploy`,
+	// 	region: "us-west-2",
+	// 	triggers: {
+	// 		workflow_dispatch: {},
+	// 	} satisfies GithubOn,
+	// 	pipeline: {
+	// 		install: undefined as unknown as GithubWorkflowProps<
+	// 			boolean,
+	// 			boolean
+	// 		>["pipeline"]["install"],
+	// 		environment: {
+	// 			name: ENVIRONMENT,
+	// 		},
+	//		approval: true as const,
+	// 		preview: true as const,
+	// 		deploy: true as const,
+	// 		push: true as const,
+	// 	},
+	// },
+	// {
+	// 	name: `on Pull Request: Preview`,
+	// 	region: "us-west-2",
+	// 	triggers: {
+	// 		schedule: [
+	// 			{
+	// 				cron: "0 0 * * *",
+	// 			},
+	// 		],
+	// 	} satisfies GithubOn,
+	// 	pipeline: {
+	// 		install: undefined as unknown as GithubWorkflowProps<
+	// 			boolean,
+	// 			boolean
+	// 		>["pipeline"]["install"],
+	// 		environment: {
+	// 			name: ENVIRONMENT,
+	// 		},
+	// 		approval: true as const,
+	// 		preview: true as const,
+	// 		deploy: false as const,
+	// 		push: false as const,
+	// 	},
+	// },
+	// {
+	// 	name: `on Schedule: Preview`,
+	// 	region: "us-west-2",
+	// 	triggers: {
+	// 		schedule: [
+	// 			{
+	// 				cron: "0 0 * * *",
+	// 			},
+	// 		],
+	// 	} satisfies GithubOn,
+	// 	pipeline: {
+	// 		install: undefined as unknown as GithubWorkflowProps<
+	// 			boolean,
+	// 			boolean
+	// 		>["pipeline"]["install"],
+	// 		environment: {
+	// 			// Matrix
+	// 			name: ENVIRONMENT,
+	// 		},
+	// 		preview: true as const,
+	// 		deploy: false as const,
+	// 		push: false as const,
+	// 	},
+	// },
 ].map((ci) => {
 	ci.pipeline.install = {
 		npm: {

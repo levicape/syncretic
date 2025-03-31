@@ -453,7 +453,7 @@ const cicd = <Preview extends boolean, Deploy extends boolean>(
 														...PULUMI_ENVIRONMENT,
 														register("APPLICATION_IMAGE_NAME", APPLICATION),
 														register(
-															"CI_ENVIRONMENT",
+															"APPLICATION_ENVIRONMENT",
 															matrix.pipeline.environment.name,
 														),
 													],
@@ -696,7 +696,7 @@ const cicd = <Preview extends boolean, Deploy extends boolean>(
 														register("APPLICATION_IMAGE_NAME", APPLICATION),
 														register("AWS_REGION", matrix.region),
 														register(
-															"CI_ENVIRONMENT",
+															"APPLICATION_ENVIRONMENT",
 															matrix.pipeline.environment.name,
 														),
 													],
@@ -781,7 +781,7 @@ const cicd = <Preview extends boolean, Deploy extends boolean>(
 														/>
 														{...[
 															`git-${_$_("WorkflowSource.CommitId")}`,
-															"$CI_ENVIRONMENT",
+															"$APPLICATION_ENVIRONMENT",
 														].map((tag) => (
 															<>
 																<CodeCatalystStepX run={`echo ${tag}`} />

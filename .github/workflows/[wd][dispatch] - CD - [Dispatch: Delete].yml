@@ -1,0 +1,1485 @@
+########################################
+# THIS FILE WAS AUTOMATICALLY GENERATED, DO NOT MODIFY
+########################################
+name: "Dispatch: Delete"
+on:
+  workflow_dispatch:
+    {}
+env:
+  NPM_REGISTRY_PROTOCOL_LEVICAPE: https
+  NPM_REGISTRY_HOST_LEVICAPE: npm.pkg.github.com
+  NPM_TOKEN_LEVICAPE: ${{ secrets.LEVICAPE_NPM_TOKEN }}
+  NPM_DEFAULT: ${{ vars.NPM_MIRROR }}
+  LEVICAPE_REGISTRY_HOST: npm.pkg.github.com/
+  LEVICAPE_REGISTRY: https://npm.pkg.github.com
+  LEVICAPE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  NODE_NO_WARNINGS: "1"
+  NPM_CONFIG_UPDATE_NOTIFIER: "false"
+  FRONTEND_HOSTNAME: na.levicape.cloud
+  PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
+  APPLICATION_IMAGE_NAME: fourtwo
+  APPLICATION_STACKREF_ROOT: ${{ vars.STACK_ROOT }}
+  APPLICATION_ENVIRONMENT: ${{ vars.CI_ENVIRONMENT }}
+  AWS_PAGER: ""
+  AWS_REGION: us-west-2
+  AWS_PROFILE: ${{ vars.CI_ENVIRONMENT }}
+  PULUMI_STACK_FILTER: ${{ vars.STACK_FILTER }}
+  DOCKER_NO_IMAGE: ${{ vars.NO_IMAGE }}
+jobs:
+  delete:
+    name: Delete Pulumi Stacks
+    runs-on: act-darwin-a64-atoko
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+      - name: Setup Node 22.13.0
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.13.0
+          registry-url: ${{ env.NPM_REGISTRY_PROTOCOL_LEVICAPE }}://${{ env.NPM_REGISTRY_HOST_LEVICAPE }}
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+          scope: "@levicape"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - id: cache-npm
+        name: Cache node modules
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-build-npm-node-modules-${{ hashFiles('**/pnpm-lock.json') }}
+          restore-keys: ${{ runner.os }}-build-npm-node-modules-
+      - name: Get pnpm store directory
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV;
+      - id: cache-pnpm-store
+        name: Cache pnpm files
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.json') }}
+          restore-keys: ${{ runner.os }}-pnpm-store-
+      - name: Verify PULUMI_CONFIG_PASSPHRASE
+        run: if [ -z "$PULUMI_CONFIG_PASSPHRASE" ]; then echo "❌❓PULUMI_CONFIG_PASSPHRASE is empty. Stopping workflow.❓"; exit 1; fi;
+      - name: Verify APPLICATION_STACKREF_ROOT
+        run: if [ -z "$APPLICATION_STACKREF_ROOT" ]; then echo "❌❓APPLICATION_STACKREF_ROOT is empty. Stopping workflow.❓"; exit 1; fi;
+      - name: Verify APPLICATION_ENVIRONMENT
+        run: if [ -z "$APPLICATION_ENVIRONMENT" ]; then echo "❌❓APPLICATION_ENVIRONMENT is empty. Stopping workflow.❓"; exit 1; fi;
+      - name: Set NPM Registry to Verdaccio:31313 or NPM_MIRROR
+        run: pnpm set registry ${NPM_DEFAULT:-http://localhost:31313};
+      - if: ${{ steps.cache-npm.outputs.cache-hit != 'true' }}
+        name: List Dependencies
+        continue-on-error: true
+        run: pnpm list;
+      - name: Install Dependencies
+        run: pnpm install;
+      - name: Build image
+        run: |-
+          if [ -z "$DOCKER_NO_IMAGE" ]; then 
+          													pnpm exec nx pack:build iac-images-application --verbose; 
+          												fi;
+      - name: Verify AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Setup Pulumi state backend
+        run: |-
+          echo "🔐🛎️Retriving AWS credentials with pnpm dx:cli:bin aws in 🗺️$AWS_REGION";
+          pnpm dx:cli:bin;
+          STRUCTURED_LOGGING=quiet pnpm dx:cli:bin aws pulumi ci --region $AWS_REGION > .pulumi-ci;
+      - name: Display Pulumi CI output
+        run: cat .pulumi-ci;
+      - name: Extract exports from Pulumi CI
+        run: cat .pulumi-ci | grep "export" > .export-cd;
+      - name: Load environment variables
+        run: cat .export-cd;
+      - name: Create Pulumi Helper Functions
+        run: |-
+          cat > .pulumi-helper.sh << 'EOF'
+          configure_stack() {
+            local step="$1"
+            local stack_name="$2"
+            local stack_cwd="$3"
+            local project="$4"
+            local output="$5"
+
+            echo "✏️🏷️ Overwriting Pulumi.yaml"
+            echo "${step}: Stack: ${stack_name}. CWD: ${stack_cwd}. Output: ${output}."
+            echo "name: ${project}" >> "${stack_cwd}/Pulumi.yaml"
+            cat "${stack_cwd}"/Pulumi.{yaml,"*".yaml} || true
+          }
+
+          setup_stack() {
+            local stack_name="$1"
+            local stack_cwd="$2"
+            
+            echo "🪆🧾Setting up stack: ${stack_name}. CWD: ${stack_cwd}."
+            for cmd in init select; do
+              pulumi stack ${cmd} ${stack_name} -C ${stack_cwd} || true
+            done
+          }
+
+          configure_stack_settings() {
+            local stack_cwd="$1"
+            local configs="$2"
+            
+            echo "⚙️Configuring stack settings ${stack_cwd}"
+            
+            while IFS= read -r line; do
+              if [[ -n "$line" ]]; then
+                key="${line%%=*}"
+                value="${line#*=}"
+                
+                # Expand variables in value
+                eval "value="$value""
+                
+                if [[ -n "$key" && -n "$value" ]]; then
+                  echo "📡Setting $key to 💡$value"
+                  pulumi config set --path "$key" "$value" -C "$stack_cwd"
+                fi
+              fi
+            done <<< "$configs"
+          }
+
+          refresh_and_preview() {
+            local message="$1"
+            local stack_cwd="$2"
+            shift 2
+            local default_args="$@"
+
+            check_root || return true;
+
+            echo "🚦 Refreshing ${stack_cwd} at ${message}"
+            echo "💡Default args: ${default_args}"
+            pulumi refresh --yes --skip-preview --clear-pending-creates --message "${message}-refresh" -C "${stack_cwd}" ${default_args}
+            pulumi preview --show-replacement-steps --message "${message}-preview" -C "${stack_cwd}" ${default_args} || true
+          }
+
+          deploy_stack() {
+            local message="$1"
+            local stack_cwd="$2"
+            shift 2
+            local default_args="$@"
+
+            check_root || return true;
+
+            echo "🛫 Deploying ${stack_cwd} at ${message}"
+            echo "💡Default args: ${default_args}"
+            pulumi up --yes --message "${message}-up" -C "${stack_cwd}" ${default_args}
+          }
+
+          remove_stack() {
+            local message="$1"
+            local stack_cwd="$2"
+            shift 2
+            local default_args="$@"
+
+            check_root || return true;
+
+            echo "🦺 Deleting ${stack_cwd} at ${message}"
+            echo "💡Default args: ${default_args}"
+            pulumi down --yes --message "${message}-down" -C "${stack_cwd}" ${default_args}
+          }
+
+          capture_outputs() {
+            local stack_cwd="$1"
+            local output="$2"
+
+            echo "🧲Capturing ${stack_cwd} outputs in ${output}.sh"
+            pulumi stack output -C "${stack_cwd}" --json > "$(pwd)/${output}.json"
+            cat "${output}.json"
+            pulumi stack output -C "${stack_cwd}" --shell > "$(pwd)/${output}.sh"
+            cat "${output}.sh"
+            ls _pulumi
+            chmod +x "$(pwd)/${output}.sh"
+            echo "🎼Outputs captured in ${output}.sh"
+          }
+
+          set_root() {
+            local only_root="$1"
+            echo "✴️"
+            echo "Configuring STACKREF_ROOT:"
+            echo "APPLICATION_IMAGE_NAME: ${APPLICATION_IMAGE_NAME}"
+            echo "APPLICATION_STACKREF_ROOT: ${APPLICATION_STACKREF_ROOT}"
+            echo "Current stack only deployed to application root: ${only_root}"
+
+            export STACKREF_ROOT="${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}"
+
+            echo "🤍🤍"
+            echo "Pulumi resolved stackref root: "
+            echo "STACKREF_ROOT: ${STACKREF_ROOT}"
+            echo "🤍🤍"
+
+          	if [[ "${only_root}" == "true" ]]; then
+          		if [[ "${APPLICATION_IMAGE_NAME}" == "${STACKREF_ROOT}" ]]; then
+              		echo "🆗🚀Stackref is compatible, setting PULUMI_NO_DEPLOYMENT=false"
+              		export PULUMI_NO_DEPLOYMENT=false
+          		else
+          			echo "🆗💤Not in application root stack, skipping deployment with PULUMI_NO_DEPLOYMENT=true"
+          			export PULUMI_NO_DEPLOYMENT=true									
+          		fi
+          	else
+          		echo "🚀🚀Stack not application-only, setting PULUMI_NO_DEPLOYMENT=false"
+          		export PULUMI_NO_DEPLOYMENT=false
+          	fi
+            echo "✴️"
+          }
+
+          check_root() {
+            if [ "${PULUMI_NO_DEPLOYMENT}" = "true" ]; then
+              echo "💤💤Skipping deployment"
+              return 1
+            else
+              echo "🔰🔰Proceeding with deployment"
+              return 0
+            fi
+          }
+          EOF
+          chmod +x .pulumi-helper.sh
+          source .pulumi-helper.sh;
+      - name: Deploy fourtwo stacks
+        run: |-
+          mkdir -p _pulumi;
+          source .export-cd;
+          pnpm build:tsc;
+          pnpm -C packages/builders build:tsc;
+          pnpm -C packages/pulumi build:tsc;
+          source .pulumi-helper.sh;
+          echo ".📁";
+          echo "...📁";
+          echo "Processing 💾${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-wwwroot.${{ vars.CI_ENVIRONMENT }}";
+          echo "⚗️PULUMI_STACK_FILTER: $PULUMI_STACK_FILTER";
+          echo "💡PULUMI_STACK_CWD: $(pwd)/iac/stacks/src/levicape/panel/wwwroot";
+          echo "🐤PULUMI_STACK_NAME: ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-wwwroot.${{ vars.CI_ENVIRONMENT }}";
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-wwwroot" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-wwwroot matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-wwwroot,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-wwwroot found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-wwwroot not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && set_root "false";
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-wwwroot" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-wwwroot matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-wwwroot,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-wwwroot found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-wwwroot not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && configure_stack "Delete" "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-wwwroot.${{ vars.CI_ENVIRONMENT }}" "$(pwd)/iac/stacks/src/levicape/panel/wwwroot" "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-wwwroot" "_pulumi/levicape_panel_wwwroot";
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-wwwroot" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-wwwroot matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-wwwroot,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-wwwroot found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-wwwroot not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && setup_stack "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-wwwroot.${{ vars.CI_ENVIRONMENT }}" "$(pwd)/iac/stacks/src/levicape/panel/wwwroot";
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-wwwroot" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-wwwroot matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-wwwroot,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-wwwroot found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-wwwroot not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && configure_stack_settings "$(pwd)/iac/stacks/src/levicape/panel/wwwroot" 'aws:skipMetadataApiCheck=false
+          context:stack.environment.isProd=false
+          context:stack.environment.features=aws
+          frontend:stack.dns.hostnames[0]=${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}.${{ vars.CI_ENVIRONMENT }}.$FRONTEND_HOSTNAME';
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-wwwroot" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-wwwroot matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-wwwroot,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-wwwroot found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-wwwroot not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && remove_stack "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/levicape/panel/wwwroot" --non-interactive --suppress-progress --diff --json;
+          echo "Stack 💾${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-wwwroot.${{ vars.CI_ENVIRONMENT }} processed";
+          echo "...📂";
+          echo ".📂";
+          echo ".📁";
+          echo "...📁";
+          echo "Processing 💾${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-monitor.${{ vars.CI_ENVIRONMENT }}";
+          echo "⚗️PULUMI_STACK_FILTER: $PULUMI_STACK_FILTER";
+          echo "💡PULUMI_STACK_CWD: $(pwd)/iac/stacks/src/levicape/panel/monitor";
+          echo "🐤PULUMI_STACK_NAME: ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-monitor.${{ vars.CI_ENVIRONMENT }}";
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-monitor" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-monitor matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-monitor,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-monitor found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-monitor not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && set_root "false";
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-monitor" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-monitor matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-monitor,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-monitor found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-monitor not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && configure_stack "Delete" "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-monitor.${{ vars.CI_ENVIRONMENT }}" "$(pwd)/iac/stacks/src/levicape/panel/monitor" "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-monitor" "_pulumi/levicape_panel_monitor";
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-monitor" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-monitor matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-monitor,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-monitor found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-monitor not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && setup_stack "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-monitor.${{ vars.CI_ENVIRONMENT }}" "$(pwd)/iac/stacks/src/levicape/panel/monitor";
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-monitor" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-monitor matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-monitor,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-monitor found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-monitor not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && configure_stack_settings "$(pwd)/iac/stacks/src/levicape/panel/monitor" 'aws:skipMetadataApiCheck=false
+          context:stack.environment.isProd=false
+          context:stack.environment.features=aws
+          frontend:stack.dns.hostnames[0]=${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}.${{ vars.CI_ENVIRONMENT }}.$FRONTEND_HOSTNAME';
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-monitor" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-monitor matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-monitor,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-monitor found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-monitor not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && remove_stack "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/levicape/panel/monitor" --non-interactive --suppress-progress --diff --json;
+          echo "Stack 💾${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-monitor.${{ vars.CI_ENVIRONMENT }} processed";
+          echo "...📂";
+          echo ".📂";
+          echo ".📁";
+          echo "...📁";
+          echo "Processing 💾${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-web.${{ vars.CI_ENVIRONMENT }}";
+          echo "⚗️PULUMI_STACK_FILTER: $PULUMI_STACK_FILTER";
+          echo "💡PULUMI_STACK_CWD: $(pwd)/iac/stacks/src/levicape/panel/web";
+          echo "🐤PULUMI_STACK_NAME: ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-web.${{ vars.CI_ENVIRONMENT }}";
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-web" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-web matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-web,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-web found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-web not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && set_root "false";
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-web" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-web matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-web,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-web found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-web not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && configure_stack "Delete" "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-web.${{ vars.CI_ENVIRONMENT }}" "$(pwd)/iac/stacks/src/levicape/panel/web" "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-web" "_pulumi/levicape_panel_web";
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-web" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-web matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-web,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-web found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-web not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && setup_stack "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-web.${{ vars.CI_ENVIRONMENT }}" "$(pwd)/iac/stacks/src/levicape/panel/web";
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-web" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-web matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-web,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-web found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-web not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && configure_stack_settings "$(pwd)/iac/stacks/src/levicape/panel/web" 'aws:skipMetadataApiCheck=false
+          context:stack.environment.isProd=false
+          context:stack.environment.features=aws
+          frontend:stack.dns.hostnames[0]=${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}.${{ vars.CI_ENVIRONMENT }}.$FRONTEND_HOSTNAME';
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-web" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-web matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-web,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-web found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-web not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && remove_stack "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/levicape/panel/web" --non-interactive --suppress-progress --diff --json;
+          echo "Stack 💾${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-web.${{ vars.CI_ENVIRONMENT }} processed";
+          echo "...📂";
+          echo ".📂";
+          echo ".📁";
+          echo "...📁";
+          echo "Processing 💾${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-http.${{ vars.CI_ENVIRONMENT }}";
+          echo "⚗️PULUMI_STACK_FILTER: $PULUMI_STACK_FILTER";
+          echo "💡PULUMI_STACK_CWD: $(pwd)/iac/stacks/src/levicape/panel/http";
+          echo "🐤PULUMI_STACK_NAME: ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-http.${{ vars.CI_ENVIRONMENT }}";
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-http" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-http matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-http,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-http found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-http not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && set_root "false";
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-http" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-http matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-http,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-http found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-http not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && configure_stack "Delete" "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-http.${{ vars.CI_ENVIRONMENT }}" "$(pwd)/iac/stacks/src/levicape/panel/http" "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-http" "_pulumi/levicape_panel_http";
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-http" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-http matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-http,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-http found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-http not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && setup_stack "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-http.${{ vars.CI_ENVIRONMENT }}" "$(pwd)/iac/stacks/src/levicape/panel/http";
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-http" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-http matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-http,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-http found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-http not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && configure_stack_settings "$(pwd)/iac/stacks/src/levicape/panel/http" 'aws:skipMetadataApiCheck=false
+          context:stack.environment.isProd=false
+          context:stack.environment.features=aws
+          frontend:stack.dns.hostnames[0]=${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}.${{ vars.CI_ENVIRONMENT }}.$FRONTEND_HOSTNAME';
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-http" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-http matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-http,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-http found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-http not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && remove_stack "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/levicape/panel/http" --non-interactive --suppress-progress --diff --json;
+          echo "Stack 💾${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-http.${{ vars.CI_ENVIRONMENT }} processed";
+          echo "...📂";
+          echo ".📂";
+          echo ".📁";
+          echo "...📁";
+          echo "Processing 💾${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-client.${{ vars.CI_ENVIRONMENT }}";
+          echo "⚗️PULUMI_STACK_FILTER: $PULUMI_STACK_FILTER";
+          echo "💡PULUMI_STACK_CWD: $(pwd)/iac/stacks/src/levicape/panel/client";
+          echo "🐤PULUMI_STACK_NAME: ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-client.${{ vars.CI_ENVIRONMENT }}";
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-client" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-client matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-client,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-client found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-client not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && set_root "false";
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-client" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-client matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-client,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-client found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-client not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && configure_stack "Delete" "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-client.${{ vars.CI_ENVIRONMENT }}" "$(pwd)/iac/stacks/src/levicape/panel/client" "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-client" "_pulumi/levicape_panel_client";
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-client" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-client matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-client,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-client found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-client not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && setup_stack "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-client.${{ vars.CI_ENVIRONMENT }}" "$(pwd)/iac/stacks/src/levicape/panel/client";
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-client" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-client matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-client,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-client found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-client not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && configure_stack_settings "$(pwd)/iac/stacks/src/levicape/panel/client" 'aws:skipMetadataApiCheck=false
+          context:stack.environment.isProd=false
+          context:stack.environment.features=aws
+          frontend:stack.dns.hostnames[0]=${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}.${{ vars.CI_ENVIRONMENT }}.$FRONTEND_HOSTNAME';
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-client" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-client matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-client,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-client found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-client not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && remove_stack "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/levicape/panel/client" --non-interactive --suppress-progress --diff --json;
+          echo "Stack 💾${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-client.${{ vars.CI_ENVIRONMENT }} processed";
+          echo "...📂";
+          echo ".📂";
+          echo ".📁";
+          echo "...📁";
+          echo "Processing 💾${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-channels.${{ vars.CI_ENVIRONMENT }}";
+          echo "⚗️PULUMI_STACK_FILTER: $PULUMI_STACK_FILTER";
+          echo "💡PULUMI_STACK_CWD: $(pwd)/iac/stacks/src/levicape/panel/channels";
+          echo "🐤PULUMI_STACK_NAME: ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-channels.${{ vars.CI_ENVIRONMENT }}";
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-channels" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-channels matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-channels,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-channels found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-channels not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && set_root "false";
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-channels" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-channels matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-channels,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-channels found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-channels not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && configure_stack "Delete" "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-channels.${{ vars.CI_ENVIRONMENT }}" "$(pwd)/iac/stacks/src/levicape/panel/channels" "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-channels" "_pulumi/levicape_panel_channels";
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-channels" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-channels matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-channels,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-channels found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-channels not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && setup_stack "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-channels.${{ vars.CI_ENVIRONMENT }}" "$(pwd)/iac/stacks/src/levicape/panel/channels";
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-channels" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-channels matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-channels,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-channels found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-channels not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && configure_stack_settings "$(pwd)/iac/stacks/src/levicape/panel/channels" 'aws:skipMetadataApiCheck=false
+          context:stack.environment.isProd=false
+          context:stack.environment.features=aws
+          frontend:stack.dns.hostnames[0]=${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}.${{ vars.CI_ENVIRONMENT }}.$FRONTEND_HOSTNAME';
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-channels" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-channels matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-channels,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-channels found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-channels not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && remove_stack "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/levicape/panel/channels" --non-interactive --suppress-progress --diff --json;
+          echo "Stack 💾${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-panel-channels.${{ vars.CI_ENVIRONMENT }} processed";
+          echo "...📂";
+          echo ".📂";
+          echo ".📁";
+          echo "...📁";
+          echo "Processing 💾${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-users.${{ vars.CI_ENVIRONMENT }}";
+          echo "⚗️PULUMI_STACK_FILTER: $PULUMI_STACK_FILTER";
+          echo "💡PULUMI_STACK_CWD: $(pwd)/iac/stacks/src/idp/users";
+          echo "🐤PULUMI_STACK_NAME: ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-users.${{ vars.CI_ENVIRONMENT }}";
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-users" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-users matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-users,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-users found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-users not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && set_root "true";
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-users" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-users matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-users,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-users found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-users not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && configure_stack "Delete" "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-users.${{ vars.CI_ENVIRONMENT }}" "$(pwd)/iac/stacks/src/idp/users" "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-users" "_pulumi/idp_users";
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-users" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-users matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-users,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-users found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-users not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && setup_stack "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-users.${{ vars.CI_ENVIRONMENT }}" "$(pwd)/iac/stacks/src/idp/users";
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-users" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-users matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-users,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-users found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-users not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && configure_stack_settings "$(pwd)/iac/stacks/src/idp/users" 'aws:skipMetadataApiCheck=false
+          context:stack.environment.isProd=false
+          context:stack.environment.features=aws
+          frontend:stack.dns.hostnames[0]=${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}.${{ vars.CI_ENVIRONMENT }}.$FRONTEND_HOSTNAME';
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-users" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-users matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-users,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-users found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-users not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && remove_stack "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/idp/users" --non-interactive --suppress-progress --diff --json;
+          echo "Stack 💾${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-users.${{ vars.CI_ENVIRONMENT }} processed";
+          echo "...📂";
+          echo ".📂";
+          echo ".📁";
+          echo "...📁";
+          echo "Processing 💾${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-oidc.${{ vars.CI_ENVIRONMENT }}";
+          echo "⚗️PULUMI_STACK_FILTER: $PULUMI_STACK_FILTER";
+          echo "💡PULUMI_STACK_CWD: $(pwd)/iac/stacks/src/idp/oidc";
+          echo "🐤PULUMI_STACK_NAME: ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-oidc.${{ vars.CI_ENVIRONMENT }}";
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-oidc" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-oidc matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-oidc,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-oidc found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-oidc not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && set_root "true";
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-oidc" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-oidc matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-oidc,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-oidc found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-oidc not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && configure_stack "Delete" "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-oidc.${{ vars.CI_ENVIRONMENT }}" "$(pwd)/iac/stacks/src/idp/oidc" "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-oidc" "_pulumi/idp_oidc";
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-oidc" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-oidc matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-oidc,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-oidc found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-oidc not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && setup_stack "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-oidc.${{ vars.CI_ENVIRONMENT }}" "$(pwd)/iac/stacks/src/idp/oidc";
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-oidc" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-oidc matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-oidc,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-oidc found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-oidc not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && configure_stack_settings "$(pwd)/iac/stacks/src/idp/oidc" 'aws:skipMetadataApiCheck=false
+          context:stack.environment.isProd=false
+          context:stack.environment.features=aws
+          frontend:stack.dns.hostnames[0]=${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}.${{ vars.CI_ENVIRONMENT }}.$FRONTEND_HOSTNAME';
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-oidc" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-oidc matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-oidc,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-oidc found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-oidc not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && remove_stack "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/idp/oidc" --non-interactive --suppress-progress --diff --json;
+          echo "Stack 💾${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-idp-oidc.${{ vars.CI_ENVIRONMENT }} processed";
+          echo "...📂";
+          echo ".📂";
+          echo ".📁";
+          echo "...📁";
+          echo "Processing 💾${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-dns-root.${{ vars.CI_ENVIRONMENT }}";
+          echo "⚗️PULUMI_STACK_FILTER: $PULUMI_STACK_FILTER";
+          echo "💡PULUMI_STACK_CWD: $(pwd)/iac/stacks/src/dns/root";
+          echo "🐤PULUMI_STACK_NAME: ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-dns-root.${{ vars.CI_ENVIRONMENT }}";
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-dns-root" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-dns-root matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-dns-root,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-dns-root found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-dns-root not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && set_root "true";
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-dns-root" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-dns-root matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-dns-root,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-dns-root found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-dns-root not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && configure_stack "Delete" "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-dns-root.${{ vars.CI_ENVIRONMENT }}" "$(pwd)/iac/stacks/src/dns/root" "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-dns-root" "_pulumi/dns_root";
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-dns-root" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-dns-root matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-dns-root,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-dns-root found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-dns-root not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && setup_stack "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-dns-root.${{ vars.CI_ENVIRONMENT }}" "$(pwd)/iac/stacks/src/dns/root";
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-dns-root" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-dns-root matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-dns-root,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-dns-root found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-dns-root not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && configure_stack_settings "$(pwd)/iac/stacks/src/dns/root" 'aws:skipMetadataApiCheck=false
+          context:stack.environment.isProd=false
+          context:stack.environment.features=aws
+          frontend:stack.dns.hostnames[0]=${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}.${{ vars.CI_ENVIRONMENT }}.$FRONTEND_HOSTNAME';
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-dns-root" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-dns-root matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-dns-root,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-dns-root found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-dns-root not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && remove_stack "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/dns/root" --non-interactive --suppress-progress --diff --json;
+          echo "Stack 💾${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-dns-root.${{ vars.CI_ENVIRONMENT }} processed";
+          echo "...📂";
+          echo ".📂";
+          echo ".📁";
+          echo "...📁";
+          echo "Processing 💾${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-datalayer.${{ vars.CI_ENVIRONMENT }}";
+          echo "⚗️PULUMI_STACK_FILTER: $PULUMI_STACK_FILTER";
+          echo "💡PULUMI_STACK_CWD: $(pwd)/iac/stacks/src/datalayer";
+          echo "🐤PULUMI_STACK_NAME: ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-datalayer.${{ vars.CI_ENVIRONMENT }}";
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-datalayer" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-datalayer matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-datalayer,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-datalayer found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-datalayer not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && set_root "true";
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-datalayer" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-datalayer matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-datalayer,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-datalayer found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-datalayer not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && configure_stack "Delete" "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-datalayer.${{ vars.CI_ENVIRONMENT }}" "$(pwd)/iac/stacks/src/datalayer" "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-datalayer" "_pulumi/datalayer";
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-datalayer" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-datalayer matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-datalayer,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-datalayer found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-datalayer not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && setup_stack "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-datalayer.${{ vars.CI_ENVIRONMENT }}" "$(pwd)/iac/stacks/src/datalayer";
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-datalayer" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-datalayer matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-datalayer,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-datalayer found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-datalayer not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && configure_stack_settings "$(pwd)/iac/stacks/src/datalayer" 'aws:skipMetadataApiCheck=false
+          context:stack.environment.isProd=false
+          context:stack.environment.features=aws
+          frontend:stack.dns.hostnames[0]=${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}.${{ vars.CI_ENVIRONMENT }}.$FRONTEND_HOSTNAME';
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-datalayer" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-datalayer matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-datalayer,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-datalayer found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-datalayer not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && remove_stack "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/datalayer" --non-interactive --suppress-progress --diff --json;
+          echo "Stack 💾${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-datalayer.${{ vars.CI_ENVIRONMENT }} processed";
+          echo "...📂";
+          echo ".📂";
+          echo ".📁";
+          echo "...📁";
+          echo "Processing 💾${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-codestar.${{ vars.CI_ENVIRONMENT }}";
+          echo "⚗️PULUMI_STACK_FILTER: $PULUMI_STACK_FILTER";
+          echo "💡PULUMI_STACK_CWD: $(pwd)/iac/stacks/src/codestar";
+          echo "🐤PULUMI_STACK_NAME: ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-codestar.${{ vars.CI_ENVIRONMENT }}";
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-codestar" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-codestar matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-codestar,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-codestar found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-codestar not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && set_root "true";
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-codestar" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-codestar matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-codestar,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-codestar found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-codestar not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && configure_stack "Delete" "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-codestar.${{ vars.CI_ENVIRONMENT }}" "$(pwd)/iac/stacks/src/codestar" "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-codestar" "_pulumi/codestar";
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-codestar" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-codestar matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-codestar,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-codestar found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-codestar not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && setup_stack "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-codestar.${{ vars.CI_ENVIRONMENT }}" "$(pwd)/iac/stacks/src/codestar";
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-codestar" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-codestar matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-codestar,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-codestar found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-codestar not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && configure_stack_settings "$(pwd)/iac/stacks/src/codestar" 'aws:skipMetadataApiCheck=false
+          context:stack.environment.isProd=false
+          context:stack.environment.features=aws
+          frontend:stack.dns.hostnames[0]=${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}.${{ vars.CI_ENVIRONMENT }}.$FRONTEND_HOSTNAME';
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-codestar" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-codestar matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-codestar,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-codestar found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-codestar not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && remove_stack "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/codestar" --non-interactive --suppress-progress --diff --json;
+          echo "Stack 💾${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-codestar.${{ vars.CI_ENVIRONMENT }} processed";
+          echo "...📂";
+          echo ".📂";
+          echo ".📁";
+          echo "...📁";
+          echo "Processing 💾${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-application.${{ vars.CI_ENVIRONMENT }}";
+          echo "⚗️PULUMI_STACK_FILTER: $PULUMI_STACK_FILTER";
+          echo "💡PULUMI_STACK_CWD: $(pwd)/iac/stacks/src/application";
+          echo "🐤PULUMI_STACK_NAME: ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-application.${{ vars.CI_ENVIRONMENT }}";
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-application" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-application matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-application,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-application found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-application not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && set_root "true";
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-application" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-application matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-application,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-application found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-application not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && configure_stack "Delete" "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-application.${{ vars.CI_ENVIRONMENT }}" "$(pwd)/iac/stacks/src/application" "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-application" "_pulumi/application";
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-application" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-application matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-application,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-application found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-application not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && setup_stack "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-application.${{ vars.CI_ENVIRONMENT }}" "$(pwd)/iac/stacks/src/application";
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-application" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-application matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-application,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-application found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-application not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && configure_stack_settings "$(pwd)/iac/stacks/src/application" 'aws:skipMetadataApiCheck=false
+          context:stack.environment.isProd=false
+          context:stack.environment.features=aws
+          frontend:stack.dns.hostnames[0]=${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}.${{ vars.CI_ENVIRONMENT }}.$FRONTEND_HOSTNAME';
+          if [ -n "$PULUMI_STACK_FILTER" ]; then
+          														if [ "$PULUMI_STACK_FILTER" = "*" ]; then
+          															echo "👞🌠Running all stacks due to wildcard filter"
+          															true
+          														elif [ "$PULUMI_STACK_FILTER" = "${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-application" ]; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-application matched in filter"
+          															true
+          														elif echo ",$PULUMI_STACK_FILTER," | grep -q ",${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-application,"; then
+          															echo "👞🧤Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-application found in comma-separated list"
+          															true
+          														else
+          															echo "👞🙅Stack ${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-application not in filter '$PULUMI_STACK_FILTER', skipping"
+          															false
+          														fi
+          													else
+          														echo "👟🧤No stack filter specified, processing all stacks"
+          														true
+          													fi && remove_stack "${{ github.ref_name }}-${{ github.sha }}" "$(pwd)/iac/stacks/src/application" --non-interactive --suppress-progress --diff --json;
+          echo "Stack 💾${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}-application.${{ vars.CI_ENVIRONMENT }} processed";
+          echo "...📂";
+          echo ".📂";
+      - name: Cleanup
+        run: |-
+          rm -f .pulumi-ci .export-cd .pulumi-helper.sh .ci-env;
+          rm -rf _pulumi;
+
+########################################
+########################################
+#**:_$~- {"$$":"head","filename":"[wd][dispatch] - CD - [Dispatch: Delete].yml","source":"iac/workflows/github/workflow_dispatch/CD.js"}
+#**:_$~- {"$$":"script","generator":"codegen/github/GenerateGithubWorkflow.mts"}
+#**:_$~- {"$$":"body","hashed":"87e3e766ab57807b08328604195d6f4f1dc6f9d4d5662d23586b2d3739a6340d"}
+#**:_$~- {"$$":"footer","started":"2025-03-31T18:08:43.097Z","now":"2025-03-31T18:08:43.101Z","elapsed":"4ms"}
+# END OF GENERATED FILE
+

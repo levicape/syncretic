@@ -10,6 +10,7 @@ import { Function as CloudfrontFunction } from "@pulumi/aws/cloudfront";
 import type { DistributionArgs } from "@pulumi/aws/cloudfront/distribution";
 import { Distribution } from "@pulumi/aws/cloudfront/distribution";
 import { OriginAccessIdentity } from "@pulumi/aws/cloudfront/originAccessIdentity";
+import { LogGroup } from "@pulumi/aws/cloudwatch/logGroup";
 import { Project } from "@pulumi/aws/codebuild";
 import { getRole } from "@pulumi/aws/iam/getRole";
 import { CallbackFunction, Permission, Runtime } from "@pulumi/aws/lambda";
@@ -37,6 +38,7 @@ import {
 	AwsCloudfrontCachePolicy,
 	AwsCloudfrontRequestPolicy,
 } from "../../../Cloudfront";
+import { objectEntries, objectFromEntries } from "../../../Object";
 import { AwsCodeBuildContainerRoundRobin } from "../../../RoundRobin";
 import { $deref, type DereferencedOutput } from "../../../Stack";
 import {
@@ -80,7 +82,7 @@ const ROUTE_MAP = (
 };
 
 const CI = {
-	CI_ENVIRONMENT: process.env.CI_ENVIRONMENT ?? "unknown",
+	APPLICATION_ENVIRONMENT: process.env.APPLICATION_ENVIRONMENT ?? "unknown",
 	CI_ACCESS_ROLE: process.env.CI_ACCESS_ROLE ?? "FourtwoAccessRole",
 };
 
@@ -150,7 +152,7 @@ export = async () => {
 	// Origins
 	//
 	const origins = (() => {
-		return Object.entries(routes).flatMap(([prefix, route]) => {
+		return objectEntries(routes).flatMap(([prefix, route]) => {
 			const { hostname, $kind } = route;
 			if (hostname?.startsWith("http")) {
 				warn(
@@ -296,6 +298,26 @@ function handler(event) {
 		);
 	}
 	//
+
+	// Logging
+	const cloudwatch = (() => {
+		const loggroup = (name: string) => {
+			const loggroup = new LogGroup(_(`${name}-logs`), {
+				retentionInDays: context.environment.isProd ? 180 : 60,
+				tags: {
+					Name: _(`${name}-logs`),
+					StackRef: STACKREF_ROOT,
+					PackageName: WORKSPACE_PACKAGE_NAME,
+				},
+			});
+
+			return { loggroup };
+		};
+
+		return {
+			build: loggroup("build"),
+		};
+	})();
 
 	////////
 	// S3
@@ -689,7 +711,7 @@ function handler(event) {
 	routes === undefined
 		? []
 		: all([cache.arn]).apply(([cacheArn]) => {
-				return Object.entries(routes)
+				return objectEntries(routes)
 					.filter(([, route]) => {
 						return (
 							route.$kind === "LambdaRouteResource" &&
@@ -730,7 +752,7 @@ function handler(event) {
 		const buildspec = (() => {
 			const content = stringify(
 				new CodeBuildBuildspecBuilder()
-					.setVersion("0.2")
+					.setVersion(0.2)
 					.setEnv(
 						new CodeBuildBuildspecEnvBuilder().setVariables({
 							CLOUDFRONT_DISTRIBUTION_ID: `<CLOUDFRONT_DISTRIBUTION_ID>`,
@@ -783,6 +805,16 @@ function handler(event) {
 								type: "PLAINTEXT",
 							},
 						],
+					},
+					logsConfig: {
+						cloudwatchLogs: {
+							groupName: cloudwatch.build.loggroup.name,
+							streamName: `${artifactIdentifier}`,
+						},
+						// s3Logs: {
+						// 	status: "ENABLED",
+						// 	location: s3.build.bucket,
+						// },
 					},
 					source: {
 						type: "NO_SOURCE",
@@ -970,8 +1002,8 @@ function handler(event) {
 	//// Outputs
 	/////
 	const s3Output = Output.create(
-		Object.fromEntries(
-			Object.entries(s3).map(([key, bucket]) => {
+		objectFromEntries(
+			objectEntries(s3).map(([key, bucket]) => {
 				return [
 					key,
 					all([bucket.bucket.bucket, bucket.region]).apply(
@@ -980,9 +1012,9 @@ function handler(event) {
 							region: bucketRegion,
 						}),
 					),
-				];
-			}) as [],
-		) as Record<keyof typeof s3, Output<{ bucket: string; region: string }>>,
+				] as const;
+			}),
+		),
 	);
 
 	const cloudfrontOutput = Output.create({
@@ -1010,8 +1042,8 @@ function handler(event) {
 	});
 
 	const codebuildProjectsOutput = Output.create(
-		Object.fromEntries(
-			Object.entries(codebuild).map(([key, resources]) => {
+		objectFromEntries(
+			objectEntries(codebuild).map(([key, resources]) => {
 				return [
 					key,
 					all([
@@ -1031,14 +1063,9 @@ function handler(event) {
 					})),
 				];
 			}),
-		) as Record<
-			"invalidate",
-			Output<{
-				buildspec: { bucket: string; key: string };
-				project: { arn: string; name: string };
-			}>
-		>,
+		),
 	);
+
 	const $http = dereferenced$[FourtwoPanelHttpStackrefRoot];
 	const $web = dereferenced$[FourtwoPanelWebStackrefRoot];
 

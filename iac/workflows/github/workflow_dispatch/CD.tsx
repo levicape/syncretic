@@ -19,7 +19,8 @@ const {
 } = GithubWorkflowExpressions;
 
 const APPLICATION = "fourtwo";
-const PUSH_IMAGE_ECR_STACK_OUTPUT = "fourtwo_codestar_ecr";
+const PUSH_IMAGE_ECR_STACK_NAME = "codestar";
+const PUSH_IMAGE_ECR_STACK_OUTPUT = "codestar_ecr";
 const OUTPUT_PULUMI_PATH = "_pulumi";
 const RUNS_ON = "act-darwin-a64-atoko";
 const FOURTWO_BIN = "pnpm dx:cli:bin";
@@ -79,13 +80,17 @@ const cd = (matrix: GithubWorkflowProps<boolean, boolean>) => {
 				...register("LEVICAPE_TOKEN", secret("GITHUB_TOKEN")),
 				...register("NODE_NO_WARNINGS", "1"),
 				...register("NPM_CONFIG_UPDATE_NOTIFIER", "false"),
-				...register("FRONTEND_HOSTNAME", `at.levicape.cloud`),
+				...register("FRONTEND_HOSTNAME", `na.levicape.cloud`),
 				...register(
 					"PULUMI_CONFIG_PASSPHRASE",
 					secret("PULUMI_CONFIG_PASSPHRASE"),
 				),
 				...register("APPLICATION_IMAGE_NAME", APPLICATION),
-				...register("CI_ENVIRONMENT", matrix.pipeline.environment.name),
+				...register("APPLICATION_STACKREF_ROOT", _$_("vars.STACK_ROOT")),
+				...register(
+					"APPLICATION_ENVIRONMENT",
+					matrix.pipeline.environment.name,
+				),
 				...register("AWS_PAGER", ""),
 				...register("AWS_REGION", matrix.region),
 				...register("AWS_PROFILE", matrix.pipeline.environment.name),
@@ -118,6 +123,27 @@ const cd = (matrix: GithubWorkflowProps<boolean, boolean>) => {
 							>
 								{(node) => (
 									<>
+										{/* Verify PULUMI_CONFIG_PASSPHRASE nonempty*/}
+										<GithubStepX
+											name="Verify PULUMI_CONFIG_PASSPHRASE"
+											run={[
+												'if [ -z "$PULUMI_CONFIG_PASSPHRASE" ]; then echo "❌❓PULUMI_CONFIG_PASSPHRASE is empty. Stopping workflow.❓"; exit 1; fi',
+											]}
+										/>
+										{/* Verify APPLICATION_STACKREF_ROOT nonempty*/}
+										<GithubStepX
+											name="Verify APPLICATION_STACKREF_ROOT"
+											run={[
+												'if [ -z "$APPLICATION_STACKREF_ROOT" ]; then echo "❌❓APPLICATION_STACKREF_ROOT is empty. Stopping workflow.❓"; exit 1; fi',
+											]}
+										/>
+										{/* Verify APPLICATION_ENVIRONMENT nonempty*/}
+										<GithubStepX
+											name="Verify APPLICATION_ENVIRONMENT"
+											run={[
+												'if [ -z "$APPLICATION_ENVIRONMENT" ]; then echo "❌❓APPLICATION_ENVIRONMENT is empty. Stopping workflow.❓"; exit 1; fi',
+											]}
+										/>
 										{/* Verdaccio NPM mirror https://verdaccio.org */}
 										<GithubStepX
 											name="Set NPM Registry to Verdaccio:31313 or NPM_MIRROR"
@@ -148,7 +174,7 @@ const cd = (matrix: GithubWorkflowProps<boolean, boolean>) => {
 										<GithubStepX
 											name="Setup Pulumi state backend"
 											run={[
-												`echo "Retriving AWS credentials with ${FOURTWO_BIN} aws in $AWS_REGION"`,
+												`echo "🔐🛎️Retriving AWS credentials with ${FOURTWO_BIN} aws in 🗺️$AWS_REGION"`,
 												`${FOURTWO_BIN}`,
 												`STRUCTURED_LOGGING=quiet ${FOURTWO_BIN} aws pulumi ci --region $AWS_REGION > .pulumi-ci`,
 											]}
@@ -177,6 +203,7 @@ configure_stack() {
   local project="$4"
   local output="$5"
 
+  echo "✏️🏷️ Overwriting Pulumi.yaml"
   echo "\${step}: Stack: \${stack_name}. CWD: \${stack_cwd}. Output: \${output}."
   echo "name: \${project}" >> "\${stack_cwd}/Pulumi.yaml"
   cat "\${stack_cwd}"/Pulumi.{yaml,"*".yaml} || true
@@ -186,7 +213,7 @@ setup_stack() {
   local stack_name="$1"
   local stack_cwd="$2"
   
-  echo "Setting up stack: \${stack_name}. CWD: \${stack_cwd}."
+  echo "🪆🧾Setting up stack: \${stack_name}. CWD: \${stack_cwd}."
   for cmd in init select; do
     pulumi stack \${cmd} \${stack_name} -C \${stack_cwd} || true
   done
@@ -196,7 +223,7 @@ configure_stack_settings() {
   local stack_cwd="$1"
   local configs="$2"
   
-  echo "Configuring stack settings"
+  echo "⚙️Configuring stack settings \${stack_cwd}"
   
   while IFS= read -r line; do
     if [[ -n "$line" ]]; then
@@ -207,7 +234,7 @@ configure_stack_settings() {
       eval "value=\"$value\""
       
       if [[ -n "$key" && -n "$value" ]]; then
-        echo "Setting $key to $value"
+        echo "📡Setting $key to 💡$value"
         pulumi config set --path "$key" "$value" -C "$stack_cwd"
       fi
     fi
@@ -220,6 +247,10 @@ refresh_and_preview() {
   shift 2
   local default_args="$@"
 
+  check_root || return true;
+
+  echo "🚦 Refreshing \${stack_cwd} at \${message}"
+  echo "💡Default args: \${default_args}"
   pulumi refresh --yes --skip-preview --clear-pending-creates --message "\${message}-refresh" -C "\${stack_cwd}" \${default_args}
   pulumi preview --show-replacement-steps --message "\${message}-preview" -C "\${stack_cwd}" \${default_args} || true
 }
@@ -230,29 +261,78 @@ deploy_stack() {
   shift 2
   local default_args="$@"
 
+  check_root || return true;
+
+  echo "🛫 Deploying \${stack_cwd} at \${message}"
+  echo "💡Default args: \${default_args}"
   pulumi up --yes --message "\${message}-up" -C "\${stack_cwd}" \${default_args}
 }
 
 remove_stack() {
-	local message="$1"
-	local stack_cwd="$2"
-	shift 2
-	local default_args="$@"
-  
-	pulumi down --yes --message "\${message}-down" -C "\${stack_cwd}" \${default_args}
-  }
-  
+  local message="$1"
+  local stack_cwd="$2"
+  shift 2
+  local default_args="$@"
+
+  check_root || return true;
+
+  echo "🦺 Deleting \${stack_cwd} at \${message}"
+  echo "💡Default args: \${default_args}"
+  pulumi down --yes --message "\${message}-down" -C "\${stack_cwd}" \${default_args}
+}
+
 capture_outputs() {
   local stack_cwd="$1"
   local output="$2"
 
+  echo "🧲Capturing \${stack_cwd} outputs in \${output}.sh"
   pulumi stack output -C "\${stack_cwd}" --json > "$(pwd)/\${output}.json"
   cat "\${output}.json"
   pulumi stack output -C "\${stack_cwd}" --shell > "$(pwd)/\${output}.sh"
   cat "\${output}.sh"
   ls ${OUTPUT_PULUMI_PATH}
   chmod +x "$(pwd)/\${output}.sh"
-  echo "Output captured in \${output}.sh"
+  echo "🎼Outputs captured in \${output}.sh"
+}
+
+set_root() {
+  local only_root="$1"
+  echo "✴️"
+  echo "Configuring STACKREF_ROOT:"
+  echo "APPLICATION_IMAGE_NAME: \${APPLICATION_IMAGE_NAME}"
+  echo "APPLICATION_STACKREF_ROOT: \${APPLICATION_STACKREF_ROOT}"
+  echo "Current stack only deployed to application root: \${only_root}"
+
+  export STACKREF_ROOT="\${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}"
+
+  echo "🤍🤍"
+  echo "Pulumi resolved stackref root: "
+  echo "STACKREF_ROOT: \${STACKREF_ROOT}"
+  echo "🤍🤍"
+
+	if [[ "\${only_root}" == "true" ]]; then
+		if [[ "\${APPLICATION_IMAGE_NAME}" == "\${STACKREF_ROOT}" ]]; then
+    		echo "🆗🚀Stackref is compatible, setting PULUMI_NO_DEPLOYMENT=false"
+    		export PULUMI_NO_DEPLOYMENT=false
+		else
+			echo "🆗💤Not in application root stack, skipping deployment with PULUMI_NO_DEPLOYMENT=true"
+			export PULUMI_NO_DEPLOYMENT=true									
+		fi
+	else
+		echo "🚀🚀Stack not application-only, setting PULUMI_NO_DEPLOYMENT=false"
+		export PULUMI_NO_DEPLOYMENT=false
+	fi
+  echo "✴️"
+}
+
+check_root() {
+  if [ "\${PULUMI_NO_DEPLOYMENT}" = "true" ]; then
+    echo "💤💤Skipping deployment"
+    return 1
+  else
+    echo "🔰🔰Proceeding with deployment"
+    return 0
+  fi
 }
 EOF
 chmod +x .pulumi-helper.sh
@@ -280,7 +360,8 @@ source .pulumi-helper.sh`,
 													const PULUMI_DEFAULT_ARGS =
 														"--non-interactive --suppress-progress --diff --json";
 													const PULUMI_STACK_CWD = `$(pwd)/iac/stacks/src/${stack}`;
-													const PULUMI_PROJECT = `${root ?? APPLICATION}-${name ?? stack}`;
+													const PULUMI_APPLICATION_ROOT = `\${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}`;
+													const PULUMI_PROJECT = `${PULUMI_APPLICATION_ROOT}-${name ?? stack}`;
 													const PULUMI_STACK_NAME = `${PULUMI_PROJECT}.${matrix.pipeline.environment.name}`;
 													const PULUMI_STACK_OUTPUT = `${OUTPUT_PULUMI_PATH}/${output}`;
 													const PULUMI_MESSAGE =
@@ -289,30 +370,31 @@ source .pulumi-helper.sh`,
 														"aws:skipMetadataApiCheck": false,
 														"context:stack.environment.isProd": false,
 														"context:stack.environment.features": "aws",
-														"frontend:stack.dns.hostnames[0]": `${matrix.pipeline.environment.name}.${root ?? APPLICATION}.$FRONTEND_HOSTNAME`,
+														"frontend:stack.dns.hostnames[0]": `${PULUMI_APPLICATION_ROOT}.${matrix.pipeline.environment.name}.$FRONTEND_HOSTNAME`,
 													})
 														.map(([k, v]) => `${k}=${v}`)
 														.join("\n");
+
 													// STACK_FILTER:
 													// -> * will deploy every stack
 													// -> (head, next...): comma delimited list of stacks to deploy
 													const STACK_FILTER = `
 													if [ -n "\$PULUMI_STACK_FILTER" ]; then
 														if [ "\$PULUMI_STACK_FILTER" = "*" ]; then
-															echo "Running all stacks due to wildcard filter"
+															echo "👞🌠Running all stacks due to wildcard filter"
 															true
 														elif [ "\$PULUMI_STACK_FILTER" = "${PULUMI_PROJECT}" ]; then
-															echo "Stack ${PULUMI_PROJECT} matched in filter"
+															echo "👞🧤Stack ${PULUMI_PROJECT} matched in filter"
 															true
 														elif echo ",\$PULUMI_STACK_FILTER," | grep -q ",${PULUMI_PROJECT},"; then
-															echo "Stack ${PULUMI_PROJECT} found in comma-separated list"
+															echo "👞🧤Stack ${PULUMI_PROJECT} found in comma-separated list"
 															true
 														else
-															echo "Stack ${PULUMI_PROJECT} not in filter '\$PULUMI_STACK_FILTER', skipping"
+															echo "👞🙅Stack ${PULUMI_PROJECT} not in filter '\$PULUMI_STACK_FILTER', skipping"
 															false
 														fi
 													else
-														echo "No stack filter specified, processing all stacks"
+														echo "👟🧤No stack filter specified, processing all stacks"
 														true
 													fi &&`;
 
@@ -328,26 +410,38 @@ source .pulumi-helper.sh`,
 													// 		fi
 													// 	fi &&`;
 
-													const FILTERBASH = `${STACK_FILTER}`;
-
 													return [
-														`configure_stack "${STEP}" "${PULUMI_STACK_NAME}" "${PULUMI_STACK_CWD}" "${PULUMI_PROJECT}" "${PULUMI_STACK_OUTPUT}"`,
-														`setup_stack "${PULUMI_STACK_NAME}" "${PULUMI_STACK_CWD}"`,
-														`configure_stack_settings "${PULUMI_STACK_CWD}" '${PULUMI_CONFIGS}'`,
-														matrix.pipeline.delete
-															? `remove_stack "${PULUMI_MESSAGE}" "${PULUMI_STACK_CWD}" ${PULUMI_DEFAULT_ARGS}`
-															: `refresh_and_preview "${PULUMI_MESSAGE}" "${PULUMI_STACK_CWD}" ${PULUMI_DEFAULT_ARGS}`,
-														...(matrix.pipeline.deploy
-															? [
-																	`deploy_stack "${PULUMI_MESSAGE}" "${PULUMI_STACK_CWD}" ${PULUMI_DEFAULT_ARGS}`,
-																	`capture_outputs "${PULUMI_STACK_CWD}" "${PULUMI_STACK_OUTPUT}"`,
-																]
-															: []),
-													]
-														.map((bash) => `${FILTERBASH} ${bash}`)
-														.concat([
-															`echo "Stack ${PULUMI_STACK_NAME} processed"`,
-														]);
+														`echo ".📁"`,
+														`echo "...📁"`,
+														`echo "Processing 💾${PULUMI_STACK_NAME}"`,
+														`echo "⚗️PULUMI_STACK_FILTER: \$PULUMI_STACK_FILTER"`,
+														`echo "💡PULUMI_STACK_CWD: ${PULUMI_STACK_CWD}"`,
+														`echo "🐤PULUMI_STACK_NAME: ${PULUMI_STACK_NAME}"`,
+														...[
+															`set_root "${root ? "true" : "false"}"`,
+															`configure_stack "${STEP}" "${PULUMI_STACK_NAME}" "${PULUMI_STACK_CWD}" "${PULUMI_PROJECT}" "${PULUMI_STACK_OUTPUT}"`,
+															`setup_stack "${PULUMI_STACK_NAME}" "${PULUMI_STACK_CWD}"`,
+															`configure_stack_settings "${PULUMI_STACK_CWD}" '${PULUMI_CONFIGS}'`,
+															matrix.pipeline.delete
+																? `remove_stack "${PULUMI_MESSAGE}" "${PULUMI_STACK_CWD}" ${PULUMI_DEFAULT_ARGS}`
+																: `refresh_and_preview "${PULUMI_MESSAGE}" "${PULUMI_STACK_CWD}" ${PULUMI_DEFAULT_ARGS}`,
+															...(matrix.pipeline.deploy
+																? [
+																		`deploy_stack "${PULUMI_MESSAGE}" "${PULUMI_STACK_CWD}" ${PULUMI_DEFAULT_ARGS}`,
+																		`capture_outputs "${PULUMI_STACK_CWD}" "${PULUMI_STACK_OUTPUT}"`,
+																	]
+																: []),
+														]
+															.map((bash) => {
+																const FILTERBASH = `${STACK_FILTER}`;
+																return `${FILTERBASH} ${bash}`;
+															})
+															.concat([
+																`echo "Stack 💾${PULUMI_STACK_NAME} processed"`,
+																`echo "...📂"`,
+																`echo ".📂"`,
+															]),
+													];
 												}),
 											]}
 										/>
@@ -355,7 +449,7 @@ source .pulumi-helper.sh`,
 										{matrix.pipeline.push === true &&
 											[
 												"git-${{ github.sha }}",
-												"${{ env.CI_ENVIRONMENT }}",
+												"${{ env.APPLICATION_IMAGE_NAME }}-${{ env.APPLICATION_ENVIRONMENT }}",
 											].map((tag) => (
 												<>
 													{/* Push to ECR */}
@@ -363,11 +457,11 @@ source .pulumi-helper.sh`,
 														name={`Tag and push image with ${tag}`}
 														run={[
 															`
-															if [[ -z "\$PULUMI_STACK_FILTER" || "\$PULUMI_STACK_FILTER" == "*" || "\$PULUMI_STACK_FILTER" =~ "codestar" ]]; then
-																echo "Codestar output found, deploying image"
+															if [[ -z "\$PULUMI_STACK_FILTER" || "\$PULUMI_STACK_FILTER" == "*" || "\$PULUMI_STACK_FILTER" =~ "${PUSH_IMAGE_ECR_STACK_NAME}" ]]; then
+																echo "📟Codestar output found, deploying image"
 																true
 															else
-																echo "Please verify PULUMI_STACK_FILTER: \$PULUMI_STACK_FILTER \n This should include codestar for the image push mechanism"
+																echo "💢Please verify PULUMI_STACK_FILTER: \$PULUMI_STACK_FILTER \n This should include ${PUSH_IMAGE_ECR_STACK_NAME} for the image push mechanism"
 																exit 0
 															fi`,
 															...[
@@ -378,17 +472,22 @@ source .pulumi-helper.sh`,
 																		`[ -f ${OUTPUT_PULUMI_PATH}/${output}.sh ] && source ${OUTPUT_PULUMI_PATH}/${output}.sh`,
 																	],
 																),
-																`echo "Verify imported environment variables"`,
-																`echo "Codestar output ${PUSH_IMAGE_ECR_STACK_OUTPUT}: $${PUSH_IMAGE_ECR_STACK_OUTPUT}"`,
-																`export ECR_URL=$(echo  $${PUSH_IMAGE_ECR_STACK_OUTPUT} | jq -r .repository.url)`,
-																`echo "ECR_URL: $ECR_URL"`,
+																`echo "🥤Verify imported environment variables"`,
+																`set +o histexpand`,
+																`export STACKREF_ROOT="\${APPLICATION_STACKREF_ROOT:-$APPLICATION_IMAGE_NAME}"`,
+																`export TARGET_VAR="\${STACKREF_ROOT}_${PUSH_IMAGE_ECR_STACK_OUTPUT}"`,
+																`export TARGET_VALUE="\${!TARGET_VAR}"`,
+																`echo "❔❔Codestar output \${TARGET_VAR}: \${TARGET_VALUE}"`,
+																`export ECR_URL=$(echo  \${TARGET_VALUE} | jq -r .repository.url)`,
+																`echo "❔❔ECR_URL: $ECR_URL"`,
 																`aws sts get-caller-identity --output json`,
 																"sleep 2s",
 																`aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_URL`,
 															],
-															`echo "Tagging $ECR_URL:${tag}"`,
-															`docker tag \${{ env.APPLICATION_IMAGE_NAME }}:latest $ECR_URL:${tag}`,
+															`echo "🌐Tagging $ECR_URL:${tag}"`,
+															`docker tag ${env("APPLICATION_IMAGE_NAME")}:latest $ECR_URL:${tag}`,
 															`docker push $ECR_URL:${tag}`,
+															`echo "✨Tagged $ECR_URL:${tag}"`,
 														]}
 													/>
 												</>

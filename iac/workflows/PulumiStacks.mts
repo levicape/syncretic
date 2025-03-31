@@ -11,57 +11,65 @@ export const CODECATALYST_PULUMI_STACKS: Array<{
 	 */
 	name?: string;
 	/**
-	 * Root name for the full stack name, defaults to APPLICATION
+	 * Whether this stack should only be deployed if APPLICATION_IMAGE_NAME matches APPLICATION_STACKREF_ROOT
 	 */
-	root?: string;
+	root?: boolean;
 	/**
 	 * The name of the stack for use in output shell exports. Automatically derived from the stack name if not provided
 	 */
 	output: string;
-}> = [
-	{
-		stack: "application",
-	},
-	{
-		stack: "codestar",
-	},
-	{
-		stack: "identity/oidc",
-		name: "identity-oidc",
-	},
-	{
-		stack: "identity/users",
-		name: "identity-users",
-	},
-	{
-		stack: "datalayer",
-	},
-	{
-		stack: "dns/root",
-		name: "dns-root",
-	},
-	{
-		stack: "levicape/panel/channels",
-		name: "panel-channels",
-	},
-	{
-		stack: "levicape/panel/client",
-		name: "panel-client",
-	},
-	{
-		stack: "levicape/panel/http",
-		name: "panel-http",
-	},
-	{
-		stack: "levicape/panel/web",
-		name: "panel-web",
-	},
-	{
-		stack: "levicape/panel/monitor",
-		name: "panel-monitor",
-	},
-	{
-		stack: "levicape/panel/wwwroot",
-		name: "panel-wwwroot",
-	},
-].map((stack) => ({ ...stack, output: stack.stack.replaceAll("/", "_") }));
+}> = (
+	[
+		{
+			stack: "application",
+			root: true,
+		},
+		{
+			stack: "codestar",
+			root: true,
+		},
+		{
+			stack: "datalayer",
+			root: true,
+		},
+		{
+			stack: "dns/root",
+			name: "dns-root",
+			root: true,
+		},
+		{
+			stack: "idp/oidc",
+			name: "idp-oidc",
+			root: true,
+		},
+		{
+			stack: "idp/users",
+			name: "idp-users",
+			root: true,
+		},
+		{
+			stack: "levicape/panel/channels",
+			name: "panel-channels",
+		},
+		{
+			stack: "levicape/panel/client",
+			name: "panel-client",
+		},
+		{
+			stack: "levicape/panel/http",
+			name: "panel-http",
+		},
+		{
+			stack: "levicape/panel/web",
+			name: "panel-web",
+		},
+		{
+			stack: "levicape/panel/monitor",
+			name: "panel-monitor",
+		},
+		{
+			stack: "levicape/panel/wwwroot",
+			name: "panel-wwwroot",
+		},
+	] as const
+).map((stack) => ({ ...stack, output: stack.stack.replaceAll("/", "_") }));

@@ -10,7 +10,7 @@ import {
 	FourtwoApplicationRoot,
 	FourtwoApplicationStackExportsZod,
 } from "../../application/exports";
-import { FourtwoIdentityOidcStackExportsZod } from "./exports";
+import { FourtwoIdpOidcStackExportsZod } from "./exports";
 
 const PACKAGE_NAME = "@levicape/fourtwo";
 const STACKREF_ROOT = process.env["STACKREF_ROOT"] ?? FourtwoApplicationRoot;
@@ -37,15 +37,15 @@ export = async () => {
 	const _ = (name: string) => `${context.prefix}-${name}`;
 	context.resourcegroups({ _ });
 
-	const identityPoolId = new RandomId(_("identitypool-id"), {
+	const identityPoolId = new RandomId(_("pool-id"), {
 		byteLength: 4,
 	});
-	const identityPoolName = _("identitypool").replace(/[^a-zA-Z0-9_]/g, "-");
-	const identityPool = new IdentityPool(_("identitypool"), {
+	const identityPoolName = _("pool").replace(/[^a-zA-Z0-9_]/g, "-");
+	const identityPool = new IdentityPool(_("pool"), {
 		identityPoolName: interpolate`${identityPoolName}-${identityPoolId.hex}`,
 		developerProviderName: _("developer-provider"),
 		tags: {
-			Name: _("identitypool"),
+			Name: _("pool"),
 			PackageName: PACKAGE_NAME,
 		},
 	});
@@ -84,12 +84,12 @@ export = async () => {
 
 	return all([identityPoolOutput]).apply(([idpool]) => {
 		const exported = {
-			fourtwo_identity_oidc_cognito: {
+			fourtwo_idp_oidc_cognito: {
 				pool: idpool,
 			},
-		} satisfies z.infer<typeof FourtwoIdentityOidcStackExportsZod>;
+		} satisfies z.infer<typeof FourtwoIdpOidcStackExportsZod>;
 
-		const validate = FourtwoIdentityOidcStackExportsZod.safeParse(exported);
+		const validate = FourtwoIdpOidcStackExportsZod.safeParse(exported);
 		if (!validate.success) {
 			error(`Validation failed: ${JSON.stringify(validate.error, null, 2)}`);
 			warn(inspect(exported, { depth: null }));

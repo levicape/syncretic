@@ -11,6 +11,7 @@ import { Topic } from "@pulumi/aws/sns/topic.js";
 import { type Input, all } from "@pulumi/pulumi/index.js";
 import { error, warn } from "@pulumi/pulumi/log/index";
 import type { z } from "zod";
+import { objectEntries, objectFromEntries } from "../Object";
 import { FourtwoApplicationStackExportsZod } from "./exports.ts";
 
 const PACKAGE_NAME = "@levicape/fourtwo";
@@ -35,7 +36,6 @@ export = async () => {
 			application: new AppregistryApplication(_("servicecatalog"), {
 				description: DESCRIPTION,
 				tags: {
-					Name: _(PACKAGE_NAME),
 					PACKAGE_NAME,
 				},
 			}),
@@ -221,7 +221,7 @@ export = async () => {
 	);
 
 	const resourcegroupsOutput = all(
-		Object.entries(resourcegroups).map(([name, group]) => {
+		objectEntries(resourcegroups).map(([name, group]) => {
 			return all([
 				group.group.arn,
 				group.group.name,
@@ -239,7 +239,7 @@ export = async () => {
 			});
 		}),
 	).apply((groups) => {
-		return Object.fromEntries(
+		return objectFromEntries(
 			groups.map(([name, group]) => {
 				return [
 					name,
@@ -256,7 +256,7 @@ export = async () => {
 	});
 
 	const snsOutput = all(
-		Object.entries(sns).map(([name, topic]) => {
+		objectEntries(sns).map(([name, topic]) => {
 			return all([topic.arn, topic.name, topic.id]).apply(
 				([topicArn, topicName, topicId]) => {
 					return [
@@ -271,7 +271,7 @@ export = async () => {
 			);
 		}),
 	).apply((topics) => {
-		return Object.fromEntries(
+		return objectFromEntries(
 			topics.map(([name, topic]) => {
 				return [
 					name,
@@ -284,16 +284,7 @@ export = async () => {
 					},
 				] as const;
 			}),
-		) as Record<
-			keyof typeof sns,
-			{
-				topic: {
-					arn: string;
-					name: string;
-					id: string;
-				};
-			}
-		>;
+		);
 	});
 
 	return all([servicecatalogOutput, resourcegroupsOutput, snsOutput]).apply(
