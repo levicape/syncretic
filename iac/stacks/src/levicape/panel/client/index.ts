@@ -8,7 +8,7 @@ import { all } from "@pulumi/pulumi";
 import { error, warn } from "@pulumi/pulumi/log";
 import type { z } from "zod";
 import { objectEntries, objectFromEntries } from "../../../Object";
-import { $deref } from "../../../Stack";
+import { $$root, $deref } from "../../../Stack";
 import {
 	FourtwoApplicationRoot,
 	FourtwoApplicationStackExportsZod,
@@ -27,6 +27,7 @@ import {
 	FourtwoPanelClientStackExportsZod,
 } from "./exports";
 
+const APPLICATION_IMAGE_NAME = FourtwoApplicationRoot;
 const SUBDOMAIN =
 	process.env["STACKREF_SUBDOMAIN"] ?? FourtwoPanelWWWRootSubdomain;
 const STACKREF_ROOT = process.env["STACKREF_ROOT"] ?? FourtwoApplicationRoot;
@@ -155,6 +156,6 @@ export = async () => {
 			warn(inspect(exported, { depth: null }));
 		}
 
-		return exported;
+		return $$root(APPLICATION_IMAGE_NAME, STACKREF_ROOT, exported);
 	});
 };

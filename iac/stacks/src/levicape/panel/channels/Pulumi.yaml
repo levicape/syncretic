@@ -1,4 +1,4 @@
-description: State bucket and associated SSM parameters
+description: Notification topics for status updates across this stackgroup's components
 runtime:
   name: nodejs
   options:

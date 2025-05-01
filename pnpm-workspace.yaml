@@ -8,18 +8,18 @@ packages:
   - protocols/*
   - realms/*/*
 catalog:
-  '@levicape/paloma': 0.3.7-main.16
+  '@levicape/paloma': 0.3.8-main.2
   '@levicape/spork': 0.10.0-main.7
   '@levicape/spork-atlas': 0.10.0-main.7
 catalogs:
   aws:
     '@aws/codecatalyst-workflows-sdk': ^0.1.5-preview.6
-    '@aws-sdk/client-codebuild': ^3.772.0
-    '@aws-sdk/client-dynamodb': ^3.758.0
-    '@aws-sdk/client-secrets-manager': ^3.758.0
-    '@aws-sdk/client-sqs': ^3.758.0
-    '@aws-sdk/lib-dynamodb': ^3.758.0
-    '@aws-sdk/util-dynamodb': ^3.758.0
+    '@aws-sdk/client-codebuild': ^3.777.0
+    '@aws-sdk/client-dynamodb': ^3.777.0
+    '@aws-sdk/client-secrets-manager': ^3.777.0
+    '@aws-sdk/client-sqs': ^3.777.0
+    '@aws-sdk/lib-dynamodb': ^3.778.0
+    '@aws-sdk/util-dynamodb': ^3.777.0
     aws-lambda-ric: ^3.2.1
     aws4fetch: ^1.0.20
     pino-lambda: ^4.4.1
@@ -28,9 +28,9 @@ catalogs:
     nexe: 4.0.0-rc.6
     node-gyp: ^11.0.0
   build-esbuild:
-    esbuild: ^0.25.1
+    esbuild: ^0.25.2
   cli:
-    '@stricli/core': ^1.1.1
+    '@stricli/core': ^1.1.2
     enquirer: ^2.4.1
   compression:
     archiver: ^7.0.1
@@ -66,9 +66,9 @@ catalogs:
     ts-node: ^10.9.2
     typescript: ^5.8.2
   effect:
-    effect: ^3.14.1
-    '@effect/platform': ^0.80.1
-    '@effect/platform-node': ^0.76.2
+    effect: ^3.14.4
+    '@effect/platform': ^0.80.4
+    '@effect/platform-node': ^0.76.7
   error:
     serialize-error: ^12.0.0
     verror: ^1.10.0
@@ -88,14 +88,14 @@ catalogs:
     express: ^4.21.2
     sirv: ^3.0.0
   hono:
-    '@hono/node-server': ^1.13.8
+    '@hono/node-server': ^1.14.0
     "@hono/react-renderer": "^0.3.0"
     '@hono/vite-build': ^1.3.0
     '@hono/vite-ssg': ^0.1.1
     '@hono/vite-dev-server': ^0.19.0
     '@hono/zod-validator': ^0.4.3
     compressible: ^2.0.18
-    hono: ^4.7.4
+    hono: ^4.7.5
     honox: ^0.1.38
     hono-rate-limiter: ^0.4.2
   id:
@@ -110,14 +110,14 @@ catalogs:
   lint:
     '@biomejs/biome': ^1.9.4
   log-awspowertools:
-    '@aws-lambda-powertools/logger': ^2.16.0
+    '@aws-lambda-powertools/logger': ^2.17.0
   log-consola:
     consola: ^3.4.2
   log-loglayer:
     '@loglayer/transport-aws-lambda-powertools': ^3.0.3
     '@loglayer/transport-consola': ^2.0.3
     '@loglayer/transport-pino': ^2.1.1
-    loglayer: ^6.3.2
+    loglayer: ^6.3.3
   log-pino:
     pino: ^9.6.0
     pino-pretty: ^13.0.0
@@ -142,13 +142,13 @@ catalogs:
     fast-xml-parser: ^5.0.9
   parse-yaml:
     js-yaml: ^4.1.0
-    yaml: ^2.7.0
+    yaml: ^2.7.1
   project-nx:
-    nx: ^20.6.2
+    nx: ^20.7.0
   protobuf:
-    '@bufbuild/protobuf': ^2.2.3
+    '@bufbuild/protobuf': ^2.2.5
     '@bufbuild/buf': ^1.44.0
-    ts-proto: ^2.6.1
+    ts-proto: ^2.7.0
   pulumi:
     '@pulumi/aws': ^6.71.0
     '@pulumi/awsx': ^2.21.0
@@ -192,7 +192,7 @@ catalogs:
     '@types/jsonwebtoken': ^9.0.9
     '@types/klaw': ^3.0.6
     '@types/module-alias': ^2.0.4
-    '@types/node': ^22.13.11
+    '@types/node': ^22.13.17
     '@types/qrcode': ^1.5.5
     '@types/react': ^19.0.1
     '@types/react-dom': ^19.0.1

@@ -33,7 +33,7 @@ import type {
 	S3RouteResource,
 	WebsiteManifest,
 } from "../../../RouteMap";
-import { $deref, type DereferencedOutput } from "../../../Stack";
+import { $$root, $deref, type DereferencedOutput } from "../../../Stack";
 import {
 	FourtwoApplicationRoot,
 	FourtwoApplicationStackExportsZod,
@@ -1328,7 +1328,7 @@ export = async () => {
 				error(`Validation failed: ${JSON.stringify(validate.error, null, 2)}`);
 				warn(inspect(exported, { depth: null }));
 			}
-			return exported;
+			return $$root(APPLICATION_IMAGE_NAME, STACKREF_ROOT, exported);
 		},
 	);
 };

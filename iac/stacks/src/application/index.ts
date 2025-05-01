@@ -15,7 +15,7 @@ import { objectEntries, objectFromEntries } from "../Object";
 import { FourtwoApplicationStackExportsZod } from "./exports.ts";
 
 const PACKAGE_NAME = "@levicape/fourtwo";
-const DESCRIPTION = `Fourtwo - IaC: redefined`;
+const DESCRIPTION = `Fourtwo - Iac Registry Application`;
 /**
  * This stack creates the following resources:
  * - A Service Catalog Application Registry Application

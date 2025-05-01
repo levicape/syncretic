@@ -6,6 +6,7 @@ import {
 } from "@levicape/fourtwo-builders/commonjs/index.cjs";
 import { Context } from "@levicape/fourtwo-pulumi/commonjs/context/Context.cjs";
 import { Certificate } from "@pulumi/aws/acm";
+import { CertificateValidation } from "@pulumi/aws/acm/certificateValidation";
 import { Function as CloudfrontFunction } from "@pulumi/aws/cloudfront";
 import type { DistributionArgs } from "@pulumi/aws/cloudfront/distribution";
 import { Distribution } from "@pulumi/aws/cloudfront/distribution";
@@ -40,7 +41,7 @@ import {
 } from "../../../Cloudfront";
 import { objectEntries, objectFromEntries } from "../../../Object";
 import { AwsCodeBuildContainerRoundRobin } from "../../../RoundRobin";
-import { $deref, type DereferencedOutput } from "../../../Stack";
+import { $$root, $deref, type DereferencedOutput } from "../../../Stack";
 import {
 	FourtwoApplicationRoot,
 	FourtwoApplicationStackExportsZod,
@@ -81,6 +82,7 @@ const ROUTE_MAP = (
 	};
 };
 
+const APPLICATION_IMAGE_NAME = FourtwoApplicationRoot;
 const CI = {
 	APPLICATION_ENVIRONMENT: process.env.APPLICATION_ENVIRONMENT ?? "unknown",
 	CI_ACCESS_ROLE: process.env.CI_ACCESS_ROLE ?? "FourtwoAccessRole",
@@ -131,6 +133,10 @@ const STACKREF_CONFIG = {
 		},
 	},
 } as const;
+
+const usEast1Provider = new Provider("us-east-1", {
+	region: "us-east-1",
+});
 
 export = async () => {
 	// Stack references
@@ -508,16 +514,85 @@ function handler(event) {
 	////////
 	// TLS
 	//////
-	const acm = dereferenced$[FourtwoDnsRootStackrefRoot]?.acm;
-	const certificate =
+	const { acm, route53 } = dereferenced$[FourtwoDnsRootStackrefRoot] ?? {};
+	const rootCertificate =
 		acm?.certificate !== undefined && acm?.certificate !== null
-			? Certificate.get(_("certificate"), acm.certificate.arn, undefined, {
-					provider: new Provider("us-east-1", {
-						region: "us-east-1",
-					}),
+			? Certificate.get(_("certificate-root"), acm.certificate.arn, undefined, {
+					provider: usEast1Provider,
 				})
 			: undefined;
-	//
+
+	/**
+	/**
+	 * Certificate for *.SUBDOMAIN.{rootCertificate.domain} domain
+	 */
+	let distributionCertificate: Certificate | undefined;
+	const distributionSubdomain = interpolate`${SUBDOMAIN}.${rootCertificate?.domainName.apply(
+		(dn) => {
+			if (dn.startsWith("*.")) {
+				return dn.slice(2);
+			}
+			return dn;
+		},
+	)}`;
+
+	if (route53.zone !== undefined && route53.zone !== null) {
+		distributionCertificate = new Certificate(
+			_(`certificate-distribution`),
+			{
+				domainName: interpolate`*.${distributionSubdomain}`,
+				subjectAlternativeNames: [distributionSubdomain],
+				validationMethod: "DNS",
+				tags: {
+					Name: _(`certificate-distribution`),
+					HostedZoneId: route53.zone.hostedZoneId,
+					HostedZoneArn: route53.zone.arn,
+					PackageName: WORKSPACE_PACKAGE_NAME,
+				},
+			},
+			{ provider: usEast1Provider },
+		);
+
+		distributionCertificate.domainValidationOptions.apply((options) => {
+			const uniqueOptions = options.filter((option, index, self) => {
+				return (
+					index ===
+					self.findIndex(
+						(o) =>
+							o.resourceRecordType === option.resourceRecordType &&
+							o.resourceRecordName === option.resourceRecordName &&
+							o.resourceRecordValue === option.resourceRecordValue,
+					)
+				);
+			});
+
+			const records = uniqueOptions.map((validationOption, index) => {
+				return new DnsRecord(_(`dns-validation-${index}`), {
+					type: validationOption.resourceRecordType,
+					ttl: 60,
+					zoneId: route53.zone?.hostedZoneId ?? "",
+					name: validationOption.resourceRecordName,
+					records: [validationOption.resourceRecordValue],
+				});
+			});
+
+			const validations = records.map((validation, _index) => {
+				return new CertificateValidation(
+					_(`certificate-validation-${_index}`),
+					{
+						certificateArn: distributionCertificate?.arn ?? "",
+						validationRecordFqdns: [validation.fqdn],
+					},
+					{ provider: usEast1Provider },
+				);
+			});
+
+			return {
+				records,
+				validations,
+			};
+		});
+	}
 
 	////////
 	// CDN
@@ -540,14 +615,14 @@ function handler(event) {
 		httpVersion: "http2and3",
 		priceClass: "PriceClass_100",
 		isIpv6Enabled: true,
-		...(certificate
+		...(distributionCertificate
 			? {
 					aliases: [
-						certificate.domainName.apply((domainName) => {
+						distributionCertificate.domainName.apply((domainName) => {
 							if (domainName.startsWith("*.")) return domainName.slice(2);
 							return domainName;
 						}),
-						certificate.domainName.apply((domainName) => {
+						distributionCertificate.domainName.apply((domainName) => {
 							if (domainName.startsWith("*.")) {
 								return domainName;
 							}
@@ -556,7 +631,7 @@ function handler(event) {
 					],
 					viewerCertificate: {
 						minimumProtocolVersion: "TLSv1.2_2021",
-						acmCertificateArn: certificate?.arn,
+						acmCertificateArn: distributionCertificate.arn,
 						sslSupportMethod: "sni-only",
 					},
 				}
@@ -957,8 +1032,7 @@ function handler(event) {
 	})();
 
 	// DNS Record
-	const route53 = dereferenced$[FourtwoDnsRootStackrefRoot].route53;
-	if (route53?.zone && certificate) {
+	if (route53?.zone && rootCertificate) {
 		new DnsRecord(
 			_("dns"),
 			{
@@ -1100,7 +1174,7 @@ function handler(event) {
 				warn(inspect(exported, { depth: null }));
 			}
 
-			return exported;
+			return $$root(APPLICATION_IMAGE_NAME, STACKREF_ROOT, exported);
 		},
 	);
 };

@@ -162,7 +162,7 @@ jobs:
             shift 2
             local default_args="$@"
 
-            check_root || return true;
+            check_root || return 0;
 
             echo "🛫 Deploying ${stack_cwd} at ${message}"
             echo "💡Default args: ${default_args}"
@@ -175,7 +175,7 @@ jobs:
             shift 2
             local default_args="$@"
 
-            check_root || return true;
+            check_root || return 0;
 
             echo "🦺 Deleting ${stack_cwd} at ${message}"
             echo "💡Default args: ${default_args}"
@@ -1479,7 +1479,7 @@ jobs:
 ########################################
 #**:_$~- {"$$":"head","filename":"[wd][dispatch] - CD - [Dispatch: Delete].yml","source":"iac/workflows/github/workflow_dispatch/CD.js"}
 #**:_$~- {"$$":"script","generator":"codegen/github/GenerateGithubWorkflow.mts"}
-#**:_$~- {"$$":"body","hashed":"87e3e766ab57807b08328604195d6f4f1dc6f9d4d5662d23586b2d3739a6340d"}
-#**:_$~- {"$$":"footer","started":"2025-03-31T18:08:43.097Z","now":"2025-03-31T18:08:43.101Z","elapsed":"4ms"}
+#**:_$~- {"$$":"body","hashed":"3cd1d1a39797bb073df668100f9ab90f6b21484fa1690d4149ea4207bfcbee8c"}
+#**:_$~- {"$$":"footer","started":"2025-04-01T04:04:26.983Z","now":"2025-04-01T04:04:26.987Z","elapsed":"4ms"}
 # END OF GENERATED FILE
 

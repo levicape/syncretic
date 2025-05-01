@@ -247,7 +247,7 @@ refresh_and_preview() {
   shift 2
   local default_args="$@"
 
-  check_root || return true;
+  check_root || return 0;
 
   echo "🚦 Refreshing \${stack_cwd} at \${message}"
   echo "💡Default args: \${default_args}"
@@ -261,7 +261,7 @@ deploy_stack() {
   shift 2
   local default_args="$@"
 
-  check_root || return true;
+  check_root || return 0;
 
   echo "🛫 Deploying \${stack_cwd} at \${message}"
   echo "💡Default args: \${default_args}"
@@ -274,7 +274,7 @@ remove_stack() {
   shift 2
   local default_args="$@"
 
-  check_root || return true;
+  check_root || return 0;
 
   echo "🦺 Deleting \${stack_cwd} at \${message}"
   echo "💡Default args: \${default_args}"

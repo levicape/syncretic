@@ -5,7 +5,7 @@ import { error, warn } from "@pulumi/pulumi/log";
 import { Output, all } from "@pulumi/pulumi/output";
 import type { z } from "zod";
 import { objectEntries, objectFromEntries } from "../../../Object";
-import { $deref } from "../../../Stack";
+import { $$root, $deref } from "../../../Stack";
 import {
 	FourtwoApplicationRoot,
 	FourtwoApplicationStackExportsZod,
@@ -13,7 +13,8 @@ import {
 import { FourtwoPanelWWWRootSubdomain } from "../wwwroot/exports";
 import { FourtwoPanelChannelsStackExportsZod } from "./exports";
 
-const PACKAGE_NAME = "@levicape/fourtwo" as const;
+const PACKAGE_NAME = "@levicape/fourtwo-panel-io" as const;
+const APPLICATION_IMAGE_NAME = FourtwoApplicationRoot;
 const SUBDOMAIN =
 	process.env["STACKREF_SUBDOMAIN"] ?? FourtwoPanelWWWRootSubdomain;
 
@@ -84,7 +85,6 @@ export = async () => {
 			error(`Validation failed: ${JSON.stringify(validate.error, null, 2)}`);
 			warn(inspect(exported, { depth: null }));
 		}
-
-		return exported;
+		return $$root(APPLICATION_IMAGE_NAME, STACKREF_ROOT, exported);
 	});
 };

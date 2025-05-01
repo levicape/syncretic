@@ -1,3 +1,4 @@
+import { hash } from "node:crypto";
 import { inspect } from "node:util";
 import {
 	CodeBuildBuildspecArtifactsBuilder,
@@ -11,15 +12,14 @@ import { Context } from "@levicape/fourtwo-pulumi/commonjs/context/Context.cjs";
 import { Version } from "@pulumi/aws-native/lambda";
 import { Deployment, Environment } from "@pulumi/aws/appconfig";
 import { ConfigurationProfile } from "@pulumi/aws/appconfig/configurationProfile";
+import { DeploymentStrategy } from "@pulumi/aws/appconfig/deploymentStrategy";
 import { HostedConfigurationVersion } from "@pulumi/aws/appconfig/hostedConfigurationVersion";
 import { EventRule, EventTarget } from "@pulumi/aws/cloudwatch";
 import { LogGroup } from "@pulumi/aws/cloudwatch/logGroup";
 import { Project } from "@pulumi/aws/codebuild";
 import { DeploymentGroup } from "@pulumi/aws/codedeploy/deploymentGroup";
 import { Pipeline } from "@pulumi/aws/codepipeline";
-import { ManagedPolicy } from "@pulumi/aws/iam";
 import { getRole } from "@pulumi/aws/iam/getRole";
-import { RolePolicyAttachment } from "@pulumi/aws/iam/rolePolicyAttachment";
 import {
 	Alias,
 	Function as LambdaFn,
@@ -33,7 +33,7 @@ import {
 } from "@pulumi/aws/s3";
 import { BucketObjectv2 } from "@pulumi/aws/s3/bucketObjectv2";
 import { BucketPublicAccessBlock } from "@pulumi/aws/s3/bucketPublicAccessBlock";
-import { BucketVersioningV2 } from "@pulumi/aws/s3/bucketVersioningV2";
+import { BucketVersioningV2 } from "@pulumi/aws/s3/bucketVersioningV2";	
 import { Output, all, interpolate, log } from "@pulumi/pulumi";
 import { AssetArchive } from "@pulumi/pulumi/asset/archive";
 import { StringAsset } from "@pulumi/pulumi/asset/asset";
@@ -44,7 +44,7 @@ import { stringify } from "yaml";
 import type { z } from "zod";
 import { objectEntries, objectFromEntries } from "../../../Object";
 import { AwsCodeBuildContainerRoundRobin } from "../../../RoundRobin";
-import { $deref, type DereferencedOutput } from "../../../Stack";
+import { $$root, $deref, type DereferencedOutput } from "../../../Stack";
 import {
 	FourtwoApplicationRoot,
 	FourtwoApplicationStackExportsZod,
@@ -185,8 +185,9 @@ export = async () => {
 	context.resourcegroups({ _ });
 
 	const stage = CI.APPLICATION_ENVIRONMENT;
-	const farRole = await getRole({ name: CI.CI_ACCESS_ROLE });
-
+	const automationRole = await getRole({
+		name: $datalayer.iam.roles.automation.name,
+	});
 	// Object Store
 	const s3 = (() => {
 		const bucket = (name: string) => {
@@ -417,8 +418,16 @@ export = async () => {
 			},
 		);
 
+		const deploymentStrategy = new DeploymentStrategy(_(`config-dev`), {
+			growthFactor: 100,
+			deploymentDurationInMinutes: 2,
+			finalBakeTimeInMinutes: 1,
+			replicateTo: "NONE",
+		});
+
 		return {
 			environment,
+			deploymentStrategy,
 		};
 	})();
 
@@ -461,20 +470,33 @@ export = async () => {
 			{ path, content }: (typeof ATLASFILE_PATHS)["routes"],
 		) => {
 			const stringcontent = JSON.stringify(content(dereferenced$));
-			const object = new BucketObjectv2(_(`${name}-${kind}-atlas`), {
-				bucket: s3.artifacts.bucket,
-				source: new StringAsset(stringcontent),
-				contentType: "application/json",
-				key: `${name}/${path}`,
-				tags: {
-					Name: _(`${name}-${kind}-atlas`),
-					StackRef: STACKREF_ROOT,
-					PackageName: WORKSPACE_PACKAGE_NAME,
-					Kind: "Monitor",
-					Monitor: name,
-					MonitorPackageName: packageName,
+			const md5hash = hash("md5", stringcontent, "hex");
+			const first6 = md5hash.slice(0, 6);
+			const last6 = md5hash.slice(-6);
+
+			const object = new BucketObjectv2(
+				_(`${name}-${kind}-configfile`),
+				{
+					bucket: s3.artifacts.bucket,
+					source: new StringAsset(stringcontent),
+					contentType: "application/json",
+					key: `${HANDLER_TYPE}/${name}/${kind}.${first6}${last6}.json`,
+					tags: {
+						Name: _(`${name}-${kind}-configfile`),
+						StackRef: STACKREF_ROOT,
+						PackageName: WORKSPACE_PACKAGE_NAME,
+						Configfile: kind,
+						ConfigfilePath: path,
+						MD5: md5hash,
+						Kind: "Monitor",
+						Monitor: name,
+						MonitorPackageName: packageName,
+					},
 				},
-			});
+				{
+					retainOnDelete: true,
+				},
+			);
 
 			const configuration = new ConfigurationProfile(
 				_(`${name}-${kind}-config`),
@@ -513,14 +535,14 @@ export = async () => {
 			const deployment = new Deployment(
 				_(`${name}-${kind}-config-deployment`),
 				{
+					description: `(${packageName}) ${name} "${kind}" atlasfile in #${stage}`,
 					applicationId: codestar.appconfig.application.id,
 					environmentId: appconfig.environment.environmentId,
 					configurationProfileId: configuration.configurationProfileId,
+					configurationVersion: version.versionNumber.apply((v) => String(v)),
 					deploymentStrategyId: context.environment.isProd
 						? "AppConfig.Canary10Percent20Minutes"
-						: "AppConfig.AllAtOnce",
-					configurationVersion: version.versionNumber.apply((v) => String(v)),
-					description: `(${packageName}) ${name} "${kind}" atlasfile in #${stage}`,
+						: appconfig.deploymentStrategy.id,
 					tags: {
 						Name: _(`${name}-${kind}-config-deployment`),
 						StackRef: STACKREF_ROOT,
@@ -537,7 +559,7 @@ export = async () => {
 
 			return {
 				object,
-				content,
+				content: stringcontent,
 				configuration,
 				version,
 				deployment,
@@ -560,24 +582,6 @@ export = async () => {
 				AWS_APPCONFIG_ENVIRONMENT: environmentName,
 			};
 		});
-		const configpath = (file: keyof typeof ATLASFILE_PATHS) => {
-			return all([appconfigEnvironment]).apply(([appconfigenvironment]) => {
-				const applicationName = appconfigenvironment.AWS_APPCONFIG_APPLICATION;
-				const environmentName = appconfigenvironment.AWS_APPCONFIG_ENVIRONMENT;
-				return interpolate`/applications/${applicationName}/environments/${environmentName}/${atlas[file].configuration.name}`;
-			});
-		};
-		const AWS_APPCONFIG_EXTENSION_PREFETCH_LIST = (() => {
-			let prefetch = [];
-			for (const af of Object.keys(atlas)) {
-				if (af) {
-					prefetch.push(af);
-				}
-			}
-			return Output.create(
-				prefetch.map((af) => configpath(af as keyof typeof ATLASFILE_PATHS)),
-			);
-		})().apply((list) => list.join(","));
 
 		const memorySize = context.environment.isProd ? 512 : 256;
 		const timeout = context.environment.isProd ? 93 : 55;
@@ -609,82 +613,104 @@ export = async () => {
 					logGroup: loggroup.name,
 					applicationLogLevel: context.environment.isProd ? "INFO" : "DEBUG",
 				},
-				layers: [
-					// TODO: RIP mapping
-					`arn:aws:lambda:us-west-2:359756378197:layer:AWS-AppConfig-Extension-Arm64:132`,
-				],
-				environment: all([appconfigEnvironment]).apply(([appconfigEnv]) => {
-					return {
-						variables: {
-							NODE_OPTIONS: [
-								"--no-force-async-hooks-checks",
-								"--enable-source-maps",
-							].join(" "),
-							NODE_ENV: "production",
-							LOG_LEVEL: "5",
-							...(LLRT_PLATFORM
-								? {
-										LLRT_PLATFORM,
-										LLRT_GC_THRESHOLD_MB: String(memorySize / 2),
-									}
-								: {}),
-							...cloudmapEnvironment,
-							...appconfigEnv,
-							AWS_APPCONFIG_EXTENSION_PREFETCH_LIST,
-							...(environment !== undefined && typeof environment === "function"
-								? objectFromEntries(
-										objectEntries(environment(dereferenced$))
-											.filter(([_, value]) => value !== undefined)
-											.filter(
-												([_, value]) =>
-													typeof value !== "function" &&
-													typeof value !== "symbol",
-											)
-											.map(([key, value]) => {
-												log.debug(
-													inspect({
-														LambdaFn: {
-															environment: {
-																key,
-																value,
-															},
-														},
-													}),
-												);
+				// Requires VPC Privatelink / RIP to match region to layer ARN
+				// layers: [
+				// 	`arn:aws:lambda:us-west-2:359756378197:layer:AWS-AppConfig-Extension-Arm64:132`,
+				// ],
+				environment: all([cloudmapEnvironment, appconfigEnvironment]).apply(
+					([cloudmapEnv, _appconfigEnv]) => {
+						return {
+							variables: {
+								NODE_OPTIONS: [
+									"--no-force-async-hooks-checks",
+									"--enable-source-maps",
+								].join(" "),
+								NODE_ENV: "production",
+								LOG_LEVEL: "5",
+								...cloudmapEnv,
+								// ...appconfigEnv,
+								// AWS_APPCONFIG_EXTENSION_PREFETCH_LIST: (() => {
+								// 	let prefetch = [];
 
-												if (typeof value === "object") {
-													return [
-														key,
-														Buffer.from(JSON.stringify(value)).toString(
-															"base64",
-														),
-													];
-												}
-												try {
-													return [key, String(value)];
-												} catch (e) {
-													log.warn(
-														inspect(
-															{
-																LambdaFn: {
-																	environment: {
-																		key,
-																		value,
-																		error: serializeError(e),
-																	},
+								// 	const configpath = (file: keyof typeof ATLASFILE_PATHS) => {
+								// 		return all([appconfigEnvironment]).apply(([appconfigenvironment]) => {
+								// 			const applicationName = appconfigenvironment.AWS_APPCONFIG_APPLICATION;
+								// 			const environmentName = appconfigenvironment.AWS_APPCONFIG_ENVIRONMENT;
+								// 			return interpolate`/applications/${applicationName}/environments/${environmentName}/configurations/${atlas[file].configuration.name}`;
+								// 		});
+								// 	};
+
+								// 	for (const af of Object.keys(atlas)) {
+								// 		if (af) {
+								// 			prefetch.push(af);
+								// 		}
+								// 	}
+								// 	return Output.create(
+								// 		prefetch.map((af) => configpath(af as keyof typeof ATLASFILE_PATHS)),
+								// 	);
+								// })().apply((list) => list.join(",")),
+								...(LLRT_PLATFORM
+									? {
+											LLRT_PLATFORM,
+											LLRT_GC_THRESHOLD_MB: String(memorySize / 2),
+										}
+									: {}),
+								...(environment !== undefined &&
+								typeof environment === "function"
+									? Object.fromEntries(
+											Object.entries(environment(dereferenced$))
+												.filter(([_, value]) => value !== undefined)
+												.filter(
+													([_, value]) =>
+														typeof value !== "function" &&
+														typeof value !== "symbol",
+												)
+												.map(([key, value]) => {
+													log.debug(
+														inspect({
+															LambdaFn: {
+																environment: {
+																	key,
+																	value,
 																},
 															},
-															{ depth: null },
-														),
+														}),
 													);
-													return [key, undefined];
-												}
-											}),
-									)
-								: {}),
-						},
-					};
-				}),
+
+													if (typeof value === "object") {
+														return [
+															key,
+															Buffer.from(JSON.stringify(value)).toString(
+																"base64",
+															),
+														];
+													}
+													try {
+														return [key, String(value)];
+													} catch (e) {
+														log.warn(
+															inspect(
+																{
+																	LambdaFn: {
+																		environment: {
+																			key,
+																			value,
+																			error: serializeError(e),
+																		},
+																	},
+																},
+																{ depth: null },
+															),
+														);
+														return [key, undefined];
+													}
+												}),
+										)
+									: {}),
+							},
+						};
+					},
+				),
 				tags: {
 					Name: _(name),
 					StackRef: STACKREF_ROOT,
@@ -726,7 +752,7 @@ export = async () => {
 				),
 				appName: codestar.codedeploy.application.name,
 				deploymentConfigName: codestar.codedeploy.deploymentConfig.name,
-				serviceRoleArn: farRole.arn,
+				serviceRoleArn: automationRole.arn,
 				deploymentStyle: {
 					deploymentOption: "WITH_TRAFFIC_CONTROL",
 					deploymentType: "BLUE_GREEN",
@@ -785,6 +811,7 @@ export = async () => {
 				const PIPELINE_STAGE = HANDLER_TYPE;
 				const EXTRACT_ACTION = "extractimage" as const;
 				const UPDATE_ACTION = "updatelambda" as const;
+				const DEPLOY_SENTINEL = "procfile deploy completed" as const;
 
 				const ATLAS_PIPELINE_VARIABLES = objectFromEntries(
 					Object.keys(ATLASFILE_PATHS).map(
@@ -795,7 +822,7 @@ export = async () => {
 							] as const,
 					),
 				);
-
+				const { codeartifact, ssm } = $codestar;
 				const stages = [
 					{
 						stage: PIPELINE_STAGE,
@@ -888,10 +915,52 @@ export = async () => {
 						phases: {
 							build: [
 								"env",
+								[
+									"aws",
+									"codeartifact",
+									"get-authorization-token",
+									"--domain",
+									codeartifact.domain.name,
+									"--domain-owner",
+									codeartifact.domain.owner ?? "<DOMAIN_OWNER>",
+									"--region $AWS_REGION",
+									"--query authorizationToken",
+									"--output text",
+									" > .codeartifact-token",
+								].join(" "),
+								[
+									"aws",
+									"codeartifact",
+									"get-repository-endpoint",
+									"--domain",
+									codeartifact.domain.name,
+									"--domain-owner",
+									codeartifact.domain.owner ?? "<DOMAIN_OWNER>",
+									"--repository",
+									codeartifact.repository.npm?.name,
+									"--format npm",
+									"--region $AWS_REGION",
+									"--query repositoryEndpoint",
+									"--output text",
+									" > .codeartifact-repository",
+								].join(" "),
+								`export LEVICAPE_TOKEN=$(${[
+									"aws",
+									"ssm",
+									"get-parameter",
+									"--name",
+									`"${ssm.levicape.npm.parameter.name}"`,
+									"--with-decryption",
+									"--region $AWS_REGION",
+									"--query Parameter.Value",
+									"--output text",
+									"--no-cli-pager",
+								].join(" ")})`,
 								"docker --version",
 								`aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $STACKREF_CODESTAR_ECR_REPOSITORY_URL`,
 								"docker pull $SOURCE_IMAGE_URI",
 								"docker images",
+								"export NPM_REGISTRY=$(cat .codeartifact-repository)",
 								// extract module
 								[
 									...[
@@ -901,22 +970,40 @@ export = async () => {
 											"--entrypoint deploy",
 											`--env DEPLOY_FILTER=$PACKAGE_NAME`,
 											`--env DEPLOY_OUTPUT=/tmp/${PIPELINE_STAGE}`,
+											`--env DEPLOY_ARGS="--verify-store-integrity=false --node-linker=hoisted --prefer-offline"`,
+											`--env NPM_REGISTRY`,
+											`--env NPM_REGISTRY_HOST=\${NPM_REGISTRY#https://}`,
+											`--env NPM_TOKEN=$(cat .codeartifact-token)`,
+											`--env NPM_ALWAYS_AUTH=true`,
+											`--env LEVICAPE_REGISTRY=${ssm.levicape.npm.url}`,
+											`--env LEVICAPE_REGISTRY_HOST=${ssm.levicape.npm.host}`,
+											`--env LEVICAPE_TOKEN`,
+											`--env LEVICAPE_ALWAYS_AUTH=true`,
 										],
 										"$SOURCE_IMAGE_URI",
 									],
 									"> .container",
 								].join(" "),
 								"docker ps -al",
-								...[2, 8, 4, 2].flatMap((i) => [
-									`cat .container`,
-									`sleep ${i}s`,
-									`docker container logs $(cat .container)`,
-								]),
+								"export DEPLOY_COMPLETE=0",
+								"echo 'Waiting for procfile deploy'",
+								...[4, 16, 20, 16, 4, 2, 8, 10, 8, 2, 1, 4, 5, 4, 1].flatMap(
+									(i) => [
+										`cat .container`,
+										`if [ "$DEPLOY_COMPLETE" != "0" ];
+											then echo "Deploy completed. Skipping ${i}s wait";
+											else echo "Sleeping for ${i}s..."; echo "..."; 
+												sleep ${i}s; docker container logs $(cat .container);
+												export DEPLOY_COMPLETE=$(docker container logs $(cat .container) | grep -c "${DEPLOY_SENTINEL}");
+										fi`,
+										`echo "DEPLOY_COMPLETE: $DEPLOY_COMPLETE"`,
+									],
+								),
 								`mkdir -p $CODEBUILD_SRC_DIR/.${EXTRACT_ACTION} || true`,
 								`docker cp $(cat .container):/tmp/${PIPELINE_STAGE} $CODEBUILD_SRC_DIR/.${EXTRACT_ACTION}`,
 								`ls -al $CODEBUILD_SRC_DIR/.${EXTRACT_ACTION} || true`,
 								`ls -al $CODEBUILD_SRC_DIR/.${EXTRACT_ACTION}/${PIPELINE_STAGE} || true`,
-								`ls -al $CODEBUILD_SRC_DIR/.${EXTRACT_ACTION}/${PIPELINE_STAGE}/node_modules || true`,
+								`ls -al $CODEBUILD_SRC_DIR/.${EXTRACT_ACTION}/${PIPELINE_STAGE}/node_modules`,
 								// bootstrap binary
 								...(LLRT_ARCH
 									? [
@@ -1060,6 +1147,12 @@ export = async () => {
 									"--function-name $LAMBDA_FUNCTION_NAME",
 									`--handler $LAMBDA_HANDLER`,
 								].join(" "),
+								"echo 'Waiting for update'",
+								[
+									"aws lambda wait function-updated",
+									"--function-name $LAMBDA_FUNCTION_NAME",
+									`--qualifier ${stage}`,
+								].join(" "),
 								"echo $DeployKey",
 								[
 									"aws lambda update-function-code",
@@ -1160,7 +1253,7 @@ export = async () => {
 								{
 									description: `(${packageName}) Deploy "${stage}" pipeline "${name}" stage: "${action}"`,
 									buildTimeout: 12,
-									serviceRole: farRole.arn,
+									serviceRole: automationRole.arn,
 									artifacts: {
 										type: "CODEPIPELINE",
 										artifactIdentifier: artifact.name,
@@ -1192,7 +1285,11 @@ export = async () => {
 									},
 								},
 								{
-									dependsOn: [upload, deploymentGroup],
+									dependsOn: [
+										upload,
+										deploymentGroup,
+										...Object.values(atlas).map((c) => c.object),
+									],
 								},
 							);
 
@@ -1291,7 +1388,7 @@ export = async () => {
 			{
 				name: interpolate`${pipelineName}-${randomid.hex}`,
 				pipelineType: "V2",
-				roleArn: farRole.arn,
+				roleArn: automationRole.arn,
 				executionMode: "QUEUED",
 				artifactStores: [
 					{
@@ -1547,11 +1644,6 @@ export = async () => {
 			},
 		);
 
-		new RolePolicyAttachment(_("codepipeline-rolepolicy"), {
-			policyArn: ManagedPolicy.CodePipeline_FullAccess,
-			role: farRole.name,
-		});
-
 		return {
 			pipeline,
 		};
@@ -1594,7 +1686,7 @@ export = async () => {
 				{
 					rule: rule.name,
 					arn: codepipeline.pipeline.arn,
-					roleArn: farRole.arn,
+					roleArn: automationRole.arn,
 				},
 				{
 					deleteBeforeReplace: true,
@@ -1933,7 +2025,7 @@ export = async () => {
 				error(`Validation failed: ${JSON.stringify(validate.error, null, 2)}`);
 				warn(inspect(exported, { depth: null }));
 			}
-			return exported;
+			return $$root(APPLICATION_IMAGE_NAME, STACKREF_ROOT, exported);
 		},
 	);
 };

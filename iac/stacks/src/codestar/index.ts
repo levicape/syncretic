@@ -62,8 +62,8 @@ export = async () => {
 			},
 		});
 
-		const taggedTtl = context.environment.isProd ? 28 : 7;
-		const untaggedTtl = context.environment.isProd ? 14 : 3;
+		const taggedTtl = context.environment.isProd ? 14 : 5;
+		const untaggedTtl = context.environment.isProd ? 7 : 2;
 
 		new LifecyclePolicy(_("binaries-lifecycle"), {
 			repository: repository.name,
