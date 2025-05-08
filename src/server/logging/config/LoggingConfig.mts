@@ -1,7 +1,5 @@
 import { Config } from "effect";
-/**
- * Configuration for Spork logging.
- */
+
 export class LoggingConfig {
 	constructor(
 		/**

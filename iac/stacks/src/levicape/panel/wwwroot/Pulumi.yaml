@@ -1,9 +1,0 @@
-description: Cloudfront distribution
-runtime:
-  name: nodejs
-  options:
-    packagemanager: pnpm
-config:
-  pulumi:tags:
-    value:
-      pulumi:template: aws-typescript

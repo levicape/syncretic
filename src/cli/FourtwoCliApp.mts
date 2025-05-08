@@ -20,7 +20,7 @@ export const FourtwoCliApp = async () => {
 		buildRouteMap({
 			routes,
 			docs: {
-				brief: "Fourtwo is a CLI for managing IaC resources",
+				brief: "Fourtwo is a CLI for generating resources from JSX templates",
 			},
 		}),
 		{

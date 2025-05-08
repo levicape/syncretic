@@ -10,14 +10,12 @@ export const GithubRoutemap = async () => {
 			aliases: {
 				workflow: "workflows",
 				wf: "workflows",
-				// co: "chatops",
 			},
 			routes: {
 				workflows,
-				// chatops,
 			},
 			docs: {
-				brief: "Commands to interact with Github Actions",
+				brief: "Github related commands",
 			},
 		});
 };
