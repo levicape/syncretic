@@ -160,88 +160,12 @@ jobs:
         name: Publish to npm
         continue-on-error: true
         run: pnpm publish --no-git-checks;
-  publish_fourtwo-builders:
-    name: "@levicape/fourtwo-builders: Compile and publish to Github"
-    runs-on: ubuntu-latest
-    permissions:
-      packages: write
-      contents: read
-    defaults:
-      run:
-        working-directory: packages/builders
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Remove project .npmrc
-        run: |-
-          if [ -f ../../.npmrc ]; then rm ../../.npmrc; fi;
-          if [ -f .npmrc ]; then rm .npmrc; fi;
-      - name: Verify registry URL
-        continue-on-error: true
-        run: |-
-          echo "NPM_REGISTRY_URL: ${{ env.LEVICAPE_REGISTRY }}";
-          echo "NPM_REGISTRY_HOST: ${{ env.LEVICAPE_REGISTRY_HOST }}";
-          curl -v --insecure ${{ env.LEVICAPE_REGISTRY }};
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-      - name: Setup Node 22.13.0
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22.13.0
-          registry-url: ${{ env.LEVICAPE_REGISTRY }}
-          cache: pnpm
-          cache-dependency-path: pnpm-lock.yaml
-          scope: "@levicape"
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - id: cache-npm
-        name: Cache node modules
-        uses: actions/cache@v3
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-build-npm-node-modules-${{ hashFiles('**/pnpm-lock.json') }}
-          restore-keys: ${{ runner.os }}-build-npm-node-modules-
-      - name: Get pnpm store directory
-        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV;
-      - id: cache-pnpm-store
-        name: Cache pnpm files
-        uses: actions/cache@v3
-        with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.json') }}
-          restore-keys: ${{ runner.os }}-pnpm-store-
-      - if: ${{ steps.cache-npm.outputs.cache-hit != 'true' }}
-        name: List Dependencies
-        continue-on-error: true
-        run: pnpm list;
-      - name: Install Dependencies
-        run: pnpm install;
-      - name: "Run package.json: build"
-        run: pnpm run build;
-      - name: "Run package.json: lint"
-        run: pnpm run lint;
-      - name: "Run package.json: test"
-        run: pnpm run test;
-      - name: "Run package.json: prepublishOnly"
-        run: pnpm run prepublishOnly;
-      - name: Increment version
-        env:
-          RELEVANT_SHA: ${{ github.event.release.target_commitish || github.sha }}
-        run: |-
-          export PREID=$RELEVANT_SHA;
-          export PREID=${PREID:0:10};
-          export ARGS="--git-tag-version=false --commit-hooks=false";
-          npm version ${{ github.event.release.tag_name }}-${PREID:-unknown}.${{ github.run_number }} $ARGS --allow-same-version;
-      - if: success()
-        name: Publish to npm
-        continue-on-error: true
-        run: pnpm publish --no-git-checks;
 
 ########################################
 ########################################
 #**:_$~- {"$$":"head","filename":"[release(released)] - Publish - [@levicape_fourtwo].yml","source":"iac/workflows/github/release/Publish.js"}
 #**:_$~- {"$$":"script","generator":"codegen/github/GenerateGithubWorkflow.mts"}
-#**:_$~- {"$$":"body","hashed":"f1338a2debc09eb4f455bd1e6e9b8dadacdbdd5708cdae78642263b34978afc0"}
-#**:_$~- {"$$":"footer","started":"2025-03-31T06:15:10.213Z","now":"2025-03-31T06:15:10.230Z","elapsed":"17ms"}
+#**:_$~- {"$$":"body","hashed":"6b1890c6df98e74e52e300ea1f0c99cc78d22704a5f55128f075f22e5c850942"}
+#**:_$~- {"$$":"footer","started":"2025-05-08T02:03:51.586Z","now":"2025-05-08T02:03:51.594Z","elapsed":"8ms"}
 # END OF GENERATED FILE
 

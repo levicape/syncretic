@@ -13,7 +13,7 @@
     "binpath": "./src/cli/bin.mts",
     "outpaths": "./module **/*/commonjs **/*/module **/*/output",
     "clipath": "./module/cli/bin.mjs",
-    "lintpaths": "./src ./canary ./iac"
+    "lintpaths": "./src ./iac"
   },
   "dependencies": {
     "@aws-lambda-powertools/logger": "catalog:log-awspowertools",
@@ -28,9 +28,6 @@
     "better-sqlite3": "catalog:database-sqlite",
     "consola": "catalog:log-consola",
     "effect": "catalog:effect",
-    "enquirer": "catalog:cli",
-    "fast-xml-parser": "catalog:parse-xml",
-    "ini": "catalog:parse-ini",
     "js-yaml": "catalog:parse-yaml",
     "knex": "catalog:database-sql",
     "loglayer": "catalog:log-loglayer",
@@ -40,12 +37,10 @@
     "serialize-error": "catalog:error",
     "std-env": "catalog:runtime-env",
     "verror": "catalog:error",
-    "yaml": "catalog:parse-yaml",
-    "zod": "catalog:schema-zod"
+    "yaml": "catalog:parse-yaml"
   },
   "devDependencies": {
     "@biomejs/biome": "catalog:lint",
-    "@types/ini": "catalog:types",
     "@types/js-yaml": "catalog:types",
     "@types/node": "catalog:types",
     "@types/verror": "catalog:types",
@@ -77,8 +72,7 @@
   },
   "files": [
     "src",
-    "module",
-    "output"
+    "module"
   ],
   "license": "AGPL-3.0-only",
   "nx": {
@@ -103,11 +97,7 @@
       },
       "dx:prepublish": {
         "dependsOn": [
-          "@levicape/fourtwo-builders:dx:precommit",
-          "@levicape/fourtwo-pulumi:dx:precommit",
-          "@levicape/fourtwo-panel-io:dx:precommit",
-          "@levicape/fourtwo-panel-ui:dx:precommit",
-          "@levicape/fourtwo-iac-stacks:dx:precommit"
+          "@levicape/fourtwo-pulumi:dx:precommit"
         ]
       },
       "dx:test": {
@@ -124,11 +114,7 @@
       "nx:compile": {
         "dependsOn": [
           "build:module",
-          "@levicape/fourtwo-builders:nx:compile",
-          "@levicape/fourtwo-canary:nx:compile",
-          "@levicape/fourtwo-pulumi:nx:compile",
-          "@levicape/fourtwo-panel-io:nx:compile",
-          "@levicape/fourtwo-panel-ui:nx:compile"
+          "@levicape/fourtwo-pulumi:nx:compile"
         ]
       },
       "nx:sync": {
@@ -138,7 +124,6 @@
       },
       "nx:test": {
         "dependsOn": [
-          "@levicape/fourtwo-canary:nx:test",
           "test:module"
         ]
       }

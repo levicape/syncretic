@@ -3,6 +3,7 @@
 
 import { GithubJobBuilder } from "@levicape/fourtwo/ci/cd/pipeline/github/GithubJobBuilder";
 import { GithubWorkflowExpressions } from "@levicape/fourtwo/ci/cd/pipeline/github/GithubWorkflowExpressions";
+import { Fragment } from "@levicape/fourtwo/jsx-runtime";
 import { GithubJobX } from "@levicape/fourtwo/jsx/github/GithubJobX";
 import { GithubStepX } from "@levicape/fourtwo/jsx/github/GithubStepX";
 import { GithubWorkflowX } from "@levicape/fourtwo/jsx/github/GithubWorkflowX";
@@ -22,10 +23,6 @@ const compileAndPublish: CompileAndPublishProps[] = [
 	{
 		packageName: "@levicape/fourtwo-pulumi",
 		cwd: "packages/pulumi",
-	},
-	{
-		packageName: "@levicape/fourtwo-builders",
-		cwd: "packages/builders",
 	},
 ];
 
@@ -55,7 +52,7 @@ export default (
 							: undefined
 					}
 					steps={
-						<>
+						<Fragment>
 							<GithubStepCheckoutX />
 							<GithubStepX
 								name="Remove project .npmrc"
@@ -126,7 +123,7 @@ export default (
 								continueOnError={true}
 								run={["pnpm publish --no-git-checks;"]}
 							/>
-						</>
+						</Fragment>
 					}
 				/>
 			);

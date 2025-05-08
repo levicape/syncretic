@@ -1,9 +1,0 @@
-description: ECR Repository, CodeArtifact NPM mirror, CodeDeploy, AppConfig
-runtime:
-  name: nodejs
-  options:
-    packagemanager: pnpm
-config:
-  pulumi:tags:
-    value:
-      pulumi:template: aws-typescript
