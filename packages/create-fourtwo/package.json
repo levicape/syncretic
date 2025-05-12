@@ -1,36 +1,48 @@
 {
-  "name": "@levicape/fourtwo-pulumi",
+  "name": "@levicape/create-fourtwo",
+  "description": "CLI for creating Fourtwo resources",
   "version": "0.0.0-local.0",
   "author": "Pedro Cardona",
+  "bin": {
+    "@levicape/create-fourtwo": "module/bin.mjs",
+    "create-fourtwo": "module/bin.mjs"
+  },
   "config": {
     "packagemanager": "pnpm",
     "packageexecutor": "pnpm exec",
-    "lintpaths": "./src",
-    "outpaths": "./commonjs"
+    "packagescript": "pnpm run",
+    "binpath": "./src/bin.mts",
+    "outpaths": "**/*/module **/*/output",
+    "clipath": "./module/bin.mjs",
+    "lintpaths": "./src ./template"
   },
   "dependencies": {
-    "@pulumi/aws": "catalog:pulumi",
-    "@pulumi/pulumi": "catalog:pulumi"
+    "@inquirer/prompts": "^7.5.0",
+    "@stricli/core": "catalog:cli",
+    "graceful-fs": "^4.2.11",
+    "nanospinner": "^1.2.2",
+    "picocolors": "^1.1.1",
+    "std-env": "catalog:runtime-env",
+    "verror": "catalog:error"
   },
   "devDependencies": {
     "@biomejs/biome": "catalog:lint",
-    "@types/folder-hash": "catalog:types",
+    "@types/graceful-fs": "^4.1.9",
+    "@types/node": "catalog:types",
     "depcheck": "catalog:package",
     "expect": "catalog:test",
+    "nx": "catalog:project-nx",
     "publint": "catalog:package",
     "syncpack": "catalog:package",
     "tsx": "catalog:dev",
     "typescript": "catalog:dev"
   },
   "engines": {
-    "node": "^22"
-  },
-  "exports": {
-    "./*": "./*"
+    "node": "22.13.0"
   },
   "files": [
-    "commonjs",
-    "output"
+    "module",
+    "template"
   ],
   "license": "AGPL-3.0-only",
   "nx": {
@@ -52,9 +64,6 @@
           "dx:prepublish",
           "nx:test"
         ]
-      },
-      "dx:prepublish": {
-        "dependsOn": []
       },
       "dx:test": {
         "dependsOn": [
@@ -88,6 +97,9 @@
     "build:tsc": "$npm_package_config_packageexecutor tsc",
     "clean": "$npm_package_config_packageexecutor nx nx:clean",
     "clean:module": "rm -rf $npm_package_config_outpaths || true",
+    "dx:cli:bin": "NODE_NO_WARNINGS=1 $npm_package_config_packageexecutor tsx $npm_package_config_binpath",
+    "dx:cli:dev": "node --inspect-brk --import tsx $npm_package_config_binpath",
+    "dx:cli:mjs": "NODE_NO_WARNINGS=1 node $npm_package_config_clipath",
     "dx:precommit": "$npm_package_config_packageexecutor nx dx:precommit:pre && $npm_package_config_packageexecutor nx package:deps",
     "dx:precommit:pre": "echo \"Starting precommit dx. This will check package.json dependencies.\"",
     "dx:prepublish": "$npm_package_config_packageexecutor nx dx:prepublish:pre && $npm_package_config_packageexecutor nx dx:lint && $npm_package_config_packageexecutor nx prepublishOnly",
@@ -106,5 +118,5 @@
     "test": "$npm_package_config_packageexecutor nx nx:test",
     "test:module": "echo 'node --test --test-reporter junit \"module/**/*.test.js\"'"
   },
-  "type": "commonjs"
+  "type": "module"
 }

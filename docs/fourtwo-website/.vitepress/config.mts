@@ -11,22 +11,30 @@ import { createFileSystemTypesCache } from '@shikijs/vitepress-twoslash/cache-fs
 const sidebars = (): DefaultTheme.SidebarItem[] => [
   {
     text: 'Getting Started',
+    link: '/docs/',
     items: [
       { 
-        text: 'Fourtwo Quickstart', 
-        link: '/docs/' 
-      },
-      { 
-        text: 'Configure JSX with Typescript', 
+        text: 'Configuring JSX', 
         link: '/docs/01-getting-started/02-configure-jsx-with-typescript' 
       },
     ],
   },
   {
+    text: "JSX Resources",
+    link: '/docs/02-jsx-resources/01-inline-jsx',
+    items: [
+      {
+        text: "Devfile",
+        link: '/docs/02-jsx-resources/02-devfile/01-devfile-api'
+      }
+    ]
+  },
+  {
     text: 'JSX Workflows',
     items: [
       {
-        text: "CLI Basics"
+        text: "CLI Basics",
+
       },
       {
         text: 'Github Actions',
@@ -65,48 +73,7 @@ const sidebars = (): DefaultTheme.SidebarItem[] => [
         ]
       },  
     ]
-  },    
-  {
-    text: "Builders",
-    items: [
-      {
-        text: "AWS CodeDeploy"
-      },
-      {
-        text: "AWS CodeBuild"
-      },
-      {
-        text: "Devfile"
-      }
-    ]
-  },
-  {
-    text: "CLI Commands",
-    items: [
-      {
-        text: "github",
-        items: [
-          {
-            text: "workflows",
-          }
-        ]
-      },
-      {
-        text: "aws",
-        items: [
-          {
-            text: "codedeploy"
-          },
-          {
-            text: "codebuild"
-          },
-          {
-            text: "codecatalyst"
-          },
-        ]
-      },
-    ]
-  },
+  }, 
 ]
 
 export default defineConfig({
@@ -128,7 +95,10 @@ export default defineConfig({
         typesCache: createFileSystemTypesCache(),
       }),
     ],
-  },  
+  },
+  head: [
+    ['link', { rel: 'icon', href: '/favicon.ico' }],
+  ],
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     nav: [

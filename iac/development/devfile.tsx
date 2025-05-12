@@ -59,88 +59,94 @@ let data = (
 			/>
 		}
 	>
-		{[
-			<DevfileCommandX
-				id={"make"}
-				exec={{
-					component: "source",
-					commandLine: `sudo yum install -y ${MAKE_DEPENDENCIES} || true`,
-				}}
-			/>,
-			<DevfileCommandX
-				id={"pyenv"}
-				exec={{
-					component: "source",
-					commandLine: [
-						'export PYENV_URL="https://pyenv.run"',
-						'echo "Downloading pyenv. URL: $PYENV_URL"',
-						"$(curl -fsSL $PYENV_URL | bash) || true",
-						'export PYENV_ROOT="$HOME/.pyenv"',
-						'[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"',
-						'eval "$(pyenv init - bash)"',
-						'echo "pyenv configured. Root: $PYENV_ROOT"',
-					].join(" && "),
-				}}
-			/>,
-			<DevfileCommandX
-				id={"corepack"}
-				exec={{
-					component: "source",
-					commandLine: sudodo("corepack enable pnpm || true"),
-				}}
-			/>,
-			<DevfileCommandX
-				id={"pnpm"}
-				exec={{
-					component: "source",
-					commandLine: sudodo(`corepack install -g ${PNPM_VERSION} || true`),
-				}}
-			/>,
-			<DevfileCommandX
-				id={"node"}
-				exec={{
-					component: "source",
-					commandLine: sudodo(`pnpx n ${NODE_VERSION} -y`),
-				}}
-			/>,
-			<DevfileCommandX
-				id={"codecatalyst-workflow-cli"}
-				exec={{
-					component: "source",
-					commandLine: [
-						[`sudo curl -sL ${CCR_URL} -o -`, "sudo tar -zx ccr"].join(" | "),
-						"sudo mv ccr /usr/local/bin/ccr",
-					].join(" && "),
-				}}
-			/>,
-			<DevfileCommandX
-				id={"docker"}
-				exec={{
-					component: "source",
-					commandLine: [
-						[
-							"sudo sh -c",
-							`'echo {\"dns\": [\"8.8.8.8\"]}`,
-							"> /etc/docker/daemon.json'",
-						].join(" "),
-						[
-							"sudo sh -c 'dockerd --storage-opt dm.basesize=60G",
-							"> /var/log/docker-daemon.log 2>&1 &'",
-						].join(" "),
-					].join(" && "),
-				}}
-			/>,
-			<DevfileCommandX
-				id={"finch"}
-				exec={{
-					component: "source",
-					commandLine: [
-						"sudo dnf install runfinch-finch",
-						"sudo dnf install amazon-ecr-credential-helper",
-					].join("; "),
-				}}
-			/>,
-		]}
+		<DevfileCommandX
+			id={"make"}
+			exec={{
+				component: "source",
+				commandLine: `sudo yum install -y ${MAKE_DEPENDENCIES} || true`,
+			}}
+		/>
+		,
+		<DevfileCommandX
+			id={"pyenv"}
+			exec={{
+				component: "source",
+				commandLine: [
+					'export PYENV_URL="https://pyenv.run"',
+					'echo "Downloading pyenv. URL: $PYENV_URL"',
+					"$(curl -fsSL $PYENV_URL | bash) || true",
+					'export PYENV_ROOT="$HOME/.pyenv"',
+					'[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"',
+					'eval "$(pyenv init - bash)"',
+					'echo "pyenv configured. Root: $PYENV_ROOT"',
+				].join(" && "),
+			}}
+		/>
+		,
+		<DevfileCommandX
+			id={"corepack"}
+			exec={{
+				component: "source",
+				commandLine: sudodo("corepack enable pnpm || true"),
+			}}
+		/>
+		,
+		<DevfileCommandX
+			id={"pnpm"}
+			exec={{
+				component: "source",
+				commandLine: sudodo(`corepack install -g ${PNPM_VERSION} || true`),
+			}}
+		/>
+		,
+		<DevfileCommandX
+			id={"node"}
+			exec={{
+				component: "source",
+				commandLine: sudodo(`pnpx n ${NODE_VERSION} -y`),
+			}}
+		/>
+		,
+		<DevfileCommandX
+			id={"codecatalyst-workflow-cli"}
+			exec={{
+				component: "source",
+				commandLine: [
+					[`sudo curl -sL ${CCR_URL} -o -`, "sudo tar -zx ccr"].join(" | "),
+					"sudo mv ccr /usr/local/bin/ccr",
+				].join(" && "),
+			}}
+		/>
+		,
+		<DevfileCommandX
+			id={"docker"}
+			exec={{
+				component: "source",
+				commandLine: [
+					[
+						"sudo sh -c",
+						`'echo {\"dns\": [\"8.8.8.8\"]}`,
+						"> /etc/docker/daemon.json'",
+					].join(" "),
+					[
+						"sudo sh -c 'dockerd --storage-opt dm.basesize=60G",
+						"> /var/log/docker-daemon.log 2>&1 &'",
+					].join(" "),
+				].join(" && "),
+			}}
+		/>
+		,
+		<DevfileCommandX
+			id={"finch"}
+			exec={{
+				component: "source",
+				commandLine: [
+					"sudo dnf install runfinch-finch",
+					"sudo dnf install amazon-ecr-credential-helper",
+				].join("; "),
+			}}
+		/>
+		,
 	</DevfileX>
 );
 

@@ -23,6 +23,6 @@ features:
     title: Flexible Builder pattern
     details: Generate AWS CodeDeploy & CodeBuild specs with the CLI, or use the provided Builders to create your specs inline.
   - icon: 🗂️
-    title: JSX for local development
-    details: The fourtwo CLI supports generation of local development configuration formats, such as Devfile format.
+    title: JSX for developers
+    details: Fourtwo JSX supports generation of Devfile configurations
 ---

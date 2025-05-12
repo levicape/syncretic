@@ -5,15 +5,56 @@ titleTemplate: ':title'
 
 # Fourtwo
 
-Fourtwo is a small, simple, and lorem ipsum sit amet et sapinu etal nos lanit pasum du roes de aloi la perisl op. Sumun gral ne dus kal nu aert kus bu
+Fourtwo is a jsx system for defining IaC resources. It translates a tree of tags (`<Component>`) into the resource's native format (usually yaml).
 
-```ts twoslash
-export const todo = "todo"
+Example:
+```tsx
+export const devfile: DevfileBuilder = <DevfileX
+	metadata={<DevfileMetadataX name={"devfile_fourtwo"} />}
+	components={[<DevfileSourceComponentX name={"source"} />]}
+	events={
+		<DevfileEventX
+			postStart={[
+				"hello-jsx",
+			]}
+		/>
+	}
+>
+	<DevfileCommandX
+		id={"hello_jsx"}
+		exec={{
+			component: "source",
+			commandLine: "echo 'Hello Fourtwo JSX!'",
+		}}
+	/>
+</DevfileX>
+
+console.log(devfile().build());
+// or
+writeFileSync(devfile().build());
+```
+translates to the following yaml:
+
+```yaml
+schemaVersion: 2.0.0
+metadata:
+  name: devfile_fourtwo
+components:
+  - name: source
+	...
+commands:
+  - id: hello_jsx
+    exec:
+      component: source
+      commandLine: echo 'Hello Fourtwo JSX!'
+events:
+  postStart:
+    - hello_jsx
 ```
 
 ## Quick Start
 
-Just run this:
+To get started, run the fourtwo-create app to generate a template:
 
 ::: code-group
 
@@ -39,9 +80,22 @@ deno init --npm fourtwo@latest
 
 :::
 
-## Features
+## JSX Resources
 
+Currently supported [inline JSX](../guide/getting-started) resources
+- Devfile
 
-## Use-cases
+## JSX Workflows
 
-Here are some examples of use-cases.
+The [Fourtwo CLI](../guide/getting-started) can manage the following git based (gitops) workflows:
+
+- CodeCatalyst
+- Github Actions
+
+## YAML Builders
+
+These resources are provided as [Builder Classes](../guide/getting-started) and have no jsx components
+
+- AWS CodeDeploy
+- AWS CodeBuild
+

@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "@levicape/fourtwo": "workspace:"
+  },
+  "private": "true",
+  "scripts": {
+    "render": "node --import tsx './devfile.tsx'"
+  }
+}
