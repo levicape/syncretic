@@ -2,12 +2,10 @@ packages:
   - .
   - iac/*
   - iac/images/*
-  - canary
   - docs/*
   - external/*/*
   - packages/*
-  - protocols/*
-  - realms/*/*
+  - packages/create-fourtwo/template/*
 catalogs:
   aws:
     '@aws/codecatalyst-workflows-sdk': ^0.1.5-preview.6
