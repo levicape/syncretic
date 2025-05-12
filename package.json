@@ -24,12 +24,9 @@
     "@loglayer/transport-consola": "catalog:log-loglayer",
     "@loglayer/transport-pino": "catalog:log-loglayer",
     "@stricli/core": "catalog:cli",
-    "aws4fetch": "catalog:aws",
-    "better-sqlite3": "catalog:database-sqlite",
     "consola": "catalog:log-consola",
     "effect": "catalog:effect",
     "js-yaml": "catalog:parse-yaml",
-    "knex": "catalog:database-sql",
     "loglayer": "catalog:log-loglayer",
     "pino": "catalog:log-pino",
     "pino-pretty": "catalog:log-pino",
@@ -97,7 +94,8 @@
       },
       "dx:prepublish": {
         "dependsOn": [
-          "@levicape/fourtwo-pulumi:dx:precommit"
+          "@levicape/fourtwo-pulumi:dx:precommit",
+          "@levicape/create-fourtwo:dx:precommit"
         ]
       },
       "dx:test": {
@@ -114,7 +112,8 @@
       "nx:compile": {
         "dependsOn": [
           "build:module",
-          "@levicape/fourtwo-pulumi:nx:compile"
+          "@levicape/fourtwo-pulumi:nx:compile",
+          "@levicape/create-fourtwo:nx:compile"
         ]
       },
       "nx:sync": {
