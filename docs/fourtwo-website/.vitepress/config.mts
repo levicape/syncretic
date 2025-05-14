@@ -21,11 +21,10 @@ const sidebars = (): DefaultTheme.SidebarItem[] => [
   },
   {
     text: "JSX Resources",
-    link: '/docs/02-jsx-resources/01-inline-jsx',
     items: [
       {
         text: "Devfile",
-        link: '/docs/02-jsx-resources/02-devfile/01-devfile-api'
+        link: '/docs/02-jsx-resources/02-devfile/01-devfile'
       }
     ]
   },
