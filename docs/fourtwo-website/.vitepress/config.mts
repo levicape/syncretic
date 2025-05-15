@@ -17,6 +17,10 @@ const sidebars = (): DefaultTheme.SidebarItem[] => [
         text: 'Configuring JSX', 
         link: '/docs/01-getting-started/02-configure-jsx-with-typescript' 
       },
+      {
+        text: "Rendering JSX",
+        link: '/docs/01-getting-started/03-rendering-jsx'
+      }
     ],
   },
   {
@@ -32,15 +36,13 @@ const sidebars = (): DefaultTheme.SidebarItem[] => [
     text: 'JSX Workflows',
     items: [
       {
-        text: "CLI Basics",
-
-      },
-      {
         text: 'Github Actions',
+        link: '/docs/03-workflows/github-actions/01-cli-basics',
         collapsed: true,
         items: [
           {
-            text: "Creating a GHA workflow"
+            text: "Creating a GHA workflow",
+            link: '/docs/03-workflows/github-actions/02-creating-a-gha-workflow'
           },
           {
             text: "Generating GHA yaml"

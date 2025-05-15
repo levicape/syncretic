@@ -19,7 +19,9 @@ type CompileAndPublishProps = {
 };
 
 const compileAndPublish: CompileAndPublishProps[] = [
-	{ packageName: "@levicape/fourtwo" },
+	{ 
+		packageName: "@levicape/fourtwo" 
+	},
 	{
 		packageName: "@levicape/fourtwo-pulumi",
 		cwd: "packages/pulumi",
@@ -90,12 +92,12 @@ export default (
 							>
 								{(node) => {
 									return (
-										<>
+										<Fragment>
 											<GithubStepNodeInstallX {...node} />
 											<GithubStepNodeScriptsX {...node} scripts={["build"]} />
 											<GithubStepNodeScriptsX {...node} scripts={["lint"]} />
 											<GithubStepNodeScriptsX {...node} scripts={["test"]} />
-										</>
+										</Fragment>
 									);
 								}}
 							</GithubStepNodeSetupX>
