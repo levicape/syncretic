@@ -4,15 +4,9 @@ titleTemplate: ':title'
 ---
 
 # Rendering a JSX file
-JSX components return a builder that 
+JSX components return a builder instance that has class methods for transforming it's contents into either yaml or json formats.
 ```
 
 ```
 
 
-
-
-
----
-
-# 
