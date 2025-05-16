@@ -19,9 +19,9 @@
   "dependencies": {
     "@inquirer/prompts": "^7.5.0",
     "@stricli/core": "catalog:cli",
-    "graceful-fs": "^4.2.11",
-    "nanospinner": "^1.2.2",
-    "picocolors": "^1.1.1",
+    "graceful-fs": "catalog:fs",
+    "nanospinner": "catalog:cli",
+    "picocolors": "catalog:cli",
     "std-env": "catalog:runtime-env",
     "verror": "catalog:error"
   },

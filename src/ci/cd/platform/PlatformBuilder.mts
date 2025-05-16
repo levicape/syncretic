@@ -81,7 +81,7 @@ export class PlatformBuilder<Step> {
 
 		return {
 			...platform,
-			getPlatformKey: () => Platform.getPlatformKey(platform, this.options!),
+			getPlatformKey: () => Platform.getPlatformKey(platform),
 			getPlatformLabel: () => Platform.getPlatformLabel(platform),
 			getImageKey: () => Platform.getImageKey(platform),
 			getImageLabel: () => Platform.getImageLabel(platform),

@@ -37,7 +37,6 @@ export function GithubNodeWorkflowJobSetup<
 		.setArch(arch)
 		.setAbi(abi)
 		.setBaseline(baseline)
-		.setOptions(options)
 		.build();
 
 	const { getPackageManager, getRuntime, getScript } =
@@ -94,7 +93,6 @@ export function GithubNodeWorkflowJobInstall<
 		.setArch(arch)
 		.setAbi(abi)
 		.setBaseline(baseline)
-		.setOptions(options)
 		.build();
 
 	const { getInstallModules, getScript } = new GithubNodePipelinePackageSteps();
@@ -149,7 +147,6 @@ export function GithubNodeWorkflowJobScript<
 		.setArch(arch)
 		.setAbi(abi)
 		.setBaseline(baseline)
-		.setOptions(options)
 		.build();
 
 	const { getScript } = new GithubNodePipelinePackageSteps();

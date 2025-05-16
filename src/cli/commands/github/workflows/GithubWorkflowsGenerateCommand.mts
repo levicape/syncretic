@@ -41,7 +41,6 @@ const fixExtension = ({ path, strict }: { path: string; strict?: boolean }) => {
 		if (strict) {
 			throw new VError("Cannot use .ts extension in strict mode");
 		}
-
 		console.warn({
 			GenerateCommand: {
 				message:
@@ -56,7 +55,6 @@ const fixExtension = ({ path, strict }: { path: string; strict?: boolean }) => {
 		if (strict) {
 			throw new VError("Cannot use .tsx extension in strict mode");
 		}
-
 		console.warn({
 			GenerateCommand: {
 				message:
@@ -133,7 +131,6 @@ export const GithubWorkflowsGenerateCommand = async () => {
 							source,
 						},
 					});
-
 					source = fixExtension({ path: source, strict });
 
 					let workflows: Array<GithubWorkflowBuilder<string, string>> = (
@@ -192,13 +189,8 @@ export const GithubWorkflowsGenerateCommand = async () => {
 						let valid = false;
 						if (output) {
 							let content = value.content;
-							AfterExit.execute(() => {
-								if (!valid) {
-									return;
-								}
-								process.stdout.write("\n");
-								process.stdout.write(content);
-							});
+							process.stdout.write("\n");
+							process.stdout.write(content);
 						}
 
 						({ value, done } = await generator.next(input));
@@ -270,9 +262,9 @@ export const GithubWorkflowsGenerateCommand = async () => {
 						{
 							brief: "File to serve",
 							parse: (input: string) => {
-								const allowed = ["js", "mjs", "cjs"];
+								const allowed = ["js", "mjs", "cjs", "ts", "tsx"];
 								if (!allowed.some((ext) => input.endsWith(ext))) {
-									throw new VError("File must be a js file (mjs, cjs)");
+									throw new VError("File must be a js/ts file (mjs, cjs, tjs)");
 								}
 								return input;
 							},
@@ -290,7 +282,7 @@ export const GithubWorkflowsGenerateCommand = async () => {
 					output: {
 						brief: "Output the generated workflow file to stdout",
 						kind: "boolean",
-						default: false,
+						default: true,
 					},
 					path: {
 						brief: "Path to write the generated workflow file",

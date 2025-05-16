@@ -7,12 +7,11 @@ import { createSpinner } from "nanospinner";
 import * as picocolors from "picocolors";
 import packageJson from "../package.json" with { type: "json" };
 import type { AppContext } from "./context.mts";
+import { type CliResource, CliTemplateIds } from "./templates.mts";
 
 const { bold, green } = picocolors;
 const { description, version, name } = packageJson;
 
-const templates = ["devfile"] as const;
-export type CliResource = (typeof templates)[number];
 export type CreateFourtwoAppFlags = {
 	resource?: CliResource;
 	offline: boolean;
@@ -29,6 +28,22 @@ export const CreateFourtwoApp = async () => {
 				const { resource, offline } = flags;
 				console.log(`Creating fourtwo jsx resource`);
 
+				const templateName =
+					resource ||
+					((await select({
+						loop: true,
+						message: "Which template do you want to use?",
+						choices: CliTemplateIds.map((template) => ({
+							title: template,
+							value: template,
+						})),
+						default: 0,
+					})) as CliResource);
+
+				if (!templateName) {
+					throw new Error("No template selected");
+				}
+
 				let target = "";
 				if (path) {
 					target = path;
@@ -38,7 +53,7 @@ export const CreateFourtwoApp = async () => {
 				} else {
 					const answer = await input({
 						message: "Target directory",
-						default: resource ? `jsx-${resource}` : "jsx-resource",
+						default: templateName ? `jsx-${templateName}` : "jsx-resource",
 					});
 					target = answer;
 				}
@@ -50,24 +65,7 @@ export const CreateFourtwoApp = async () => {
 				} else {
 					projectName = this.path.basename(target);
 				}
-
-				const templateName =
-					resource ||
-					(await select({
-						loop: true,
-						message: "Which template do you want to use?",
-						choices: templates.map((template) => ({
-							title: template,
-							value: template,
-						})),
-						default: 0,
-					}));
-
-				if (!templateName) {
-					throw new Error("No template selected");
-				}
-
-				if (!templates.includes(templateName)) {
+				if (!CliTemplateIds.includes(templateName)) {
 					throw new Error(`Invalid template selected: ${templateName}`);
 				}
 
@@ -154,7 +152,7 @@ export const CreateFourtwoApp = async () => {
 					resource: {
 						kind: "enum",
 						brief: "Resource to create",
-						values: templates,
+						values: CliTemplateIds,
 						optional: true,
 					},
 					offline: {

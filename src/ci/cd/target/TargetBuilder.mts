@@ -7,7 +7,6 @@ export class TargetBuilder<Step> {
 	private arch?: Arch;
 	private abi?: Abi;
 	private baseline?: boolean;
-	private options?: PipelineOptions;
 
 	setArch(arch: Arch): this {
 		this.arch = arch;
@@ -29,11 +28,6 @@ export class TargetBuilder<Step> {
 		return this;
 	}
 
-	setOptions(options: PipelineOptions) {
-		this.options = options;
-		return this;
-	}
-
 	build(): Target & TargetPrototype<Step> {
 		if (!this.os) {
 			throw new Error("os is required");
@@ -41,10 +35,6 @@ export class TargetBuilder<Step> {
 
 		if (!this.arch) {
 			throw new Error("arch is required");
-		}
-
-		if (this.options === undefined) {
-			throw new Error("options required");
 		}
 
 		const target: Target = {
@@ -65,8 +55,6 @@ export class TargetBuilder<Step> {
 			getTargetKey: () => Target.getTargetKey(target),
 			getTargetLabel: () => Target.getTargetLabel(target),
 			getBuildToolchain: () => Target.getBuildToolchain(target),
-			getBuildAgent: () => Target.getBuildAgent(target, this.options!),
-			getZigAgent: () => Target.getZigAgent(target, this.options!),
 			getParallelism: () => Target.getParallelism(target),
 		};
 	}

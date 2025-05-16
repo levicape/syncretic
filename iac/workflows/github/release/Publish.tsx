@@ -19,8 +19,8 @@ type CompileAndPublishProps = {
 };
 
 const compileAndPublish: CompileAndPublishProps[] = [
-	{ 
-		packageName: "@levicape/fourtwo" 
+	{
+		packageName: "@levicape/fourtwo",
 	},
 	{
 		packageName: "@levicape/fourtwo-pulumi",

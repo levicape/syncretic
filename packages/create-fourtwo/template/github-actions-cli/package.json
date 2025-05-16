@@ -1,0 +1,10 @@
+{
+  "dependencies": {
+    "@levicape/fourtwo": "workspace:",
+    "tsx": "^4.19.4"
+  },
+  "private": "true",
+  "scripts": {
+    "render": "fourtwo github workflows generate ./workflow.tsx --output"
+  }
+}
