@@ -1,7 +1,6 @@
 import type { Abi, Agent, Arch, Os } from "../agent/Agent.mjs";
 import type { PipelineOptions } from "../pipeline/Pipeline.mjs";
 import { BuildkiteContext } from "../pipeline/buildkite/BuildkiteContext.mjs";
-import type { PlatformPrototype } from "../platform/Platform.mjs";
 import { PlatformBuilder } from "../platform/PlatformBuilder.mjs";
 
 export interface Target {
@@ -15,8 +14,6 @@ export type TargetPrototype<Step> = {
 	getTargetKey: () => string;
 	getTargetLabel: () => string;
 	getBuildToolchain: () => string;
-	getBuildAgent: (platform: PlatformPrototype<Step>) => Agent;
-	getZigAgent: () => Agent;
 	getParallelism: () => number;
 };
 

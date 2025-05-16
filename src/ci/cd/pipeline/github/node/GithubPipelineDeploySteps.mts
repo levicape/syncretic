@@ -10,7 +10,7 @@ import type {
 import type { Target, TargetPrototype } from "../../../target/Target.mjs";
 import { TargetBuilder } from "../../../target/TargetBuilder.mjs";
 import type { PipelineOptions } from "../../PipelineOptions.mjs";
-import { type GithubStep, GithubStepBuilder } from "../GithubStepBuilder.mjs";
+import type { GithubStep } from "../GithubStepBuilder.mjs";
 
 export type GithubPipelineNodeDeployProps = {
 	version: {
@@ -43,7 +43,6 @@ export class GithubPipelineDeploySteps<Uses extends string, With extends string>
 			.setArch(platform.arch)
 			.setAbi(platform.abi)
 			.setBaseline(platform.baseline)
-			.setOptions(options)
 			.build();
 
 		this.options = options;

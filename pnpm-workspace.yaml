@@ -27,6 +27,8 @@ catalogs:
   cli:
     '@stricli/core': ^1.1.2
     enquirer: ^2.4.1
+    nanospinner: "^1.2.2"
+    picocolors: "^1.1.1"
   compression:
     archiver: ^7.0.1
   core:
@@ -70,6 +72,7 @@ catalogs:
   fs:
     chokidar: ^4.0.3
     fs-extra: ^11.3.0
+    graceful-fs: "^4.2.11"    
     klaw: ^4.1.0
   http:
     cookie: ^1.0.2
@@ -156,7 +159,7 @@ catalogs:
     '@pulumi/synced-folder': ^0.11.1
     '@pulumiverse/time': ^0.1.0
   runtime-env:
-    '@tuplo/envsubst': ^1.15.2 # Not compatible with ESM
+    '@tuplo/envsubst': ^1.15.2
     dotenv: ^16.4.7
     std-env: ^3.8.1
   schema-zod:
@@ -192,6 +195,7 @@ catalogs:
     '@types/qrcode': ^1.5.5
     '@types/react': ^19.0.1
     '@types/react-dom': ^19.0.1
+    '@types/ts-node': ^10.9.2  
     '@types/unzipper': ^0.10.10
     '@types/verror': ^1.10.11
     tslib: ^2.8.1

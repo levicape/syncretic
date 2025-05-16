@@ -13,6 +13,12 @@ catalogs:
     '@stricli/core':
       specifier: ^1.1.2
       version: 1.1.2
+    nanospinner:
+      specifier: ^1.2.2
+      version: 1.2.2
+    picocolors:
+      specifier: ^1.1.1
+      version: 1.1.1
   dev:
     tsx:
       specifier: ^4.19.3
@@ -41,6 +47,10 @@ catalogs:
     pretty-ms:
       specifier: ^9.2.0
       version: 9.2.0
+  fs:
+    graceful-fs:
+      specifier: ^4.2.11
+      version: 4.2.11
   lint:
     '@biomejs/biome':
       specifier: ^1.9.4
@@ -260,13 +270,13 @@ importers:
         specifier: catalog:cli
         version: 1.1.2
       graceful-fs:
-        specifier: ^4.2.11
+        specifier: catalog:fs
         version: 4.2.11
       nanospinner:
-        specifier: ^1.2.2
+        specifier: catalog:cli
         version: 1.2.2
       picocolors:
-        specifier: ^1.1.1
+        specifier: catalog:cli
         version: 1.1.1
       std-env:
         specifier: catalog:runtime-env
@@ -311,6 +321,21 @@ importers:
       '@levicape/fourtwo':
         specifier: 'workspace:'
         version: link:../../../..
+
+  packages/create-fourtwo/template/github-actions:
+    dependencies:
+      '@levicape/fourtwo':
+        specifier: 'workspace:'
+        version: link:../../../..
+
+  packages/create-fourtwo/template/github-actions-cli:
+    dependencies:
+      '@levicape/fourtwo':
+        specifier: 'workspace:'
+        version: link:../../../..
+      tsx:
+        specifier: ^4.19.4
+        version: 4.19.4
 
 packages:
 
@@ -3297,6 +3322,11 @@ packages:
 
   tsx@4.19.3:
     resolution: {integrity: sha512-4H8vUNGNjQ4V2EOoGw005+c+dGuPSnhpPBPHBtsZdGZBk/iJb4kguGlPWaZTZ3q5nMtFOEsY0nRDlh9PJyd6SQ==}
+    engines: {node: '>=18.0.0'}
+    hasBin: true
+
+  tsx@4.19.4:
+    resolution: {integrity: sha512-gK5GVzDkJK1SI1zwHf32Mqxf2tSJkNx+eYcNly5+nHvWqXUJYUkWBQtKauoESz3ymezAI++ZwT855x5p5eop+Q==}
     engines: {node: '>=18.0.0'}
     hasBin: true
 
@@ -6529,6 +6559,13 @@ snapshots:
   tslib@2.8.1: {}
 
   tsx@4.19.3:
+    dependencies:
+      esbuild: 0.25.0
+      get-tsconfig: 4.10.0
+    optionalDependencies:
+      fsevents: 2.3.3
+
+  tsx@4.19.4:
     dependencies:
       esbuild: 0.25.0
       get-tsconfig: 4.10.0

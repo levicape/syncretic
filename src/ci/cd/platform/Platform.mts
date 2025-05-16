@@ -34,17 +34,13 @@ export type PlatformPrototype<Step> = {
 };
 
 export class Platform {
-	static getPlatformKey = (
-		platform: Platform,
-		options: PipelineOptions,
-	): string => {
+	static getPlatformKey = (platform: Platform): string => {
 		const { os, arch, abi, baseline, distro, release } = platform;
 		const target = new TargetBuilder()
 			.setOs(os)
 			.setArch(arch)
 			.setAbi(abi)
 			.setBaseline(baseline)
-			.setOptions(options)
 			.build()
 			.getTargetKey();
 		if (distro) {

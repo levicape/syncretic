@@ -17,8 +17,6 @@ import type {
 import { GithubWorkflowExpressions } from "../../cd/pipeline/github/GithubWorkflowExpressions.mjs";
 import { GenerateWorkflowTemplate } from "../pipeline/GenerateWorkflowTemplate.mjs";
 
-const pathToWorkflows = (named: string) => `/.github/workflows/${named}.yml`;
-
 export const GenerateGithubWorkflow = async function* () {
 	const then = Date.now();
 
