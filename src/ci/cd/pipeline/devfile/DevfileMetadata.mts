@@ -19,7 +19,8 @@ export class DevfileMetadataBuilder {
 export type DevfileMetadataProps = {
 	name: string;
 };
-export const DevfileMetadataX = (
+
+export const DevfileMetadata = (
 	props: DevfileMetadataProps,
 ): DevfileMetadataBuilder => {
 	return new DevfileMetadataBuilder(props.name);

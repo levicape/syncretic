@@ -4,28 +4,29 @@
 /** @jsxRuntime automatic */
 
 import {
+	Devfile,
 	type DevfileBuilder,
-	DevfileCommandX,
-	DevfileEventX,
-	DevfileMetadataX,
-	DevfileSourceComponentX,
-	DevfileX,
-} from "@levicape/fourtwo/devfile";
+	DevfileCommand,
+	DevfileEvent,
+	DevfileMetadata,
+	DevfileResource,
+	DevfileSourceComponent,
+} from "@levicape/fourtwo/jsx/devfile/Devfile";
 
 const devfile: DevfileBuilder = (
-	<DevfileX
-		metadata={<DevfileMetadataX name={"devfile-fourtwo"} />}
-		components={[<DevfileSourceComponentX name={"source"} />]}
-		events={<DevfileEventX postStart={["hello-jsx"]} />}
+	<Devfile
+		metadata={<DevfileMetadata name={"devfile-fourtwo"} />}
+		components={[<DevfileSourceComponent name={"source"} />]}
+		events={<DevfileEvent postStart={["hello-jsx"]} />}
 	>
-		<DevfileCommandX
+		<DevfileCommand
 			id={"hello-jsx"}
 			exec={{
 				component: "source",
 				commandLine: "echo 'Hello Fourtwo JSX!'",
 			}}
 		/>
-	</DevfileX>
+	</Devfile>
 );
 
 devfile.build();

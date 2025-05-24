@@ -2,9 +2,9 @@ import VError from "verror";
 import type {
 	CodeCatalystActionBuilder,
 	CodeCatalystActionGroupPart,
-} from "../../ci/cd/pipeline/codecatalyst/CodeCatalystActionBuilder.mjs";
+} from "../../ci/cd/pipeline/codecatalyst/CodeCatalystActionBuilder.mts";
 
-export type CodeCatalystActionGroupXProps<
+export type CodeCatalystActionGroupProps<
 	Identifiers extends string,
 	ParentDependsOn extends string,
 	DependsOn extends string,
@@ -22,12 +22,12 @@ export type CodeCatalystActionGroupXProps<
 	>;
 };
 
-export const CodeCatalystActionGroupX = <
+export const CodeCatalystActionGroup = <
 	Identifiers extends string,
 	ParentDependsOn extends string,
 	DependsOn extends string,
 >(
-	props: CodeCatalystActionGroupXProps<Identifiers, ParentDependsOn, DependsOn>,
+	props: CodeCatalystActionGroupProps<Identifiers, ParentDependsOn, DependsOn>,
 ): CodeCatalystActionGroupPart<Identifiers, ParentDependsOn, DependsOn> => {
 	const { children } = props;
 

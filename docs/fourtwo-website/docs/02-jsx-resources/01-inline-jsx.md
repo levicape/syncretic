@@ -5,21 +5,22 @@ titleTemplate: ':title'
 
 # Rendering a JSX file
 JSX components return a builder instance that has class methods for transforming it's contents into either yaml or json formats.
+
 ```jsx
-<GithubWorkflowX
+<GithubWorkflow
 	name="on Push"
 	on={{
 		push: {},
 	}}
 >
-	<GithubJobX
+	<GithubJob
 		id="build"
 		name="Compile, Lint and Test all workspace packages"
 		runsOn={GithubJobBuilder.defaultRunsOn()}
 		steps={
 			<Fragment>
-				<GithubStepCheckoutX />
-				<GithubStepNodeSetupX
+				<GithubStepCheckout />
+				<GithubStepNodeSetup
 					configuration={{
 						packageManager: {
 							node: "pnpm",
@@ -35,7 +36,7 @@ JSX components return a builder instance that has class methods for transforming
 					children={(node) => {
 						return (
 							<Fragment>
-								<GithubStepX
+								<GithubStep
 									name="Compile"
 									run={["echo 'Compile all packages'"]}
 								/>
@@ -46,7 +47,7 @@ JSX components return a builder instance that has class methods for transforming
 			</Fragment>
 		}
 	/>
-</GithubWorkflowX>
+</GithubWorkflow>
 ```
 
 

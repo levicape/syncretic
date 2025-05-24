@@ -1,12 +1,12 @@
 import VError from "verror";
-import { CodeCatalystActionBuilder } from "../../../../ci/cd/pipeline/codecatalyst/CodeCatalystActionBuilder.mjs";
-import type { CodeCatalystStepBuilder } from "../../../../ci/cd/pipeline/codecatalyst/CodeCatalystStepBuilder.mjs";
+import { CodeCatalystActionBuilder } from "../../../../ci/cd/pipeline/codecatalyst/CodeCatalystActionBuilder.mts";
+import type { CodeCatalystStepBuilder } from "../../../../ci/cd/pipeline/codecatalyst/CodeCatalystStepBuilder.mts";
 import {
 	CodeCatalystLinux86,
 	CodeCatalystLinuxA64,
 	type CodeCatalystTestAction,
-} from "../../../../ci/cd/pipeline/codecatalyst/actions/aws/CodeCatalystTestAction.mjs";
-export type CodeCatalystTestXConfiguration<
+} from "../../../../ci/cd/pipeline/codecatalyst/actions/aws/CodeCatalystTestAction.mts";
+export type CodeCatalystTestConfiguration<
 	DependsOn extends string,
 	Input extends {
 		Sources: string | "WorkflowSource"[];
@@ -33,7 +33,7 @@ export type CodeCatalystTestXConfiguration<
 	caching?: CodeCatalystTestAction<DependsOn, Input, Output>["Caching"];
 };
 
-export type CodeCatalystTestXProps<
+export type CodeCatalystTestProps<
 	DependsOn extends string,
 	Input extends {
 		Sources: string | "WorkflowSource"[];
@@ -54,7 +54,7 @@ export type CodeCatalystTestXProps<
 	architecture?: "arm64" | "x86";
 	dependsOn?: DependsOn[];
 	configuration?: Omit<
-		CodeCatalystTestXConfiguration<DependsOn, Input, Output>,
+		CodeCatalystTestConfiguration<DependsOn, Input, Output>,
 		"Steps"
 	>;
 	steps: CodeCatalystStepBuilder[] | CodeCatalystStepBuilder;
@@ -66,7 +66,7 @@ export type CodeCatalystTestXProps<
 	caching?: CodeCatalystTestAction<DependsOn, Input, Output>["Caching"];
 };
 
-export const CodeCatalystTestX = <
+export const CodeCatalystTest = <
 	DependsOn extends string,
 	Input extends {
 		Sources: string | "WorkflowSource"[];
@@ -84,7 +84,7 @@ export const CodeCatalystTestX = <
 		Variables: string[];
 	},
 >(
-	props: CodeCatalystTestXProps<DependsOn, Input, Output>,
+	props: CodeCatalystTestProps<DependsOn, Input, Output>,
 ): CodeCatalystActionBuilder<
 	CodeCatalystTestAction<DependsOn, Input, Output>["Identifier"],
 	DependsOn,

@@ -6,32 +6,30 @@ titleTemplate: ':title'
 # Rendering a JSX file
 JSX components return a builder instance that has class methods for transforming it's contents into either yaml or json formats.
 
----
-
 ## Node 
 ```jsx
 import { stringify } from "yaml";
 
-const devfile = <DevfileX
-	metadata={<DevfileMetadataX name={"devfile_fourtwo"} />}
-	components={[<DevfileSourceComponentX name={"source"} />]}
+const devfile = <Devfile
+	metadata={<DevfileMetadata name={"devfile_fourtwo"} />}
+	components={[<DevfileSourceComponent name={"source"} />]}
 	events={
-		<DevfileEventX
+		<DevfileEvent
 			postStart={[
-				"hello-jsx",
+				"hello-jsx"
 			]}
 		/>
 	}
 >
-	<DevfileCommandX
+	<DevfileCommand
 		id={"hello_jsx"}
 		exec={{
 			component: "source",
 			commandLine: "echo 'Hello Fourtwo JSX!'",
 		}}
 	/>
-</DevfileX>
+</Devfile>
 
 console.log(devfile.build());
-
 ```
+

@@ -27,7 +27,7 @@ export type GithubStepSecretsSpec =
 	  }
 	| "inherit";
 
-export type GithubStep<Uses extends string, WithKeys extends string> = {
+export type GithubStepSchema<Uses extends string, WithKeys extends string> = {
 	id?: string;
 	name?: string;
 	uses: Uses;
@@ -163,7 +163,7 @@ export class GithubStepBuilder<Uses extends string, WithKeys extends string> {
 		return this;
 	}
 
-	build(): GithubStep<Uses, WithKeys> {
+	build(): GithubStepSchema<Uses, WithKeys> {
 		return {
 			if: this._if,
 			id: (this.id?.length ?? 0) > 0 ? this.id : undefined,

@@ -26,3 +26,7 @@ The best practice to avoid code and command injection vulnerabilities in GitHub 
     TITLE: ${{ github.event.issue.title }}
   run: echo "$TITLE"
 ```
+
+
+- Change component naming
+- permissions props match GHA spec

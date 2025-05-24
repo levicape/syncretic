@@ -1,4 +1,4 @@
-import { DevfileComponentBuilder } from "../../ci/cd/pipeline/devfile/DevfileComponent.mjs";
+import { DevfileComponentBuilder } from "../../ci/cd/pipeline/devfile/DevfileComponent.mts";
 
 export type DevfileComponentProps<
 	Component extends string,
@@ -15,13 +15,13 @@ export type DevfileComponentProps<
 	};
 };
 
-export const DevfileComponentX = <Component extends string>(
+export const DevfileComponent = <Component extends string>(
 	props: DevfileComponentProps<Component>,
 ): DevfileComponentBuilder<Component> => {
 	return new DevfileComponentBuilder(props.name).setContainer(props.container);
 };
 
-export const DevfileSourceComponentX = <Component extends string>(props: {
+export const DevfileSourceComponent = <Component extends string>(props: {
 	name: Component;
 	image?: string;
 	volumeMounts?: { [key: string]: string };

@@ -4,13 +4,13 @@
 import { GithubJobBuilder } from "@levicape/fourtwo/ci/cd/pipeline/github/GithubJobBuilder";
 import { GithubWorkflowExpressions } from "@levicape/fourtwo/ci/cd/pipeline/github/GithubWorkflowExpressions";
 import { Fragment } from "@levicape/fourtwo/jsx-runtime";
-import { GithubJobX } from "@levicape/fourtwo/jsx/github/GithubJobX";
-import { GithubStepX } from "@levicape/fourtwo/jsx/github/GithubStepX";
-import { GithubWorkflowX } from "@levicape/fourtwo/jsx/github/GithubWorkflowX";
-import { GithubStepCheckoutX } from "@levicape/fourtwo/jsx/github/steps/GithubStepCheckoutX";
-import { GithubStepNodeInstallX } from "@levicape/fourtwo/jsx/github/steps/node/GithubStepNodeInstallX";
-import { GithubStepNodeScriptsX } from "@levicape/fourtwo/jsx/github/steps/node/GithubStepNodeScriptsX";
-import { GithubStepNodeSetupX } from "@levicape/fourtwo/jsx/github/steps/node/GithubStepNodeSetupX";
+import { GithubJob } from "@levicape/fourtwo/jsx/github/GithubJob";
+import { GithubStep } from "@levicape/fourtwo/jsx/github/GithubStep";
+import { GithubWorkflow } from "@levicape/fourtwo/jsx/github/GithubWorkflow";
+import { GithubStepCheckout } from "@levicape/fourtwo/jsx/github/steps/GithubStepCheckout";
+import { GithubStepNodeInstall } from "@levicape/fourtwo/jsx/github/steps/node/GithubStepNodeInstall";
+import { GithubStepNodeScripts } from "@levicape/fourtwo/jsx/github/steps/node/GithubStepNodeScripts";
+import { GithubStepNodeSetup } from "@levicape/fourtwo/jsx/github/steps/node/GithubStepNodeSetup";
 import { NodeGhaConfiguration } from "../push/CI.js";
 
 type CompileAndPublishProps = {
@@ -40,7 +40,7 @@ export default (
 		let CompileAndPublish = ({ cwd, packageName }: CompileAndPublishProps) => {
 			let shortname = packageName.split("/").pop();
 			return (
-				<GithubJobX
+				<GithubJob
 					id={`publish_${shortname}`}
 					name={`${packageName}: Compile and publish to Github`}
 					runsOn={GithubJobBuilder.defaultRunsOn()}
@@ -55,8 +55,8 @@ export default (
 					}
 					steps={
 						<Fragment>
-							<GithubStepCheckoutX />
-							<GithubStepX
+							<GithubStepCheckout />
+							<GithubStep
 								name="Remove project .npmrc"
 								run={(() => {
 									const rootWorkspaceNpmrc = (() => {
@@ -77,7 +77,7 @@ export default (
 									];
 								})()}
 							/>
-							<GithubStepX
+							<GithubStep
 								name={"Verify registry URL"}
 								continueOnError={true}
 								run={[
@@ -86,26 +86,26 @@ export default (
 									`curl -v --insecure ${env("LEVICAPE_REGISTRY")}`,
 								]}
 							/>
-							<GithubStepNodeSetupX
+							<GithubStepNodeSetup
 								configuration={NodeGhaConfiguration({ env })}
 								options={{}}
 							>
 								{(node) => {
 									return (
 										<Fragment>
-											<GithubStepNodeInstallX {...node} />
-											<GithubStepNodeScriptsX {...node} scripts={["build"]} />
-											<GithubStepNodeScriptsX {...node} scripts={["lint"]} />
-											<GithubStepNodeScriptsX {...node} scripts={["test"]} />
+											<GithubStepNodeInstall {...node} />
+											<GithubStepNodeScripts {...node} scripts={["build"]} />
+											<GithubStepNodeScripts {...node} scripts={["lint"]} />
+											<GithubStepNodeScripts {...node} scripts={["test"]} />
 										</Fragment>
 									);
 								}}
-							</GithubStepNodeSetupX>
-							<GithubStepNodeScriptsX
+							</GithubStepNodeSetup>
+							<GithubStepNodeScripts
 								configuration={NodeGhaConfiguration({ env })}
 								scripts={["prepublishOnly"]}
 							/>
-							<GithubStepX
+							<GithubStep
 								name={"Increment version"}
 								run={[
 									"export PREID=$RELEVANT_SHA",
@@ -119,7 +119,7 @@ export default (
 									),
 								}}
 							/>
-							<GithubStepX
+							<GithubStep
 								if={"success()"}
 								name={"Publish to npm"}
 								continueOnError={true}
@@ -137,7 +137,7 @@ export default (
 		);
 
 		return (
-			<GithubWorkflowX
+			<GithubWorkflow
 				name={`${packageScope ?? "UNKNOWN_PACKAGE"}`}
 				on={{
 					release: {
@@ -155,7 +155,7 @@ export default (
 							<CompileAndPublish {...props} />
 						))
 					: []}
-			</GithubWorkflowX>
+			</GithubWorkflow>
 		);
 	}
 )({ compileAndPublish });
