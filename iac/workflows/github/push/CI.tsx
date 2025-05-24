@@ -2,15 +2,15 @@
 /** @jsxImportSource @levicape/fourtwo */
 
 import {
+	GithubJob,
 	GithubJobBuilder,
-	GithubJobX,
-	GithubStepCheckoutX,
-	GithubStepNodeInstallX,
-	GithubStepNodeSetupX,
-	GithubStepX,
+	GithubStep,
+	GithubWorkflow,
 	GithubWorkflowExpressions,
-	GithubWorkflowX,
 } from "@levicape/fourtwo/github";
+import { GithubStepCheckout } from "@levicape/fourtwo/jsx/github/steps/GithubStepCheckout";
+import { GithubStepNodeInstall } from "@levicape/fourtwo/jsx/github/steps/node/GithubStepNodeInstall";
+import { GithubStepNodeSetup } from "@levicape/fourtwo/jsx/github/steps/node/GithubStepNodeSetup";
 
 const {
 	current: { register, context: _$_, env, secret },
@@ -37,7 +37,7 @@ export const NodeGhaConfiguration = ({
 	}) as const;
 
 export default async () => (
-	<GithubWorkflowX
+	<GithubWorkflow
 		name="on Push: Compile, Lint, Test all workspace packages"
 		on={{
 			push: {},
@@ -48,38 +48,38 @@ export default async () => (
 			...register("LEVICAPE_TOKEN", secret("GITHUB_TOKEN")),
 		}}
 	>
-		<GithubJobX
+		<GithubJob
 			id="build"
 			name="Compile, Lint and Test all workspace packages"
 			runsOn={GithubJobBuilder.defaultRunsOn()}
 			steps={
 				<>
-					<GithubStepCheckoutX />
-					<GithubStepNodeSetupX
+					<GithubStepCheckout />
+					<GithubStepNodeSetup
 						configuration={NodeGhaConfiguration({ env })}
 						children={(node) => {
 							return (
 								<>
-									<GithubStepNodeInstallX {...node} />
-									<GithubStepX
+									<GithubStepNodeInstall {...node} />
+									<GithubStep
 										name="Compile"
 										run={[
 											"pnpm exec nx run-many -t build --parallel=1 --verbose --no-cloud",
 										]}
 									/>
-									<GithubStepX
+									<GithubStep
 										name="Lint"
 										run={[
 											"pnpm exec nx run-many -t lint --parallel=1 --verbose --no-cloud",
 										]}
 									/>
-									<GithubStepX
+									<GithubStep
 										name="Test"
 										run={[
 											"pnpm exec nx run-many -t test --parallel=1 --verbose --no-cloud",
 										]}
 									/>
-									<GithubStepX
+									<GithubStep
 										name="Clean cache"
 										run={[
 											"pnpm store prune || true",
@@ -93,19 +93,19 @@ export default async () => (
 				</>
 			}
 		/>
-		<GithubJobX
+		<GithubJob
 			id="build-image"
 			name="Build Docker Image"
 			runsOn={GithubJobBuilder.defaultRunsOn()}
 			steps={
 				<>
-					<GithubStepCheckoutX />
-					<GithubStepNodeSetupX configuration={NodeGhaConfiguration({ env })}>
+					<GithubStepCheckout />
+					<GithubStepNodeSetup configuration={NodeGhaConfiguration({ env })}>
 						{(node) => {
 							return (
 								<>
-									<GithubStepNodeInstallX {...node} />
-									<GithubStepX
+									<GithubStepNodeInstall {...node} />
+									<GithubStep
 										name="Build Docker Image"
 										run={[
 											"pnpm exec nx pack:build iac-images-application --verbose",
@@ -114,9 +114,9 @@ export default async () => (
 								</>
 							);
 						}}
-					</GithubStepNodeSetupX>
+					</GithubStepNodeSetup>
 				</>
 			}
 		/>
-	</GithubWorkflowX>
+	</GithubWorkflow>
 );

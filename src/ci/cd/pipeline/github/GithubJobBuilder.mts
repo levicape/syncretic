@@ -1,4 +1,7 @@
-import type { GithubStep, GithubStepBuilder } from "./GithubStepBuilder.mjs";
+import type {
+	GithubStepBuilder,
+	GithubStepSchema,
+} from "./GithubStepBuilder.mjs";
 
 export type GithubTemplateString = string;
 
@@ -41,11 +44,11 @@ export type GithubJobSecretsSpec =
 	  }
 	| "inherit";
 
-export type GithubJob<Uses extends string, With extends string> = {
+export type GithubJobSchema<Uses extends string, With extends string> = {
 	name: string;
 	"runs-on"?: string;
 	permissions?: GithubJobPermissionsSpec;
-	steps?: GithubStep<Uses, With>[];
+	steps?: GithubStepSchema<Uses, With>[];
 	needs?: string[];
 	if?: string;
 	environment?: string;
@@ -196,7 +199,7 @@ export class GithubJobBuilder<Uses extends string, With extends string> {
 	}
 
 	build(): {
-		job: GithubJob<Uses, With>;
+		job: GithubJobSchema<Uses, With>;
 		children: GithubJobBuilder<Uses, With>[];
 	} {
 		if (!Array.isArray(this.steps)) {

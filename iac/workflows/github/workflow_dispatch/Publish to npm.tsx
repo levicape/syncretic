@@ -2,13 +2,14 @@
 /** @jsxRuntime automatic */
 
 import { GithubWorkflowExpressions } from "@levicape/fourtwo/ci/cd/pipeline/github/GithubWorkflowExpressions";
-import { GithubJobX } from "@levicape/fourtwo/jsx/github/GithubJobX";
-import { GithubStepX } from "@levicape/fourtwo/jsx/github/GithubStepX";
-import { GithubWorkflowX } from "@levicape/fourtwo/jsx/github/GithubWorkflowX";
-import { GithubStepCheckoutX } from "@levicape/fourtwo/jsx/github/steps/GithubStepCheckoutX";
-import { GithubStepNodeInstallX } from "@levicape/fourtwo/jsx/github/steps/node/GithubStepNodeInstallX";
-import { GithubStepNodeScriptsX } from "@levicape/fourtwo/jsx/github/steps/node/GithubStepNodeScriptsX";
-import { GithubStepNodeSetupX } from "@levicape/fourtwo/jsx/github/steps/node/GithubStepNodeSetupX";
+import { Fragment } from "@levicape/fourtwo/jsx-runtime";
+import { GithubJob } from "@levicape/fourtwo/jsx/github/GithubJob";
+import { GithubStep } from "@levicape/fourtwo/jsx/github/GithubStep";
+import { GithubWorkflow } from "@levicape/fourtwo/jsx/github/GithubWorkflow";
+import { GithubStepCheckout } from "@levicape/fourtwo/jsx/github/steps/GithubStepCheckout";
+import { GithubStepNodeInstall } from "@levicape/fourtwo/jsx/github/steps/node/GithubStepNodeInstall";
+import { GithubStepNodeScripts } from "@levicape/fourtwo/jsx/github/steps/node/GithubStepNodeScripts";
+import { GithubStepNodeSetup } from "@levicape/fourtwo/jsx/github/steps/node/GithubStepNodeSetup";
 import { NodeGhaConfiguration } from "../push/CI";
 
 // const enquirer = new Enquirer();
@@ -19,7 +20,7 @@ export default async () => {
 		current: { register, context: _$_, env },
 	} = GithubWorkflowExpressions;
 	return (
-		<GithubWorkflowX
+		<GithubWorkflow
 			name="dispatch: RUNNER:publish:npm"
 			on={{
 				workflow_dispatch: {
@@ -52,7 +53,7 @@ export default async () => {
 				...register("PACKAGE_JSON_NAME", "@levicape/fourtwo"),
 			}}
 		>
-			<GithubJobX
+			<GithubJob
 				id={"select"}
 				name={"Select registry from event inputs"}
 				runsOn={"ubuntu-latest"}
@@ -66,7 +67,7 @@ export default async () => {
 					package_name: env("PACKAGE_JSON_NAME"),
 				}}
 				steps={[
-					<GithubStepX
+					<GithubStep
 						name={"Select registry from event inputs"}
 						run={[
 							`export REGISTRY_SECRET="$${_$_("github.event.inputs.registry_secret_env")}"`,
@@ -83,7 +84,7 @@ export default async () => {
 					/>,
 				]}
 			/>
-			<GithubJobX
+			<GithubJob
 				id="packages"
 				needs={["select"]}
 				name="Publish to registry"
@@ -92,7 +93,7 @@ export default async () => {
 				contents="read"
 				steps={
 					<>
-						<GithubStepX
+						<GithubStep
 							name={"Verify registry URL"}
 							continueOnError={true}
 							run={[
@@ -100,13 +101,13 @@ export default async () => {
 								`curl -v --insecure ${env("NPM_REGISTRY_PROTOCOL")}://${env("NPM_REGISTRY_HOST")}`,
 							]}
 						/>
-						<GithubStepCheckoutX />
-						<GithubStepNodeSetupX configuration={NodeGhaConfiguration({ env })}>
+						<GithubStepCheckout />
+						<GithubStepNodeSetup configuration={NodeGhaConfiguration({ env })}>
 							{(node) => {
 								return (
 									<>
-										<GithubStepNodeInstallX {...node} />
-										<GithubStepX
+										<GithubStepNodeInstall {...node} />
+										<GithubStep
 											name={"Set version to latest in registry"}
 											continueOnError={true}
 											run={[
@@ -119,8 +120,8 @@ export default async () => {
 									</>
 								);
 							}}
-						</GithubStepNodeSetupX>
-						<GithubStepNodeSetupX
+						</GithubStepNodeSetup>
+						<GithubStepNodeSetup
 							configuration={{
 								...NodeGhaConfiguration({ env }),
 								packageManager: {
@@ -136,24 +137,18 @@ export default async () => {
 						>
 							{(node) => {
 								return (
-									<>
-										<GithubStepNodeScriptsX
+									<Fragment>
+										<GithubStepNodeScripts
 											{...node}
 											scripts={["prepublishOnly"]}
 										/>
-										{/* <GithubStepX
-										if={"success()"}
-										name={"Publish to registry"}
-										continueOnError={true}
-										run={["pnpm publish --no-git-checks;"]}
-									/> */}
-									</>
+									</Fragment>
 								);
 							}}
-						</GithubStepNodeSetupX>
+						</GithubStepNodeSetup>
 					</>
 				}
 			/>
-		</GithubWorkflowX>
+		</GithubWorkflow>
 	);
 };

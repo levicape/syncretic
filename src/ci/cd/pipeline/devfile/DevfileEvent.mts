@@ -1,6 +1,5 @@
 import VError from "verror";
 
-///// Event
 export type DevfileEvent<Id extends string> = {
 	postStart: NoInfer<Id>[];
 };

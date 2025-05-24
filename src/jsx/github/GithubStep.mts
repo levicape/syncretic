@@ -1,12 +1,12 @@
-import type { GithubTemplateString } from "../../ci/cd/pipeline/github/GithubJobBuilder.mjs";
+import type { GithubTemplateString } from "../../ci/cd/pipeline/github/GithubJobBuilder.mts";
 import {
 	GithubStepBuilder,
 	type GithubStepImageSpec,
 	type GithubStepSecretsSpec,
 	type GithubStepStrategySpec,
-} from "../../ci/cd/pipeline/github/GithubStepBuilder.mjs";
+} from "../../ci/cd/pipeline/github/GithubStepBuilder.mts";
 
-export type GithubStepXProps<Uses extends string, WithKeys extends string> = {
+export type GithubStepProps<Uses extends string, WithKeys extends string> = {
 	name: string;
 	with?: Record<WithKeys, GithubTemplateString | undefined>;
 	id?: string;
@@ -22,8 +22,8 @@ export type GithubStepXProps<Uses extends string, WithKeys extends string> = {
 	secrets?: GithubStepSecretsSpec;
 } & ({ uses: Uses; run?: string[] } | { uses?: never; run: string[] });
 
-export const GithubStepX = <Uses extends string, WithKeys extends string>(
-	props: GithubStepXProps<Uses, WithKeys>,
+export const GithubStep = <Uses extends string, WithKeys extends string>(
+	props: GithubStepProps<Uses, WithKeys>,
 ): GithubStepBuilder<Uses, WithKeys> => {
 	const { name, uses, with: with_ } = props;
 	const factory = new GithubStepBuilder(name, uses, with_);

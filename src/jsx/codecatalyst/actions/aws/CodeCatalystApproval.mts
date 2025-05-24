@@ -1,17 +1,17 @@
-import { CodeCatalystActionBuilder } from "../../../../ci/cd/pipeline/codecatalyst/CodeCatalystActionBuilder.mjs";
-import type { CodeCatalystApprovalAction } from "../../../../ci/cd/pipeline/codecatalyst/actions/aws/CodeCatalystApprovalAction.mjs";
+import { CodeCatalystActionBuilder } from "../../../../ci/cd/pipeline/codecatalyst/CodeCatalystActionBuilder.mts";
+import type { CodeCatalystApprovalAction } from "../../../../ci/cd/pipeline/codecatalyst/actions/aws/CodeCatalystApprovalAction.mts";
 
-export type CodeCatalystApprovalXConfiguration = {
+export type CodeCatalystApprovalConfiguration = {
 	approvalsRequired: number;
 };
 
-export type CodeCatalystApprovalXProps<DependsOn extends string> = {
+export type CodeCatalystApprovalProps<DependsOn extends string> = {
 	dependsOn?: DependsOn[];
-	configuration: CodeCatalystApprovalXConfiguration;
+	configuration: CodeCatalystApprovalConfiguration;
 };
 
-export const CodeCatalystApprovalX = <DependsOn extends string>(
-	props: CodeCatalystApprovalXProps<DependsOn>,
+export const CodeCatalystApproval = <DependsOn extends string>(
+	props: CodeCatalystApprovalProps<DependsOn>,
 ): CodeCatalystActionBuilder<
 	CodeCatalystApprovalAction<DependsOn>["Identifier"],
 	DependsOn,

@@ -2,13 +2,13 @@
 /** @jsxImportSource @levicape/fourtwo */
 
 import {
+	GithubJob,
 	GithubJobBuilder,
-	GithubJobX,
-	GithubStepCheckoutX,
-	GithubStepNodeSetupX,
-	GithubStepX,
+	GithubStep,
+	GithubStepCheckout,
+	GithubStepNodeSetup,
+	GithubWorkflow,
 	GithubWorkflowExpressions,
-	GithubWorkflowX,
 } from "@levicape/fourtwo/github";
 import { Fragment } from "@levicape/fourtwo/jsx-runtime";
 import { stringify } from "yaml";
@@ -18,20 +18,20 @@ const {
 } = GithubWorkflowExpressions;
 
 const workflows = (
-	<GithubWorkflowX
+	<GithubWorkflow
 		name="on Push"
 		on={{
 			push: {},
 		}}
 	>
-		<GithubJobX
+		<GithubJob
 			id="build"
 			name="Compile, Lint and Test all workspace packages"
 			runsOn={GithubJobBuilder.defaultRunsOn()}
 			steps={
 				<Fragment>
-					<GithubStepCheckoutX />
-					<GithubStepNodeSetupX
+					<GithubStepCheckout />
+					<GithubStepNodeSetup
 						configuration={{
 							packageManager: {
 								node: "pnpm",
@@ -47,7 +47,7 @@ const workflows = (
 						children={(node) => {
 							return (
 								<Fragment>
-									<GithubStepX
+									<GithubStep
 										name="Compile"
 										run={["echo 'Compile all packages'"]}
 									/>
@@ -58,7 +58,7 @@ const workflows = (
 				</Fragment>
 			}
 		/>
-	</GithubWorkflowX>
+	</GithubWorkflow>
 );
 
 const yaml = stringify(workflows.build());

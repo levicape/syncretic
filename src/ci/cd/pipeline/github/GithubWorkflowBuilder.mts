@@ -1,5 +1,5 @@
 import VError from "verror";
-import type { GithubJob, GithubJobBuilder } from "./GithubJobBuilder.mjs";
+import type { GithubJobBuilder, GithubJobSchema } from "./GithubJobBuilder.mjs";
 
 type GithubBranchesSpec = {
 	branches?: string[];
@@ -94,7 +94,7 @@ export type GithubWorkflowDefaults = {
 export type GithubWorkflow<Uses extends string, With extends string> = {
 	name: string;
 	on: GithubOn;
-	jobs?: Record<string, GithubJob<Uses, With>>;
+	jobs?: Record<string, GithubJobSchema<Uses, With>>;
 	env?: Record<string, string>;
 	permissions?: GithubWorkflowPermissions;
 	defaults?: GithubWorkflowDefaults;
@@ -195,7 +195,7 @@ export class GithubWorkflowBuilder<Uses extends string, With extends string> {
 
 					return acc;
 				},
-				{} as Record<string, GithubJob<Uses, With>>,
+				{} as Record<string, GithubJobSchema<Uses, With>>,
 			),
 		};
 	}

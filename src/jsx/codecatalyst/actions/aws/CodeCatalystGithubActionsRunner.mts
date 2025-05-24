@@ -1,9 +1,9 @@
 import VError from "verror";
-import { CodeCatalystActionBuilder } from "../../../../ci/cd/pipeline/codecatalyst/CodeCatalystActionBuilder.mjs";
-import type { CodeCatalystGithubActionsRunner } from "../../../../ci/cd/pipeline/codecatalyst/actions/aws/CodeCatalystGithubActionsRunner.mjs";
-import type { GithubStepBuilder } from "../../../../ci/cd/pipeline/github/GithubStepBuilder.mjs";
+import { CodeCatalystActionBuilder } from "../../../../ci/cd/pipeline/codecatalyst/CodeCatalystActionBuilder.mts";
+import type { CodeCatalystGithubActionsRunnerSchema } from "../../../../ci/cd/pipeline/codecatalyst/actions/aws/CodeCatalystGithubActionsRunner.mts";
+import type { GithubStepBuilder } from "../../../../ci/cd/pipeline/github/GithubStepBuilder.mts";
 
-export type CodeCatalystGithubActionsRunnerXProps<
+export type CodeCatalystGithubActionsRunnerProps<
 	DependsOn extends string,
 	Input extends {
 		Sources: string | "WorkflowSource";
@@ -17,18 +17,22 @@ export type CodeCatalystGithubActionsRunnerXProps<
 > = {
 	dependsOn?: DependsOn[];
 	steps: GithubStepBuilder<string, string>[];
-	compute?: CodeCatalystGithubActionsRunner<
+	compute?: CodeCatalystGithubActionsRunnerSchema<
 		DependsOn,
 		Input,
 		Output
 	>["Compute"];
-	inputs?: CodeCatalystGithubActionsRunner<DependsOn, Input, Output>["Inputs"];
-	outputs?: CodeCatalystGithubActionsRunner<
+	inputs?: CodeCatalystGithubActionsRunnerSchema<
+		DependsOn,
+		Input,
+		Output
+	>["Inputs"];
+	outputs?: CodeCatalystGithubActionsRunnerSchema<
 		DependsOn,
 		Input,
 		Output
 	>["Outputs"];
-	caching?: CodeCatalystGithubActionsRunner<
+	caching?: CodeCatalystGithubActionsRunnerSchema<
 		DependsOn,
 		Input,
 		Output
@@ -40,7 +44,7 @@ export const CodeCatalystFilteredGithubActions = [
 	"actions/cache@v3",
 ];
 
-export const CodeCatalystGithubActionsRunnerX = <
+export const CodeCatalystGithubActionsRunner = <
 	DependsOn extends string,
 	Input extends {
 		Sources: string | "WorkflowSource";
@@ -52,43 +56,47 @@ export const CodeCatalystGithubActionsRunnerX = <
 		Variables: string;
 	},
 >(
-	props: CodeCatalystGithubActionsRunnerXProps<DependsOn, Input, Output>,
+	props: CodeCatalystGithubActionsRunnerProps<DependsOn, Input, Output>,
 ): CodeCatalystActionBuilder<
-	CodeCatalystGithubActionsRunner<DependsOn, Input, Output>["Identifier"],
+	CodeCatalystGithubActionsRunnerSchema<DependsOn, Input, Output>["Identifier"],
 	DependsOn,
-	keyof CodeCatalystGithubActionsRunner<
+	keyof CodeCatalystGithubActionsRunnerSchema<
 		DependsOn,
 		Input,
 		Output
 	>["Configuration"],
 	Omit<
-		CodeCatalystGithubActionsRunner<DependsOn, Input, Output>["Configuration"],
+		CodeCatalystGithubActionsRunnerSchema<
+			DependsOn,
+			Input,
+			Output
+		>["Configuration"],
 		"Steps"
 	> & {
 		Steps: GithubStepBuilder<string, string>[];
 	},
 	{
-		Compute?: CodeCatalystGithubActionsRunner<
+		Compute?: CodeCatalystGithubActionsRunnerSchema<
 			DependsOn,
 			Input,
 			Output
 		>["Compute"];
-		Inputs?: CodeCatalystGithubActionsRunner<
+		Inputs?: CodeCatalystGithubActionsRunnerSchema<
 			DependsOn,
 			Input,
 			Output
 		>["Inputs"];
-		Outputs?: CodeCatalystGithubActionsRunner<
+		Outputs?: CodeCatalystGithubActionsRunnerSchema<
 			DependsOn,
 			Input,
 			Output
 		>["Outputs"];
-		DependsOn?: CodeCatalystGithubActionsRunner<
+		DependsOn?: CodeCatalystGithubActionsRunnerSchema<
 			DependsOn,
 			Input,
 			Output
 		>["DependsOn"];
-		Caching?: CodeCatalystGithubActionsRunner<
+		Caching?: CodeCatalystGithubActionsRunnerSchema<
 			DependsOn,
 			Input,
 			Output
@@ -97,15 +105,19 @@ export const CodeCatalystGithubActionsRunnerX = <
 > => {
 	const { dependsOn, steps } = props;
 	const factory = new CodeCatalystActionBuilder<
-		CodeCatalystGithubActionsRunner<DependsOn, Input, Output>["Identifier"],
+		CodeCatalystGithubActionsRunnerSchema<
+			DependsOn,
+			Input,
+			Output
+		>["Identifier"],
 		DependsOn,
-		keyof CodeCatalystGithubActionsRunner<
+		keyof CodeCatalystGithubActionsRunnerSchema<
 			DependsOn,
 			Input,
 			Output
 		>["Configuration"],
 		Omit<
-			CodeCatalystGithubActionsRunner<
+			CodeCatalystGithubActionsRunnerSchema<
 				DependsOn,
 				Input,
 				Output
@@ -115,27 +127,27 @@ export const CodeCatalystGithubActionsRunnerX = <
 			Steps: GithubStepBuilder<string, string>[];
 		},
 		{
-			Compute?: CodeCatalystGithubActionsRunner<
+			Compute?: CodeCatalystGithubActionsRunnerSchema<
 				DependsOn,
 				Input,
 				Output
 			>["Compute"];
-			Inputs?: CodeCatalystGithubActionsRunner<
+			Inputs?: CodeCatalystGithubActionsRunnerSchema<
 				DependsOn,
 				Input,
 				Output
 			>["Inputs"];
-			Outputs?: CodeCatalystGithubActionsRunner<
+			Outputs?: CodeCatalystGithubActionsRunnerSchema<
 				DependsOn,
 				Input,
 				Output
 			>["Outputs"];
-			DependsOn?: CodeCatalystGithubActionsRunner<
+			DependsOn?: CodeCatalystGithubActionsRunnerSchema<
 				DependsOn,
 				Input,
 				Output
 			>["DependsOn"];
-			Caching?: CodeCatalystGithubActionsRunner<
+			Caching?: CodeCatalystGithubActionsRunnerSchema<
 				DependsOn,
 				Input,
 				Output
@@ -184,7 +196,7 @@ export const CodeCatalystGithubActionsRunnerX = <
 				if (step.uses === "actions/setup-node@v4") {
 					if (step.with?.scope) {
 						console.warn({
-							CodeCatalystGithubActionsRunnerX: {
+							CodeCatalystGithubActionsRunner: {
 								message: `Verify that ${step.with?.scope} is set up by a previous workflow action.`,
 							},
 						});

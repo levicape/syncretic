@@ -41,7 +41,6 @@ metadata:
   name: devfile_fourtwo
 components:
   - name: source
-	...
 commands:
   - id: hello_jsx
     exec:

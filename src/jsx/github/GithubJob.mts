@@ -3,10 +3,10 @@ import {
 	type GithubJobDefaultsSpec,
 	type GithubJobImageSpec,
 	type GithubJobStrategySpec,
-} from "../../ci/cd/pipeline/github/GithubJobBuilder.mjs";
-import type { GithubStepBuilder } from "../../ci/cd/pipeline/github/GithubStepBuilder.mjs";
+} from "../../ci/cd/pipeline/github/GithubJobBuilder.mts";
+import type { GithubStepBuilder } from "../../ci/cd/pipeline/github/GithubStepBuilder.mts";
 
-export type GithubJobXProps<Uses extends string, With extends string> = {
+export type GithubJobProps<Uses extends string, With extends string> = {
 	id: string;
 	name: string;
 	runsOn?: string;
@@ -27,7 +27,7 @@ export type GithubJobXProps<Uses extends string, With extends string> = {
 	services?: Record<string, GithubJobImageSpec>;
 };
 
-export const GithubJobX = <Uses extends string, With extends string>({
+export const GithubJob = <Uses extends string, With extends string>({
 	id,
 	name,
 	runsOn,
@@ -46,48 +46,61 @@ export const GithubJobX = <Uses extends string, With extends string>({
 	continueOnError,
 	container,
 	services,
-}: GithubJobXProps<Uses, With>): GithubJobBuilder<Uses, With> => {
+}: GithubJobProps<Uses, With>): GithubJobBuilder<Uses, With> => {
 	const job = new GithubJobBuilder<Uses, With>(id, name);
 	if (runsOn) {
 		job.setRunsOn(runsOn);
 	}
+
 	job.setSteps(steps);
 	if (needs) {
 		job.addNeeds(needs);
 	}
+
 	if (children) {
 		job.setChildren(children);
 	}
+
 	if (packages || contents) {
 		job.setPermissions({ packages, contents });
 	}
+
 	if (_if) {
 		job.setIf(_if);
 	}
+
 	if (outputs) {
 		job.setOutputs(outputs);
 	}
+
 	if (env) {
 		job.setEnv(env);
 	}
+
 	if (enviroment) {
 		job.setEnvironment(enviroment);
 	}
+
 	if (concurrency) {
 		job.setConcurrency(concurrency);
 	}
+
 	if (defaults) {
 		job.setDefaults(defaults);
 	}
+
 	if (strategy) {
 		job.setStrategy(strategy);
 	}
+
 	if (continueOnError) {
 		job.setContinueOnError(continueOnError);
 	}
+
 	if (container) {
 		job.setContainer(container);
 	}
+
 	if (services) {
 		job.setServices(services);
 	}

@@ -1,4 +1,4 @@
-import type { GithubStep } from "../../../github/GithubStepBuilder.mjs";
+import type { GithubStepSchema } from "../../../github/GithubStepBuilder.mjs";
 import type { CodeCatalystAction } from "../../CodeCatalystActionBuilder.mjs";
 
 export type CodeCatalystGithubActionsRunnerComputeSpec = {
@@ -51,7 +51,7 @@ export type CodeCatalystGithubActionsRunnerCachingSpec = {
 	};
 };
 
-export type CodeCatalystGithubActionsRunner<
+export type CodeCatalystGithubActionsRunnerSchema<
 	DependsOn extends string,
 	Input extends {
 		Sources: string | "WorkflowSource";
@@ -66,7 +66,7 @@ export type CodeCatalystGithubActionsRunner<
 	"aws/github-actions-runner@v1",
 	"Steps" | "Container",
 	{
-		Steps: GithubStep<string, string>[];
+		Steps: GithubStepSchema<string, string>[];
 	},
 	{
 		Compute?: CodeCatalystGithubActionsRunnerComputeSpec;

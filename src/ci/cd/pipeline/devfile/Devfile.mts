@@ -12,7 +12,7 @@ import type {
 	DevfileMetadataBuilder,
 } from "./DevfileMetadata.mjs";
 
-export type Devfile<Id extends string, Component extends string> = {
+export type DevfileResource<Id extends string, Component extends string> = {
 	schemaVersion: "2.0.0";
 	metadata: DevfileMetadata;
 	components: DevfileComponent<Component>[];

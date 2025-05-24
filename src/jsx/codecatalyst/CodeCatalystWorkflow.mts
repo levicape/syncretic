@@ -1,11 +1,11 @@
-import type { CodeCatalystActionBuilder } from "../../ci/cd/pipeline/codecatalyst/CodeCatalystActionBuilder.mjs";
+import type { CodeCatalystActionBuilder } from "../../ci/cd/pipeline/codecatalyst/CodeCatalystActionBuilder.mts";
 import {
 	type CodeCatalystComputeSpec,
 	type CodeCatalystTriggersSpec,
 	CodeCatalystWorkflowBuilder,
-} from "../../ci/cd/pipeline/codecatalyst/CodeCatalystWorkflowBuilder.mjs";
+} from "../../ci/cd/pipeline/codecatalyst/CodeCatalystWorkflowBuilder.mts";
 
-export type CodeCatalystWorkflowXProps<
+export type CodeCatalystWorkflowProps<
 	Identifiers extends string,
 	With extends string,
 	DependsOn extends string,
@@ -26,7 +26,7 @@ export type CodeCatalystWorkflowXProps<
 	>;
 };
 
-export const CodeCatalystWorkflowX = <
+export const CodeCatalystWorkflow = <
 	Identifiers extends string,
 	With extends string,
 	DependsOn extends string,
@@ -51,7 +51,7 @@ export const CodeCatalystWorkflowX = <
 	compute,
 	triggers,
 	children,
-}: CodeCatalystWorkflowXProps<
+}: CodeCatalystWorkflowProps<
 	Identifiers,
 	With,
 	DependsOn
@@ -117,11 +117,11 @@ export const CodeCatalystWorkflowX = <
 	return factory;
 };
 
-export * from "../../ci/cd/pipeline/codecatalyst/CodeCatalystWorkflowBuilder.mjs";
-export * from "../../ci/cd/pipeline/codecatalyst/CodeCatalystWorkflowExpressions.mjs";
-export * from "./actions/aws/CodeCatalystApprovalX.mjs";
-export * from "./actions/aws/CodeCatalystBuildX.mjs";
-export * from "./actions/aws/CodeCatalystGithubActionsRunnerX.mjs";
-export * from "./actions/aws/CodeCatalystTestX.mjs";
-export * from "./CodeCatalystActionGroupX.mjs";
-export * from "./CodeCatalystStepX.mjs";
+export * from "../../ci/cd/pipeline/codecatalyst/CodeCatalystWorkflowBuilder.mts";
+export * from "../../ci/cd/pipeline/codecatalyst/CodeCatalystWorkflowExpressions.mts";
+export * from "./actions/aws/CodeCatalystApproval.mts";
+export * from "./actions/aws/CodeCatalystBuild.mts";
+export * from "./actions/aws/CodeCatalystGithubActionsRunner.mts";
+export * from "./actions/aws/CodeCatalystTest.mts";
+export * from "./CodeCatalystActionGroup.mts";
+export * from "./CodeCatalystStep.mts";

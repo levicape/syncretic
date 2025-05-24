@@ -1,6 +1,6 @@
 import type { ILogLayer } from "loglayer";
 import VError from "verror";
-import type { GithubStep } from "../github/GithubStepBuilder.mjs";
+import type { GithubStepSchema } from "../github/GithubStepBuilder.mjs";
 import type {
 	CodeCatalystApprovalAction,
 	CodeCatalystApprovalConfiguration,
@@ -205,7 +205,7 @@ export class CodeCatalystActionBuilder<
 	}
 
 	cacheGithubAction(
-		step: GithubStep<string, "path" | "key" | "restore-keys">,
+		step: GithubStepSchema<string, "path" | "key" | "restore-keys">,
 	): this {
 		if (Object.hasOwn(this.rest ?? {}, "Caching")) {
 			const caching = (
@@ -266,7 +266,7 @@ export class CodeCatalystActionBuilder<
 		return this;
 	}
 
-	normalizeWithEnv(step: GithubStep<string, string>): this {
+	normalizeWithEnv(step: GithubStepSchema<string, string>): this {
 		if (step.with) {
 			let recursive = (withs: Record<string, string | undefined>) => {
 				Object.entries(withs ?? {}).forEach(([key, value]) => {
@@ -296,7 +296,7 @@ export class CodeCatalystActionBuilder<
 		return this;
 	}
 
-	copyWithReferencingEnvToInputs(step: GithubStep<string, string>): this {
+	copyWithReferencingEnvToInputs(step: GithubStepSchema<string, string>): this {
 		if (Object.hasOwn(this.rest ?? {}, "Inputs")) {
 			const inputs = (
 				this.rest as {
@@ -336,7 +336,7 @@ export class CodeCatalystActionBuilder<
 		return this;
 	}
 
-	copyEnvsToInputs(step: GithubStep<string, string>): this {
+	copyEnvsToInputs(step: GithubStepSchema<string, string>): this {
 		if (Object.hasOwn(this.rest ?? {}, "Inputs")) {
 			const inputs = (
 				this.rest as {

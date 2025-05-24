@@ -1,8 +1,8 @@
 import type { PipelineOptions } from "../../../cd/pipeline/Pipeline.mjs";
 import { GithubContext } from "../../../cd/pipeline/github/GithubContext.mjs";
 import type {
-	GithubStep,
 	GithubStepBuilder,
+	GithubStepSchema,
 } from "../../../cd/pipeline/github/GithubStepBuilder.mjs";
 import { GithubWorkflowExpressions } from "../../../cd/pipeline/github/GithubWorkflowExpressions.mjs";
 import type { GithubPipelineNodeOptions } from "../../../cd/pipeline/github/node/GithubPipelineNodeOptions.mjs";
@@ -141,7 +141,7 @@ export function GithubNodeWorkflowJobScript<
 
 	const { os, arch, abi, baseline } = platform;
 	const { getTargetKey, getTargetLabel } = new TargetBuilder<
-		GithubStep<Uses, With>
+		GithubStepSchema<Uses, With>
 	>()
 		.setOs(os)
 		.setArch(arch)

@@ -7,43 +7,43 @@ titleTemplate: ':title'
 
 [Devfile ](https://devfile.io)
 
-## DevfileX
+## Devfile
 ```jsx
-<DevfileX
-	metadata={<DevfileMetadataX name={"devfile_fourtwo"} />}
-	components={[<DevfileSourceComponentX name={"source"} />]}
+<Devfile
+	metadata={<DevfileMetadata name={"devfile_fourtwo"} />}
+	components={[<DevfileSourceComponent name={"source"} />]}
 	events={
-		<DevfileEventX
+		<DevfileEvent
 			postStart={[
 				"hello-jsx",
 			]}
 		/>
 	}
 >
-	<DevfileCommandX
+	<DevfileCommand
 		id={"hello_jsx"}
 		exec={{
 			component: "source",
 			commandLine: "echo 'Hello Fourtwo JSX!'",
 		}}
 	/>
-</DevfileX>
+</Devfile>
 ```
+[https://devfile.io/docs/2.3.0/devfile-schema] (Devfile schema)
 
-### Props 
+### Devfile Props 
 |   |   |   |
 |---|---|---|
-| metadata | DevfileMetadata |  |   
-| components | DevfileSourceComponent |   |
-| events | DevfileEvent |   |
-| commands | DevfileCommand |   |
+| metadata | DevfileMetadata | [DevfileMetadata](#devfilemetadata)
+| components | DevfileSourceComponent |  [DevfileSourceComponent](#devfilesourcecomponent)
+| events | DevfileEvent | [DevfileEvent](#devfileevent)
+| commands | DevfileCommand | [DevfileCommand](#devfilecommand)
 
 
-
-## DefileMetadataX
+## DevfileMetadata
 
 ```jsx
-<DevfileMetadataX 
+<DevfileMetadata
 	name={"devfile_fourtwo"} 
 />
 ```
@@ -53,12 +53,31 @@ metadata:
   name: devfile_fourtwo
 ```
 
-## DevfileSourceComponentX
+
+### DevfileMetadata Props 
+|   |   |   |
+|---|---|---|
+| name | string | Optional devfile name
+
+---
+
+## DevfileSourceComponent
 ```jsx
-<DevfileSourceComponentX 
+<DevfileSourceComponent
 	name={"source"} 
 />
 ```
+
+### DevfileSourceComponent Props 
+|   |   |   | 
+|---|---|---|
+| name | string | Mandatory name that allows referencing the component from other elements (such as commands) or from an external devfile that may reference this component through a parent or a plugin. 
+| container.image | string 
+| container.mountSources | boolean? | Toggles whether or not the project source code should be mounted in the component. 
+| container.command | string[] | The command to run in the dockerimage component instead of the default one provided in the image. 
+
+
+---
 
 ```yaml
 components:
@@ -68,9 +87,9 @@ components:
       mountSources: true
 ```
 
-## DevfileEventX
+## DevfileEvent
 ```jsx
-<DevfileEventX
+<DevfileEvent
 	postStart={[
 		"hello-jsx",
 	]}
@@ -83,9 +102,15 @@ events:
     - hello-jsx
 ```
 
-## DevfileCommandX
+### DevfileEvent Props
+|   |   |   |
+|---|---|---|
+| postStart | string | IDs of commands that should be executed after stopping the devworkspace. |
+
+
+## DevfileCommand
 ```jsx
-<DevfileCommandX
+<DevfileCommand
 	id={"hello_jsx"}
 	exec={{
 		component: "source",
@@ -101,3 +126,8 @@ commands:
       component: source
       commandLine: echo 'Hello Fourtwo JSX!' 
 ```
+
+### DevfileCommand Props
+|   |   |   |
+|---|---|---|
+| postStart | string | IDs of commands that should be executed after stopping the devworkspace.

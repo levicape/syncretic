@@ -37,42 +37,43 @@ const sidebars = (): DefaultTheme.SidebarItem[] => [
     items: [
       {
         text: 'Github Actions',
-        link: '/docs/03-workflows/github-actions/01-cli-basics',
+        link: '/docs/03-workflows/github-actions/01-gha-api',
         collapsed: true,
-        items: [
-          {
-            text: "Creating a GHA workflow",
-            link: '/docs/03-workflows/github-actions/02-creating-a-gha-workflow'
-          },
-          {
-            text: "Generating GHA yaml"
-          },
-          {
-            text: "Workflow naming defaults"
-          },
-          {
-            text: "Github Actions Builder API"
-          }
-        ]
+        // items: [
+          //   {
+            //     text: "Creating a GHA workflow",
+            //     link: '/docs/03-workflows/github-actions/02-creating-a-gha-workflow'
+            //   },
+            //   {
+              //     text: "Generating GHA yaml"
+              //   },
+              //   {
+                //     text: "Workflow naming defaults"
+                //   },
+                //   {
+                  //     text: "Github Actions Builder API"
+                  //   }
+                  // ]
       },  
-      {
-        text: 'AWS CodeCatalyst',
-        collapsed: true,
-        items: [
-          {
-            text: "Creating a CodeCatalyst workflow"
-          },
-          {
-            text: "Generating CodeCatalyst yaml"
-          },
-          {
-            text: "Workflow naming defaults"
-          },
-          {
-            text: "CodeCatalyst Builder API"
-          }
-        ]
-      },  
+      // {
+      //   text: 'AWS CodeCatalyst',
+      //   link: '/docs/03-workflows/catalyst/01-catalyst-api',
+      //   collapsed: true,
+      //   // items: [
+      //   //   {
+      //   //     text: "Creating a CodeCatalyst workflow"
+      //   //   },
+      //   //   {
+      //   //     text: "Generating CodeCatalyst yaml"
+      //   //   },
+      //   //   {
+      //   //     text: "Workflow naming defaults"
+      //   //   },
+      //   //   {
+      //   //     text: "CodeCatalyst Builder API"
+      //   //   }
+      //   // ]
+      // },  
     ]
   }, 
 ]

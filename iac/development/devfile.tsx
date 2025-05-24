@@ -3,12 +3,12 @@
 /** @jsxRuntime automatic */
 
 import {
-	DevfileCommandX,
-	DevfileEventX,
-	DevfileMetadataX,
-	DevfileSourceComponentX,
-	DevfileX,
-} from "@levicape/fourtwo/devfile";
+	Devfile,
+	DevfileCommand,
+	DevfileEvent,
+	DevfileMetadata,
+	DevfileSourceComponent,
+} from "../../module/jsx/devfile/Devfile.mts";
 
 const APPLICATION_NAME = "fourtwo";
 const NODE_VERSION = "22.12.0";
@@ -41,11 +41,11 @@ const sudodo = (script: string) =>
 	["sudo ", ""].map((su) => `${su}${script}`).join("; ");
 
 let data = (
-	<DevfileX
-		metadata={<DevfileMetadataX name={APPLICATION_NAME} />}
-		components={[<DevfileSourceComponentX name={"source"} />]}
+	<Devfile
+		metadata={<DevfileMetadata name={APPLICATION_NAME} />}
+		components={[<DevfileSourceComponent name={"source"} />]}
 		events={
-			<DevfileEventX
+			<DevfileEvent
 				postStart={[
 					"make",
 					"pyenv",
@@ -59,7 +59,7 @@ let data = (
 			/>
 		}
 	>
-		<DevfileCommandX
+		<DevfileCommand
 			id={"make"}
 			exec={{
 				component: "source",
@@ -67,7 +67,7 @@ let data = (
 			}}
 		/>
 		,
-		<DevfileCommandX
+		<DevfileCommand
 			id={"pyenv"}
 			exec={{
 				component: "source",
@@ -83,7 +83,7 @@ let data = (
 			}}
 		/>
 		,
-		<DevfileCommandX
+		<DevfileCommand
 			id={"corepack"}
 			exec={{
 				component: "source",
@@ -91,7 +91,7 @@ let data = (
 			}}
 		/>
 		,
-		<DevfileCommandX
+		<DevfileCommand
 			id={"pnpm"}
 			exec={{
 				component: "source",
@@ -99,7 +99,7 @@ let data = (
 			}}
 		/>
 		,
-		<DevfileCommandX
+		<DevfileCommand
 			id={"node"}
 			exec={{
 				component: "source",
@@ -107,7 +107,7 @@ let data = (
 			}}
 		/>
 		,
-		<DevfileCommandX
+		<DevfileCommand
 			id={"codecatalyst-workflow-cli"}
 			exec={{
 				component: "source",
@@ -118,7 +118,7 @@ let data = (
 			}}
 		/>
 		,
-		<DevfileCommandX
+		<DevfileCommand
 			id={"docker"}
 			exec={{
 				component: "source",
@@ -136,7 +136,7 @@ let data = (
 			}}
 		/>
 		,
-		<DevfileCommandX
+		<DevfileCommand
 			id={"finch"}
 			exec={{
 				component: "source",
@@ -147,7 +147,7 @@ let data = (
 			}}
 		/>
 		,
-	</DevfileX>
+	</Devfile>
 );
 
 import { stringify } from "yaml";

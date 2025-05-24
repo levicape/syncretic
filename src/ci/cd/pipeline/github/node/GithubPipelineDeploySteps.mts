@@ -10,7 +10,7 @@ import type {
 import type { Target, TargetPrototype } from "../../../target/Target.mjs";
 import { TargetBuilder } from "../../../target/TargetBuilder.mjs";
 import type { PipelineOptions } from "../../PipelineOptions.mjs";
-import type { GithubStep } from "../GithubStepBuilder.mjs";
+import type { GithubStepSchema } from "../GithubStepBuilder.mjs";
 
 export type GithubPipelineNodeDeployProps = {
 	version: {
@@ -20,15 +20,18 @@ export type GithubPipelineNodeDeployProps = {
 
 export class GithubPipelineDeploySteps<Uses extends string, With extends string>
 	implements
-		PipelineDeploySteps<GithubStep<Uses, With>, GithubPipelineNodeDeployProps>
+		PipelineDeploySteps<
+			GithubStepSchema<Uses, With>,
+			GithubPipelineNodeDeployProps
+		>
 {
-	private platform: Platform & PlatformPrototype<GithubStep<Uses, With>>;
-	private target: Target & TargetPrototype<GithubStep<Uses, With>>;
+	private platform: Platform & PlatformPrototype<GithubStepSchema<Uses, With>>;
+	private target: Target & TargetPrototype<GithubStepSchema<Uses, With>>;
 	private options: PipelineOptions;
 	private deploy: PipelineDeployOptions;
 
 	constructor(platform: Platform, options: PipelineOptions) {
-		this.platform = new PlatformBuilder<GithubStep<Uses, With>>()
+		this.platform = new PlatformBuilder<GithubStepSchema<Uses, With>>()
 			.setOs(platform.os)
 			.setArch(platform.arch)
 			.setAbi(platform.abi)

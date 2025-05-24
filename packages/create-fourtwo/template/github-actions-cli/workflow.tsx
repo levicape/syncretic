@@ -2,56 +2,36 @@
 /** @jsxImportSource @levicape/fourtwo */
 
 import {
+	GithubJob,
 	GithubJobBuilder,
-	GithubJobX,
-	GithubStepCheckoutX,
-	GithubStepNodeSetupX,
-	GithubStepX,
+	GithubStep,
+	GithubWorkflow,
 	GithubWorkflowExpressions,
-	GithubWorkflowX,
 } from "@levicape/fourtwo/github";
 import { Fragment } from "@levicape/fourtwo/jsx-runtime";
+import { GithubStepCheckout } from "@levicape/fourtwo/jsx/github/steps/GithubStepCheckout";
+
 const {
 	current: { context: _$_, env },
 } = GithubWorkflowExpressions;
 
 export default () => (
-	<GithubWorkflowX
+	<GithubWorkflow
 		name="on Push"
 		on={{
 			push: {},
 		}}
 	>
-		<GithubJobX
+		<GithubJob
 			id={"build"}
 			name={"Step"}
 			runsOn={GithubJobBuilder.defaultRunsOn()}
 			steps={
 				<Fragment>
-					<GithubStepCheckoutX />
-					<GithubStepNodeSetupX
-						configuration={{
-							packageManager: {
-								node: "pnpm",
-							},
-							registry: {
-								scope: "@scope",
-								host: `${env("NPM_REGISTRY")}`,
-							},
-							version: {
-								node: "22.13.0",
-							},
-						}}
-						children={(node) => {
-							return (
-								<Fragment>
-									<GithubStepX name={"Compile"} run={["echo 'Hello world'"]} />
-								</Fragment>
-							);
-						}}
-					/>
+					<GithubStepCheckout />
+					<GithubStep name={"Compile"} run={["echo 'Hello world'"]} />
 				</Fragment>
 			}
 		/>
-	</GithubWorkflowX>
+	</GithubWorkflow>
 );

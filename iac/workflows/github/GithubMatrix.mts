@@ -1,8 +1,8 @@
-import type { CodeCatalystComputeSpec } from "@levicape/fourtwo/codecatalyst";
 import type {
 	GithubOn,
 	GithubWorkflowExpressions,
 } from "@levicape/fourtwo/github";
+import type { CodeCatalystComputeSpec } from "../../../module/jsx/codecatalyst/CodeCatalystWorkflow.mts";
 
 const ENVIRONMENT = "sage";
 export const GITHUB_CI_MATRIX = [
