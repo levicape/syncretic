@@ -1,0 +1,28 @@
+{
+    "name": "fourtwo-website-stacks",
+    "main": "index.ts",
+    "dependencies": {
+        "@aws-sdk/client-codebuild": "catalog:aws",
+        "@levicape/fourtwo": "workspace:",
+        "@pulumi/aws": "catalog:pulumi",
+        "@pulumi/aws-native": "catalog:pulumi",
+        "@pulumi/awsx": "catalog:pulumi",
+        "@pulumi/command": "catalog:pulumi",
+        "@pulumi/docker-build": "catalog:pulumi",
+        "@pulumi/pulumi": "catalog:pulumi",
+        "@pulumi/synced-folder": "catalog:pulumi",
+        "@pulumi/random": "catalog:pulumi",
+        "destr": "catalog:parse-json",
+        "serialize-error": "catalog:error",
+        "ts-node": "catalog:dev",
+        "tslib": "catalog:dev",
+        "typescript": "catalog:dev",
+        "verror": "catalog:error",
+        "yaml": "catalog:parse-yaml",
+        "zod": "catalog:schema-zod"        
+    },
+    "devDependencies": {
+        "@types/node": "^18",
+        "typescript": "^5.0.0"
+    }
+}

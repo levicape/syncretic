@@ -1,0 +1,10 @@
+name: Fourtwo-Website
+description: Documentation for the Fourtwo CLI
+runtime:
+  name: nodejs
+  options:
+    packagemanager: pnpm
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: aws-typescript

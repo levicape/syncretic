@@ -1,4 +1,5 @@
 {
+  "name": "@levicape/fourtwo-website",
   "devDependencies": {
     "@shikijs/vitepress-twoslash": "^1.23.0",
     "@types/node": "^22.13.1",
@@ -16,5 +17,6 @@
     "docs:preview": "vitepress preview",
     "format": "pnpm exec prettier --check ./docs index.md",
     "format:fix": "pnpm exec prettier --check --write ./docs index.md"
-  }
+  },
+  "type": "module"
 }

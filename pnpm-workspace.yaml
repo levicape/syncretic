@@ -1,8 +1,9 @@
 packages:
   - .
   - iac/*
-  - iac/images/*
+  - iac/stacks/*
   - docs/*
+  - docs/fourtwo-website/iac/stacks
   - external/*/*
   - packages/*
   - packages/create-fourtwo/template/*
