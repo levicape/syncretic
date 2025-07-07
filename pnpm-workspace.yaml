@@ -5,7 +5,7 @@ packages:
   - docs/*
   - external/*/*
   - packages/*
-  - packages/create-fourtwo/template/*
+  - packages/create-syncretic/template/*
 catalogs:
   aws:
     '@aws/codecatalyst-workflows-sdk': ^0.1.5-preview.6

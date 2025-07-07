@@ -1,5 +1,5 @@
 #!/usr/bin/env -S node --import tsx
-/** @jsxImportSource @levicape/fourtwo */
+/** @jsxImportSource @levicape/syncretic */
 /** @jsxRuntime automatic */
 
 import {
@@ -8,9 +8,9 @@ import {
 	DevfileMetadataX,
 	DevfileSourceComponentX,
 	DevfileX,
-} from "@levicape/fourtwo/devfile";
+} from "@levicape/syncretic/devfile";
 
-const APPLICATION_NAME = "fourtwo";
+const APPLICATION_NAME = "syncretic";
 const NODE_VERSION = "22.12.0";
 const PNPM_VERSION = "pnpm@9.15.4";
 const MAKE_DEPENDENCIES = [

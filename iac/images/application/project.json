@@ -7,7 +7,7 @@
 				"env": {
 					"ENTRYPOINT_DOCKER": "pnpm exec nx run --verbose iac-images:cli:pack",
 					"ENTRYPOINT_BIN": "pack",
-					"DEFAULT_IMAGE_NAME": "fourtwo",
+					"DEFAULT_IMAGE_NAME": "syncretic",
 					"DEFAULT_PROCESS": "cli",
 					"DOCKER_NETWORK": "host",
 					"PAKETO_BUILDER": "heroku/builder:24",

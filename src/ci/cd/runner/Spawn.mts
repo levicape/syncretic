@@ -145,10 +145,20 @@ export class Spawn {
 				GITHUB_ACTIONS: "true", // always true so annotations are parsed
 			},
 			stdout: (data) => {
-				appendFile(`/tmp/fourtwo-runner.stdout.log`, data as string, () => {});
+                appendFile(
+                    `/tmp/syncretic-runner.stdout.log`,
+                    data as string,
+                    () => {
+                    },
+                );
 			},
 			stderr: (data) => {
-				appendFile(`/tmp/fourtwo-runner.stderr.log`, data as string, () => {});
+                appendFile(
+                    `/tmp/syncretic-runner.stderr.log`,
+                    data as string,
+                    () => {
+                    },
+                );
 			},
 		});
 		const {
@@ -170,11 +180,11 @@ export class Spawn {
 
 	static cleanLogs = async () => {
 		try {
-			rmSync(`/tmp/fourtwo-runner.stdout.log`, {
+            rmSync(`/tmp/syncretic-runner.stdout.log`, {
 				recursive: true,
 				force: true,
 			});
-			rmSync(`/tmp/fourtwo-runner.stderr.log`, {
+            rmSync(`/tmp/syncretic-runner.stderr.log`, {
 				recursive: true,
 				force: true,
 			});
@@ -200,10 +210,12 @@ export class Spawn {
 			env,
 			timeout = spawnTimeout,
 			stdout = (data: string) => {
-				appendFile(`/tmp/fourtwo-runner.stdout.log`, data, () => {});
+                appendFile(`/tmp/syncretic-runner.stdout.log`, data, () => {
+                });
 			},
 			stderr = (data: string) => {
-				appendFile(`/tmp/fourtwo-runner.stderr.log`, data, () => {});
+                appendFile(`/tmp/syncretic-runner.stderr.log`, data, () => {
+                });
 			},
 			retries = 0,
 		} = options;

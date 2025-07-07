@@ -30,7 +30,7 @@ const fixExtension = ({ path, strict }: { path: string; strict?: boolean }) => {
 		console.warn({
 			GenerateCommand: {
 				message:
-					"Using jsx file. Fourtwo will automatically convert the extension to .js. Use --strict to disable",
+					"Using jsx file. Syncretic will automatically convert the extension to .js. Use --strict to disable",
 				path,
 			},
 		});
@@ -45,7 +45,7 @@ const fixExtension = ({ path, strict }: { path: string; strict?: boolean }) => {
 		console.warn({
 			GenerateCommand: {
 				message:
-					"Using ts file. Fourtwo will automatically convert the extension to .js. Use --strict to disable",
+					"Using ts file. syncretic will automatically convert the extension to .js. Use --strict to disable",
 				path,
 			},
 		});
@@ -60,7 +60,7 @@ const fixExtension = ({ path, strict }: { path: string; strict?: boolean }) => {
 		console.warn({
 			GenerateCommand: {
 				message:
-					"Using tsx file. Fourtwo will automatically convert the extension to .js. Use --strict to disable",
+					"Using tsx file. syncretic will automatically convert the extension to .js. Use --strict to disable",
 				path,
 			},
 		});
@@ -75,7 +75,7 @@ const fixExtension = ({ path, strict }: { path: string; strict?: boolean }) => {
 		console.warn({
 			GenerateCommand: {
 				message:
-					"Using mjs file. Fourtwo will automatically convert the extension to .js. Use --strict to disable",
+					"Using mjs file. syncretic will automatically convert the extension to .js. Use --strict to disable",
 				path,
 			},
 		});
@@ -90,7 +90,7 @@ const fixExtension = ({ path, strict }: { path: string; strict?: boolean }) => {
 		console.warn({
 			GenerateCommand: {
 				message:
-					"Using cjs file. Fourtwo will automatically convert the extension to .js. Use --strict to disable",
+					"Using cjs file. syncretic will automatically convert the extension to .js. Use --strict to disable",
 				path,
 			},
 		});
@@ -107,7 +107,7 @@ const fixExtension = ({ path, strict }: { path: string; strict?: boolean }) => {
 		console.warn({
 			GenerateCommand: {
 				message:
-					"Using no extension. Fourtwo will automatically convert the extension to .js. Use --strict to disable",
+					"Using no extension. syncretic will automatically convert the extension to .js. Use --strict to disable",
 				path,
 			},
 		});

@@ -9,7 +9,7 @@ import {
 	withStructuredLogging,
 } from "../server/logging/LoggingContext.mjs";
 import { AfterExit } from "./AfterExit.mjs";
-import { FourtwoCliApp } from "./FourtwoCliApp.mjs";
+import {SyncreticCliApp} from "./SyncreticCliApp.mjs";
 
 const args = process.argv?.slice(2) ?? [];
 
@@ -18,7 +18,7 @@ NodeRuntime.runMain(
 		Effect.gen(function* () {
 			const consola = yield* LoggingContext;
 			const logger = yield* consola.logger;
-			const app = yield* Effect.tryPromise(() => FourtwoCliApp());
+			const app = yield* Effect.tryPromise(() => SyncreticCliApp());
 			yield* Effect.tryPromise(async () => {
 				if (process.stderr === undefined || process.stdout === undefined) {
 					throw new VError("process.stderr or process.stdout is undefined");

@@ -1,6 +1,6 @@
 schemaVersion: 2.0.0
 metadata:
-  name: fourtwo
+  name: syncretic
 components:
   - name: source
     container:

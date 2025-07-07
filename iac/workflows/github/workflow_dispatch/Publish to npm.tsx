@@ -1,14 +1,17 @@
-/** @jsxImportSource @levicape/fourtwo */
+/** @jsxImportSource @levicape/syncretic */
 /** @jsxRuntime automatic */
 
-import { GithubWorkflowExpressions } from "@levicape/fourtwo/ci/cd/pipeline/github/GithubWorkflowExpressions";
-import { GithubJobX } from "@levicape/fourtwo/jsx/github/GithubJobX";
-import { GithubStepX } from "@levicape/fourtwo/jsx/github/GithubStepX";
-import { GithubWorkflowX } from "@levicape/fourtwo/jsx/github/GithubWorkflowX";
-import { GithubStepCheckoutX } from "@levicape/fourtwo/jsx/github/steps/GithubStepCheckoutX";
-import { GithubStepNodeInstallX } from "@levicape/fourtwo/jsx/github/steps/node/GithubStepNodeInstallX";
-import { GithubStepNodeScriptsX } from "@levicape/fourtwo/jsx/github/steps/node/GithubStepNodeScriptsX";
-import { GithubStepNodeSetupX } from "@levicape/fourtwo/jsx/github/steps/node/GithubStepNodeSetupX";
+import {GithubWorkflowExpressions} from "@levicape/syncretic/ci/cd/pipeline/github/GithubWorkflowExpressions";
+import type {
+	GithubNodeWorkflowJobProps
+} from "@levicape/syncretic/ci/codegen/github/node/GithubNodeWorkflowJobStepCodegen";
+import {GithubJobX} from "@levicape/syncretic/jsx/github/GithubJobX";
+import {GithubStepX} from "@levicape/syncretic/jsx/github/GithubStepX";
+import {GithubWorkflowX} from "@levicape/syncretic/jsx/github/GithubWorkflowX";
+import {GithubStepCheckoutX} from "@levicape/syncretic/jsx/github/steps/GithubStepCheckoutX";
+import {GithubStepNodeInstallX} from "@levicape/syncretic/jsx/github/steps/node/GithubStepNodeInstallX";
+import {GithubStepNodeScriptsX} from "@levicape/syncretic/jsx/github/steps/node/GithubStepNodeScriptsX";
+import {GithubStepNodeSetupX} from "@levicape/syncretic/jsx/github/steps/node/GithubStepNodeSetupX";
 import { NodeGhaConfiguration } from "../push/CI";
 
 // const enquirer = new Enquirer();
@@ -49,7 +52,7 @@ export default async () => {
 			env={{
 				...register("NPM_REGISTRY_PROTOCOL", "https"),
 				...register("NPM_REGISTRY_HOST", "npm.pkg.github.com"),
-				...register("PACKAGE_JSON_NAME", "@levicape/fourtwo"),
+				...register("PACKAGE_JSON_NAME", "@levicape/syncretic"),
 			}}
 		>
 			<GithubJobX
@@ -102,7 +105,7 @@ export default async () => {
 						/>
 						<GithubStepCheckoutX />
 						<GithubStepNodeSetupX configuration={NodeGhaConfiguration({ env })}>
-							{(node) => {
+							{(node: GithubNodeWorkflowJobProps) => {
 								return (
 									<>
 										<GithubStepNodeInstallX {...node} />
@@ -134,7 +137,7 @@ export default async () => {
 								},
 							}}
 						>
-							{(node) => {
+							{(node: GithubNodeWorkflowJobProps) => {
 								return (
 									<>
 										<GithubStepNodeScriptsX

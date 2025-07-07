@@ -1,0 +1,8 @@
+{
+	"compilerOptions": {
+		"jsx": "react-jsx",
+		"jsxImportSource": "@levicape/syncretic",
+		"module": "ESNext",
+		"moduleResolution": "bundler"
+	}
+}

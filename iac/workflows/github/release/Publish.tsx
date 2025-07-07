@@ -1,16 +1,19 @@
 /** @jsxRuntime automatic */
-/** @jsxImportSource @levicape/fourtwo */
+/** @jsxImportSource @levicape/syncretic */
 
-import { GithubJobBuilder } from "@levicape/fourtwo/ci/cd/pipeline/github/GithubJobBuilder";
-import { GithubWorkflowExpressions } from "@levicape/fourtwo/ci/cd/pipeline/github/GithubWorkflowExpressions";
-import { Fragment } from "@levicape/fourtwo/jsx-runtime";
-import { GithubJobX } from "@levicape/fourtwo/jsx/github/GithubJobX";
-import { GithubStepX } from "@levicape/fourtwo/jsx/github/GithubStepX";
-import { GithubWorkflowX } from "@levicape/fourtwo/jsx/github/GithubWorkflowX";
-import { GithubStepCheckoutX } from "@levicape/fourtwo/jsx/github/steps/GithubStepCheckoutX";
-import { GithubStepNodeInstallX } from "@levicape/fourtwo/jsx/github/steps/node/GithubStepNodeInstallX";
-import { GithubStepNodeScriptsX } from "@levicape/fourtwo/jsx/github/steps/node/GithubStepNodeScriptsX";
-import { GithubStepNodeSetupX } from "@levicape/fourtwo/jsx/github/steps/node/GithubStepNodeSetupX";
+import {GithubJobBuilder} from "@levicape/syncretic/ci/cd/pipeline/github/GithubJobBuilder";
+import {GithubWorkflowExpressions} from "@levicape/syncretic/ci/cd/pipeline/github/GithubWorkflowExpressions";
+import type {
+	GithubNodeWorkflowJobProps
+} from "@levicape/syncretic/ci/codegen/github/node/GithubNodeWorkflowJobStepCodegen";
+import {Fragment} from "@levicape/syncretic/jsx-runtime";
+import {GithubJobX} from "@levicape/syncretic/jsx/github/GithubJobX";
+import {GithubStepX} from "@levicape/syncretic/jsx/github/GithubStepX";
+import {GithubWorkflowX} from "@levicape/syncretic/jsx/github/GithubWorkflowX";
+import {GithubStepCheckoutX} from "@levicape/syncretic/jsx/github/steps/GithubStepCheckoutX";
+import {GithubStepNodeInstallX} from "@levicape/syncretic/jsx/github/steps/node/GithubStepNodeInstallX";
+import {GithubStepNodeScriptsX} from "@levicape/syncretic/jsx/github/steps/node/GithubStepNodeScriptsX";
+import {GithubStepNodeSetupX} from "@levicape/syncretic/jsx/github/steps/node/GithubStepNodeSetupX";
 import { NodeGhaConfiguration } from "../push/CI.js";
 
 type CompileAndPublishProps = {
@@ -19,9 +22,9 @@ type CompileAndPublishProps = {
 };
 
 const compileAndPublish: CompileAndPublishProps[] = [
-	{ packageName: "@levicape/fourtwo" },
+	{packageName: "@levicape/syncretic"},
 	{
-		packageName: "@levicape/fourtwo-pulumi",
+		packageName: "@levicape/syncretic-pulumi",
 		cwd: "packages/pulumi",
 	},
 ];
@@ -88,7 +91,7 @@ export default (
 								configuration={NodeGhaConfiguration({ env })}
 								options={{}}
 							>
-								{(node) => {
+								{(node: GithubNodeWorkflowJobProps) => {
 									return (
 										<>
 											<GithubStepNodeInstallX {...node} />

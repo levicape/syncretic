@@ -3,12 +3,12 @@
   "config": {
     "packagemanager": "pnpm",
     "packageexecutor": "pnpm exec",
-    "binpath": "nx dx:cli:bin @levicape/fourtwo",
+    "binpath": "nx dx:cli:bin @levicape/syncretic",
     "ccpath": "./iac/workflows/codecatalyst",
     "ghapath": "./iac/workflows/github"
   },
   "dependencies": {
-    "@levicape/fourtwo": "workspace:"
+    "@levicape/syncretic": "workspace:"
   },
   "nx": {
     "targets": {

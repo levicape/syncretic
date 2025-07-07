@@ -1,6 +1,9 @@
 /** @jsxRuntime automatic */
-/** @jsxImportSource @levicape/fourtwo */
+/** @jsxImportSource @levicape/syncretic */
 
+import type {
+	GithubNodeWorkflowJobProps
+} from "@levicape/syncretic/ci/codegen/github/node/GithubNodeWorkflowJobStepCodegen";
 import {
 	GithubJobBuilder,
 	GithubJobX,
@@ -10,7 +13,7 @@ import {
 	GithubStepX,
 	GithubWorkflowExpressions,
 	GithubWorkflowX,
-} from "@levicape/fourtwo/github";
+} from "@levicape/syncretic/github";
 
 const {
 	current: { register, context: _$_, env, secret },
@@ -101,7 +104,7 @@ export default async () => (
 				<>
 					<GithubStepCheckoutX />
 					<GithubStepNodeSetupX configuration={NodeGhaConfiguration({ env })}>
-						{(node) => {
+						{(node: GithubNodeWorkflowJobProps) => {
 							return (
 								<>
 									<GithubStepNodeInstallX {...node} />

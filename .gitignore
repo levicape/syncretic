@@ -149,6 +149,8 @@ _protocols
 **/_models
 _models
 
+.vitepress
+
 
 *.local.*
 protobuf

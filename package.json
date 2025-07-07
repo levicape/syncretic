@@ -1,10 +1,10 @@
 {
-  "name": "@levicape/fourtwo",
-  "version": "0.0.0-local.0",
+  "name": "@levicape/syncretic",
+  "version": "0.0.0",
   "author": "Pedro Cardona",
   "bin": {
-    "@levicape/fourtwo": "module/cli/bin.mjs",
-    "fourtwo": "module/cli/bin.mjs"
+    "@levicape/syncretic": "module/cli/bin.mjs",
+    "syncretic": "module/cli/bin.mjs"
   },
   "config": {
     "packagemanager": "pnpm",
@@ -94,8 +94,8 @@
       },
       "dx:prepublish": {
         "dependsOn": [
-          "@levicape/fourtwo-pulumi:dx:precommit",
-          "@levicape/create-fourtwo:dx:precommit"
+          "@levicape/syncretic-pulumi:dx:precommit",
+          "@levicape/create-syncretic:dx:precommit"
         ]
       },
       "dx:test": {
@@ -112,8 +112,8 @@
       "nx:compile": {
         "dependsOn": [
           "build:module",
-          "@levicape/fourtwo-pulumi:nx:compile",
-          "@levicape/create-fourtwo:nx:compile"
+          "@levicape/syncretic-pulumi:nx:compile",
+          "@levicape/create-syncretic:nx:compile"
         ]
       },
       "nx:sync": {
@@ -142,10 +142,7 @@
       ]
     }
   },
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com/"
-  },
-  "repository": "github:levicape/fourtwo",
+  "repository": "github:levicape/syncretic",
   "scripts": {
     "build": "$npm_package_config_packageexecutor nx nx:compile",
     "build:tsc": "$npm_package_config_packageexecutor tsc",

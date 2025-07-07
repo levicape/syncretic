@@ -1,8 +1,9 @@
 {
-  "name": "iac-development",
   "dependencies": {
     "@levicape/syncretic": "workspace:"
   },
   "private": "true",
-  "type": "module"
+  "scripts": {
+    "render": "node --import tsx './devfile.tsx'"
+  }
 }
