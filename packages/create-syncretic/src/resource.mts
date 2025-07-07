@@ -15,4 +15,4 @@ export interface TemplateResource {
 // 	}
 // }
 
-// PackageJsonFourtwoVersion
+// PackageJsonsyncreticVersion

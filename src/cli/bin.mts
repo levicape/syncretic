@@ -9,7 +9,7 @@ import {
 	withStructuredLogging,
 } from "../server/logging/LoggingContext.mjs";
 import { AfterExit } from "./AfterExit.mjs";
-import {SyncreticCliApp} from "./SyncreticCliApp.mjs";
+import { SyncreticCliApp } from "./SyncreticCliApp.mjs";
 
 const args = process.argv?.slice(2) ?? [];
 

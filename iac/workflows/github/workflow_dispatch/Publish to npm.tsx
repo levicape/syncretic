@@ -1,17 +1,15 @@
 /** @jsxImportSource @levicape/syncretic */
 /** @jsxRuntime automatic */
 
-import {GithubWorkflowExpressions} from "@levicape/syncretic/ci/cd/pipeline/github/GithubWorkflowExpressions";
-import type {
-	GithubNodeWorkflowJobProps
-} from "@levicape/syncretic/ci/codegen/github/node/GithubNodeWorkflowJobStepCodegen";
-import {GithubJobX} from "@levicape/syncretic/jsx/github/GithubJobX";
-import {GithubStepX} from "@levicape/syncretic/jsx/github/GithubStepX";
-import {GithubWorkflowX} from "@levicape/syncretic/jsx/github/GithubWorkflowX";
-import {GithubStepCheckoutX} from "@levicape/syncretic/jsx/github/steps/GithubStepCheckoutX";
-import {GithubStepNodeInstallX} from "@levicape/syncretic/jsx/github/steps/node/GithubStepNodeInstallX";
-import {GithubStepNodeScriptsX} from "@levicape/syncretic/jsx/github/steps/node/GithubStepNodeScriptsX";
-import {GithubStepNodeSetupX} from "@levicape/syncretic/jsx/github/steps/node/GithubStepNodeSetupX";
+import { GithubWorkflowExpressions } from "@levicape/syncretic/ci/cd/pipeline/github/GithubWorkflowExpressions";
+import type { GithubNodeWorkflowJobProps } from "@levicape/syncretic/ci/codegen/github/node/GithubNodeWorkflowJobStepCodegen";
+import { GithubJobX } from "@levicape/syncretic/jsx/github/GithubJobX";
+import { GithubStepX } from "@levicape/syncretic/jsx/github/GithubStepX";
+import { GithubWorkflowX } from "@levicape/syncretic/jsx/github/GithubWorkflowX";
+import { GithubStepCheckoutX } from "@levicape/syncretic/jsx/github/steps/GithubStepCheckoutX";
+import { GithubStepNodeInstallX } from "@levicape/syncretic/jsx/github/steps/node/GithubStepNodeInstallX";
+import { GithubStepNodeScriptsX } from "@levicape/syncretic/jsx/github/steps/node/GithubStepNodeScriptsX";
+import { GithubStepNodeSetupX } from "@levicape/syncretic/jsx/github/steps/node/GithubStepNodeSetupX";
 import { NodeGhaConfiguration } from "../push/CI";
 
 // const enquirer = new Enquirer();

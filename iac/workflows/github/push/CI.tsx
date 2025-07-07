@@ -1,9 +1,7 @@
 /** @jsxRuntime automatic */
 /** @jsxImportSource @levicape/syncretic */
 
-import type {
-	GithubNodeWorkflowJobProps
-} from "@levicape/syncretic/ci/codegen/github/node/GithubNodeWorkflowJobStepCodegen";
+import type { GithubNodeWorkflowJobProps } from "@levicape/syncretic/ci/codegen/github/node/GithubNodeWorkflowJobStepCodegen";
 import {
 	GithubJobBuilder,
 	GithubJobX,

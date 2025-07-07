@@ -14,7 +14,7 @@ import {
 
 const devfile: DevfileBuilder = (
 	<DevfileX
-		metadata={<DevfileMetadataX name={"devfile-syncretic"}/>}
+		metadata={<DevfileMetadataX name={"devfile-syncretic"} />}
 		components={[<DevfileSourceComponentX name={"source"} />]}
 		events={<DevfileEventX postStart={["hello-jsx"]} />}
 	>

@@ -1,4 +1,4 @@
-import type {CodeCatalystComputeSpec} from "@levicape/syncretic/codecatalyst";
+import type { CodeCatalystComputeSpec } from "@levicape/syncretic/codecatalyst";
 import type {
 	GithubOn,
 	GithubWorkflowExpressions,
