@@ -28,9 +28,7 @@ export const NodeGhaConfiguration = ({
 			cache: !!(cache === undefined || cache === true),
 		},
 		registry: {
-			scope: "@levicape",
-			host: `${e("LEVICAPE_REGISTRY")}`,
-			secret,
+			secret: "NPM_TOKEN",
 		},
 		version: {
 			node: "22.13.0",
@@ -42,11 +40,6 @@ export default async () => (
 		name="on Push: Compile, Lint, Test all workspace packages"
 		on={{
 			push: {},
-		}}
-		env={{
-			...register("LEVICAPE_REGISTRY_HOST", "npm.pkg.github.com/"),
-			...register("LEVICAPE_REGISTRY", "https://npm.pkg.github.com"),
-			...register("LEVICAPE_TOKEN", secret("GITHUB_TOKEN")),
 		}}
 	>
 		<GithubJobX

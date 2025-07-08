@@ -27,6 +27,8 @@ const compileAndPublish: CompileAndPublishProps[] = [
 	},
 ];
 
+const EXTERNAL_REGISTRY = null;
+
 export default (
 	(props: {
 		compileAndPublish?: CompileAndPublishProps[];
@@ -41,7 +43,7 @@ export default (
 			return (
 				<GithubJobX
 					id={`publish_${shortname}`}
-					name={`${packageName}: Compile and publish to Github`}
+					name={`${packageName}: Compile and publish to NPM`}
 					runsOn={GithubJobBuilder.defaultRunsOn()}
 					packages={"write"}
 					contents={"read"}
@@ -79,11 +81,15 @@ export default (
 							<GithubStepX
 								name={"Verify registry URL"}
 								continueOnError={true}
-								run={[
-									`echo "NPM_REGISTRY_URL: ${env("LEVICAPE_REGISTRY")}"`,
-									`echo "NPM_REGISTRY_HOST: ${env("LEVICAPE_REGISTRY_HOST")}"`,
-									`curl -v --insecure ${env("LEVICAPE_REGISTRY")}`,
-								]}
+								run={
+									EXTERNAL_REGISTRY
+										? [
+												`echo "NPM_REGISTRY_URL: ${env("LEVICAPE_REGISTRY")}"`,
+												`echo "NPM_REGISTRY_HOST: ${env("LEVICAPE_REGISTRY_HOST")}"`,
+												`curl -v --insecure ${env("LEVICAPE_REGISTRY")}`,
+											]
+										: [`echo "Using NPM registry"`]
+								}
 							/>
 							<GithubStepNodeSetupX
 								configuration={NodeGhaConfiguration({ env })}
@@ -110,7 +116,8 @@ export default (
 									"export PREID=$RELEVANT_SHA",
 									"export PREID=${PREID:0:10}",
 									`export ARGS="--git-tag-version=false --commit-hooks=false"`,
-									`npm version ${_$_("github.event.release.tag_name")}-\${PREID:-unknown}.${_$_("github.run_number")} $ARGS --allow-same-version`,
+									`export PRERELEASE="${`-\${PREID:-unknown}.${_$_("github.run_number")}`}"`,
+									`pnpm version ${_$_("github.event.release.tag_name")}\${PRERELEASE} $ARGS --allow-same-version`,
 								]}
 								env={{
 									RELEVANT_SHA: _$_(
