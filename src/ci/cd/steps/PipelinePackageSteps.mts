@@ -3,9 +3,9 @@ export type PipelinePackageOptions<Options> = {
 		node: "npm" | "pnpm" | "yarn";
 		cache?: boolean;
 	};
-	registry: {
-		scope: string;
-		host: string;
+	registry?: {
+		scope?: string;
+		host?: string;
 		secret?: string;
 	};
 } & Options;

@@ -5,10 +5,6 @@ name: "on Push: Compile, Lint, Test all workspace packages"
 on:
   push:
     {}
-env:
-  LEVICAPE_REGISTRY_HOST: npm.pkg.github.com/
-  LEVICAPE_REGISTRY: https://npm.pkg.github.com
-  LEVICAPE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 jobs:
   build:
     name: Compile, Lint and Test all workspace packages
@@ -22,12 +18,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22.13.0
-          registry-url: ${{ env.LEVICAPE_REGISTRY }}
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
-          scope: "@levicape"
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - id: cache-npm
         name: Cache node modules
         uses: actions/cache@v3
@@ -72,12 +66,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22.13.0
-          registry-url: ${{ env.LEVICAPE_REGISTRY }}
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
-          scope: "@levicape"
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - id: cache-npm
         name: Cache node modules
         uses: actions/cache@v3
@@ -107,7 +99,7 @@ jobs:
 ########################################
 #**:_$~- {"$$":"head","filename":"[push] - CI - [on Push: Compile, Lint, Test all workspace packages].yml","source":"iac/workflows/github/push/CI.js"}
 #**:_$~- {"$$":"script","generator":"codegen/github/GenerateGithubWorkflow.mts"}
-#**:_$~- {"$$":"body","hashed":"b6bcc38f5d041439bc3ee0e8140064f6016984ac45cbc7b0f3061ae686cf7924"}
-#**:_$~- {"$$":"footer","started":"2025-03-31T06:15:09.756Z","now":"2025-03-31T06:15:09.764Z","elapsed":"8ms"}
+#**:_$~- {"$$":"body","hashed":"d4aa42d53eaef4c96896efaa36d42bdba97b687efe37a57b12d3cb0dacca474a"}
+#**:_$~- {"$$":"footer","started":"2025-07-08T00:16:17.485Z","now":"2025-07-08T00:16:17.496Z","elapsed":"11ms"}
 # END OF GENERATED FILE
 

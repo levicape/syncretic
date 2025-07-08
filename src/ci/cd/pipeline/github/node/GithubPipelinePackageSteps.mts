@@ -1,8 +1,8 @@
 import VError from "verror";
-import type { PipelinePackageSteps } from "../../../steps/PipelinePackageSteps.mjs";
-import { GithubStepBuilder } from "../GithubStepBuilder.mjs";
-import type { GithubWorkflowExpressions } from "../GithubWorkflowExpressions.mjs";
-import type { GithubPipelineNodeOptions } from "./GithubPipelineNodeOptions.mjs";
+import type {PipelinePackageSteps} from "../../../steps/PipelinePackageSteps.mjs";
+import {GithubStepBuilder} from "../GithubStepBuilder.mjs";
+import type {GithubWorkflowExpressions} from "../GithubWorkflowExpressions.mjs";
+import type {GithubPipelineNodeOptions} from "./GithubPipelineNodeOptions.mjs";
 
 export type GithubPipelineNodePackageProps = {
 	version: {
@@ -12,12 +12,12 @@ export type GithubPipelineNodePackageProps = {
 		node: "npm" | "pnpm" | "yarn";
 		cache?: boolean;
 	};
-	registry: {
-		scope: string;
-		host: string;
+	registry?: {
+		scope?: string;
+		host?: string;
 		secret?: string;
 	};
-	expressions: (typeof GithubWorkflowExpressions)["current"];
+	expressions?: Partial<(typeof GithubWorkflowExpressions)["current"]>;
 };
 
 export class GithubNodePipelinePackageSteps<
@@ -93,9 +93,12 @@ export class GithubNodePipelinePackageSteps<
 	getRuntime = ({
 		version: { node },
 		packageManager: { node: npm, cache },
-		registry: { scope, host, secret: secretName },
-		expressions: { env, context, secret, register },
+		registry,
+		expressions,
 	}: GithubPipelineNodePackageProps): GithubStepBuilder<Uses, With>[] => {
+		let { scope, host, secret: secretName } = registry ?? {};
+		let { env, context, secret, register } = expressions ?? {};
+
 		if (!node) {
 			throw new VError("Node version is required");
 		}
@@ -104,10 +107,12 @@ export class GithubNodePipelinePackageSteps<
 			secretName = "GITHUB_TOKEN";
 		}
 
-		if (!scope.startsWith("@")) {
+		if (scope !== undefined && !scope?.startsWith("@")) {
 			throw new VError("Scope must start with @");
 		}
 
+		const envsAvailable =
+			register !== undefined && secret !== undefined && context !== undefined;
 		return [
 			new GithubStepBuilder<Uses, With>(
 				`Setup Node ${node}`,
@@ -123,9 +128,13 @@ export class GithubNodePipelinePackageSteps<
 						npm === "pnpm" ? "pnpm-lock.yaml" : undefined,
 					["scope" as With]: npm === "pnpm" ? scope : undefined,
 				} as unknown as Record<With, string | undefined>,
-			).setEnv({
-				...register("NODE_AUTH_TOKEN", secret(secretName)),
-			}),
+			).setEnv(
+				envsAvailable
+					? {
+							...register("NODE_AUTH_TOKEN", secret(secretName)),
+						}
+					: {},
+			),
 			...(cache
 				? [
 						new GithubStepBuilder<Uses, With>(
@@ -133,9 +142,13 @@ export class GithubNodePipelinePackageSteps<
 							"actions/cache@v3" as Uses,
 							{
 								["path" as With]: "~/.npm",
-								["key" as With]: `${context("runner.os")}-build-npm-node-modules-${context("hashFiles('**/pnpm-lock.json')")}`,
+								["key" as With]: envsAvailable
+									? `${context("runner.os")}-build-npm-node-modules-${context("hashFiles('**/pnpm-lock.json')")}`
+									: "os-build-npm-node-modules-",
 								["restore-keys" as With]: [
-									`${context("runner.os")}-build-npm-node-modules-`,
+									envsAvailable
+										? `${context("runner.os")}-build-npm-node-modules-`
+										: "os-build-npm-node-modules-",
 								].join("\n"),
 							} as unknown as Record<With, string | undefined>,
 						).setId("cache-npm"),
@@ -154,9 +167,9 @@ export class GithubNodePipelinePackageSteps<
 							"actions/cache@v3" as Uses,
 							{
 								["path" as With]: "${{ env.STORE_PATH }}",
-								["key" as With]: `${context("runner.os")}-pnpm-store-${context("hashFiles('**/pnpm-lock.json')")}`,
+								["key" as With]: `${context?.("runner.os") ?? "os"}-pnpm-store-${context?.("hashFiles('**/pnpm-lock.json')") ?? ""}`,
 								["restore-keys" as With]: [
-									`${context("runner.os")}-pnpm-store-`,
+									`${context?.("runner.os") ?? "os"}-pnpm-store-`,
 								].join("\n"),
 							} as unknown as Record<With, string | undefined>,
 						).setId("cache-pnpm-store"),
@@ -168,21 +181,21 @@ export class GithubNodePipelinePackageSteps<
 	getInstallModules = ({
 		version: { node },
 		packageManager: { node: npm, cache },
-		expressions: { context },
+		expressions,
 	}: GithubPipelineNodePackageProps) => {
 		if (!node) {
 			throw new VError("Node version is required");
 		}
-		return [
-			...(cache
-				? [
-						new GithubStepBuilder<Uses, With>("List Dependencies")
-							.setIf(context(`steps.cache-npm.outputs.cache-hit != 'true'`))
-							.setRun([`${npm} list`])
-							.setContinueOnError(true),
-					]
-				: []),
+		const { context } = expressions ?? {};
+		const step = new GithubStepBuilder<Uses, With>("List Dependencies")
+			.setRun([`${npm} list`])
+			.setContinueOnError(true);
+		if (context) {
+			step.setIf(context?.(`steps.cache-npm.outputs.cache-hit != 'true'`));
+		}
 
+		return [
+			...(cache ? [step] : []),
 			new GithubStepBuilder<Uses, With>("Install Dependencies").setRun([
 				`${npm} install`,
 			]),

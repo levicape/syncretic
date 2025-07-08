@@ -12,7 +12,7 @@ env:
   LEVICAPE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 jobs:
   publish_syncretic:
-    name: "@levicape/syncretic: Compile and publish to Github"
+    name: "@levicape/syncretic: Compile and publish to NPM"
     runs-on: ubuntu-latest
     permissions:
       packages: write
@@ -24,24 +24,16 @@ jobs:
         run: |-
           if [ -f .npmrc ]; then rm .npmrc; fi;
           if [ -f .npmrc ]; then rm .npmrc; fi;
-      - name: Verify registry URL
-        continue-on-error: true
-        run: |-
-          echo "NPM_REGISTRY_URL: ${{ env.LEVICAPE_REGISTRY }}";
-          echo "NPM_REGISTRY_HOST: ${{ env.LEVICAPE_REGISTRY_HOST }}";
-          curl -v --insecure ${{ env.LEVICAPE_REGISTRY }};
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
       - name: Setup Node 22.13.0
         uses: actions/setup-node@v4
         with:
           node-version: 22.13.0
-          registry-url: ${{ env.LEVICAPE_REGISTRY }}
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
-          scope: "@levicape"
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - id: cache-npm
         name: Cache node modules
         uses: actions/cache@v3
@@ -85,7 +77,7 @@ jobs:
         continue-on-error: true
         run: pnpm publish --no-git-checks;
   publish_syncretic-pulumi:
-    name: "@levicape/syncretic-pulumi: Compile and publish to Github"
+    name: "@levicape/syncretic-pulumi: Compile and publish to NPM"
     runs-on: ubuntu-latest
     permissions:
       packages: write
@@ -100,24 +92,16 @@ jobs:
         run: |-
           if [ -f ../../.npmrc ]; then rm ../../.npmrc; fi;
           if [ -f .npmrc ]; then rm .npmrc; fi;
-      - name: Verify registry URL
-        continue-on-error: true
-        run: |-
-          echo "NPM_REGISTRY_URL: ${{ env.LEVICAPE_REGISTRY }}";
-          echo "NPM_REGISTRY_HOST: ${{ env.LEVICAPE_REGISTRY_HOST }}";
-          curl -v --insecure ${{ env.LEVICAPE_REGISTRY }};
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
       - name: Setup Node 22.13.0
         uses: actions/setup-node@v4
         with:
           node-version: 22.13.0
-          registry-url: ${{ env.LEVICAPE_REGISTRY }}
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
-          scope: "@levicape"
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - id: cache-npm
         name: Cache node modules
         uses: actions/cache@v3
@@ -165,7 +149,7 @@ jobs:
 ########################################
 #**:_$~- {"$$":"head","filename":"[release(released)] - Publish - [@levicape_syncretic].yml","source":"iac/workflows/github/release/Publish.js"}
 #**:_$~- {"$$":"script","generator":"codegen/github/GenerateGithubWorkflow.mts"}
-#**:_$~- {"$$":"body","hashed":"6b1890c6df98e74e52e300ea1f0c99cc78d22704a5f55128f075f22e5c850942"}
-#**:_$~- {"$$":"footer","started":"2025-05-08T02:03:51.586Z","now":"2025-05-08T02:03:51.594Z","elapsed":"8ms"}
+#**:_$~- {"$$":"body","hashed":"a2ddcf7609ae1af9037f99b3359b70900766c60213117f5a955f027cc642ccb2"}
+#**:_$~- {"$$":"footer","started":"2025-07-08T00:16:17.485Z","now":"2025-07-08T00:16:17.497Z","elapsed":"12ms"}
 # END OF GENERATED FILE
 

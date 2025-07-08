@@ -1,18 +1,20 @@
 /** @jsxRuntime automatic */
 /** @jsxImportSource @levicape/syncretic */
 
-import { GithubJobBuilder } from "@levicape/syncretic/ci/cd/pipeline/github/GithubJobBuilder";
-import { GithubWorkflowExpressions } from "@levicape/syncretic/ci/cd/pipeline/github/GithubWorkflowExpressions";
-import type { GithubNodeWorkflowJobProps } from "@levicape/syncretic/ci/codegen/github/node/GithubNodeWorkflowJobStepCodegen";
-import { Fragment } from "@levicape/syncretic/jsx-runtime";
-import { GithubJobX } from "@levicape/syncretic/jsx/github/GithubJobX";
-import { GithubStepX } from "@levicape/syncretic/jsx/github/GithubStepX";
-import { GithubWorkflowX } from "@levicape/syncretic/jsx/github/GithubWorkflowX";
-import { GithubStepCheckoutX } from "@levicape/syncretic/jsx/github/steps/GithubStepCheckoutX";
-import { GithubStepNodeInstallX } from "@levicape/syncretic/jsx/github/steps/node/GithubStepNodeInstallX";
-import { GithubStepNodeScriptsX } from "@levicape/syncretic/jsx/github/steps/node/GithubStepNodeScriptsX";
-import { GithubStepNodeSetupX } from "@levicape/syncretic/jsx/github/steps/node/GithubStepNodeSetupX";
-import { NodeGhaConfiguration } from "../push/CI.js";
+import {GithubJobBuilder} from "@levicape/syncretic/ci/cd/pipeline/github/GithubJobBuilder";
+import {GithubWorkflowExpressions} from "@levicape/syncretic/ci/cd/pipeline/github/GithubWorkflowExpressions";
+import type {
+	GithubNodeWorkflowJobProps
+} from "@levicape/syncretic/ci/codegen/github/node/GithubNodeWorkflowJobStepCodegen";
+import {Fragment} from "@levicape/syncretic/jsx-runtime";
+import {GithubJobX} from "@levicape/syncretic/jsx/github/GithubJobX";
+import {GithubStepX} from "@levicape/syncretic/jsx/github/GithubStepX";
+import {GithubWorkflowX} from "@levicape/syncretic/jsx/github/GithubWorkflowX";
+import {GithubStepCheckoutX} from "@levicape/syncretic/jsx/github/steps/GithubStepCheckoutX";
+import {GithubStepNodeInstallX} from "@levicape/syncretic/jsx/github/steps/node/GithubStepNodeInstallX";
+import {GithubStepNodeScriptsX} from "@levicape/syncretic/jsx/github/steps/node/GithubStepNodeScriptsX";
+import {GithubStepNodeSetupX} from "@levicape/syncretic/jsx/github/steps/node/GithubStepNodeSetupX";
+import {NodeGhaConfiguration} from "../push/CI.js";
 
 type CompileAndPublishProps = {
 	cwd?: string;
@@ -41,7 +43,7 @@ export default (
 			return (
 				<GithubJobX
 					id={`publish_${shortname}`}
-					name={`${packageName}: Compile and publish to Github`}
+					name={`${packageName}: Compile and publish to NPM`}
 					runsOn={GithubJobBuilder.defaultRunsOn()}
 					packages={"write"}
 					contents={"read"}
@@ -76,15 +78,15 @@ export default (
 									];
 								})()}
 							/>
-							<GithubStepX
-								name={"Verify registry URL"}
-								continueOnError={true}
-								run={[
-									`echo "NPM_REGISTRY_URL: ${env("LEVICAPE_REGISTRY")}"`,
-									`echo "NPM_REGISTRY_HOST: ${env("LEVICAPE_REGISTRY_HOST")}"`,
-									`curl -v --insecure ${env("LEVICAPE_REGISTRY")}`,
-								]}
-							/>
+							{/*<GithubStepX*/}
+							{/*	name={"Verify registry URL"}*/}
+							{/*	continueOnError={true}*/}
+							{/*	run={[*/}
+							{/*		`echo "NPM_REGISTRY_URL: ${env("LEVICAPE_REGISTRY")}"`,*/}
+							{/*		`echo "NPM_REGISTRY_HOST: ${env("LEVICAPE_REGISTRY_HOST")}"`,*/}
+							{/*		`curl -v --insecure ${env("LEVICAPE_REGISTRY")}`,*/}
+							{/*	]}*/}
+							{/*/>*/}
 							<GithubStepNodeSetupX
 								configuration={NodeGhaConfiguration({ env })}
 								options={{}}
